@@ -1,0 +1,210 @@
+{
+  "name": "rlg-cc-unleashed",
+  "version": "1.0.0",
+  "description": "Streamlined Claude Code plugin with core agents, on-demand specialists, and chunked planning",
+  "claudeCodeVersion": ">=2.0.31",
+  "author": "RLGeeX",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rlgeex/rlg-cc-unleashed"
+  },
+  "core": {
+    "agents": [
+      "agents/core/tdd-enforcer.md",
+      "agents/core/doc-assistant.md",
+      "agents/core/orchestrator.md"
+    ],
+    "alwaysLoad": true,
+    "estimatedTokens": 2300
+  },
+  "categories": {
+    "infrastructure": {
+      "path": "agents/infrastructure/",
+      "agents": [
+        "kubernetes-specialist.md",
+        "terraform-engineer.md",
+        "devops-engineer.md",
+        "sre-engineer.md",
+        "cloud-architect.md",
+        "deployment-engineer.md",
+        "incident-responder.md"
+      ],
+      "estimatedTokens": 6000
+    },
+    "development": {
+      "path": "agents/development/",
+      "agents": [
+        "python-pro.md",
+        "typescript-pro.md",
+        "golang-pro.md",
+        "react-specialist.md",
+        "nextjs-developer.md",
+        "django-developer.md",
+        "fastapi-developer.md",
+        "backend-architect.md",
+        "frontend-developer.md",
+        "fullstack-developer.md",
+        "mobile-developer.md",
+        "api-designer.md"
+      ],
+      "estimatedTokens": 10000
+    },
+    "quality": {
+      "path": "agents/quality/",
+      "agents": [
+        "code-reviewer.md",
+        "test-automator.md",
+        "qa-expert.md",
+        "debugger.md",
+        "refactoring-specialist.md",
+        "security-auditor.md"
+      ],
+      "estimatedTokens": 5000
+    },
+    "product-management": {
+      "path": "agents/product-management/",
+      "agents": [
+        "business-analyst.md",
+        "product-owner.md",
+        "story-writer.md",
+        "jira-specialist.md",
+        "scrum-master.md"
+      ],
+      "estimatedTokens": 4000
+    }
+  },
+  "skills": {
+    "workflows": {
+      "path": "skills/workflows/",
+      "skills": [
+        "brainstorming",
+        "test-driven-development",
+        "systematic-debugging",
+        "verification-before-completion",
+        "using-git-worktrees",
+        "receiving-code-review",
+        "dispatching-parallel-agents",
+        "condition-based-waiting",
+        "defense-in-depth",
+        "testing-anti-patterns",
+        "subagent-driven-development",
+        "root-cause-tracing",
+        "finishing-a-development-branch"
+      ]
+    },
+    "planning": {
+      "path": "skills/planning/",
+      "skills": [
+        "write-plan",
+        "execute-plan",
+        "plan-manager"
+      ]
+    }
+  },
+  "commands": {
+    "namespace": "rlg",
+    "workflow-triggers": [
+      {
+        "command": "tdd",
+        "description": "Start test-driven development workflow",
+        "skill": "skills/workflows/test-driven-development/"
+      },
+      {
+        "command": "debug",
+        "description": "Launch systematic debugging workflow",
+        "skill": "skills/workflows/systematic-debugging/"
+      },
+      {
+        "command": "review",
+        "description": "Request code review workflow",
+        "agent": "agents/quality/code-reviewer.md"
+      },
+      {
+        "command": "brainstorm",
+        "description": "Start brainstorming session",
+        "skill": "skills/workflows/brainstorming/"
+      },
+      {
+        "command": "worktree",
+        "description": "Create isolated git worktree",
+        "skill": "skills/workflows/using-git-worktrees/"
+      }
+    ],
+    "agent-dispatch": [
+      {
+        "command": "infra",
+        "description": "Load infrastructure category agent",
+        "category": "infrastructure"
+      },
+      {
+        "command": "dev",
+        "description": "Smart dispatch or direct load development agent",
+        "category": "development",
+        "smartDispatch": true
+      },
+      {
+        "command": "quality",
+        "description": "Load quality category agent",
+        "category": "quality"
+      },
+      {
+        "command": "pm",
+        "description": "Load product management agent",
+        "category": "product-management"
+      }
+    ],
+    "plan-management": [
+      {
+        "command": "plan-new",
+        "description": "Create new chunked implementation plan",
+        "skill": "skills/planning/write-plan.md"
+      },
+      {
+        "command": "plan-status",
+        "description": "Show current plan progress",
+        "skill": "skills/planning/plan-manager.md",
+        "action": "status"
+      },
+      {
+        "command": "plan-next",
+        "description": "Load and execute next chunk",
+        "skill": "skills/planning/execute-plan.md"
+      },
+      {
+        "command": "plan-resume",
+        "description": "Resume interrupted plan",
+        "skill": "skills/planning/plan-manager.md",
+        "action": "resume"
+      },
+      {
+        "command": "plan-list",
+        "description": "List all feature plans",
+        "skill": "skills/planning/plan-manager.md",
+        "action": "list"
+      }
+    ]
+  },
+  "settings": {
+    "plansDirectory": ".claude/plans",
+    "maxChunkSize": 10,
+    "contextBudget": 50000,
+    "contextWarningThreshold": 40000,
+    "contextCriticalThreshold": 45000,
+    "autoUnloadIdleTime": 300000,
+    "strictTDD": false
+  },
+  "metadata": {
+    "tags": ["agents", "tdd", "planning", "orchestration", "context-management"],
+    "license": "MIT",
+    "keywords": [
+      "claude-code",
+      "plugin",
+      "agents",
+      "tdd",
+      "planning",
+      "orchestration",
+      "chunked-plans",
+      "context-management"
+    ]
+  }
+}
