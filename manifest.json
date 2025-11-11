@@ -21,7 +21,6 @@
     "infrastructure": {
       "path": "agents/infrastructure/",
       "agents": [
-        "kubernetes-specialist.md",
         "terraform-engineer.md",
         "devops-engineer.md",
         "sre-engineer.md",
@@ -29,7 +28,7 @@
         "deployment-engineer.md",
         "incident-responder.md"
       ],
-      "estimatedTokens": 6000
+      "estimatedTokens": 5000
     },
     "development": {
       "path": "agents/development/",
@@ -71,6 +70,17 @@
         "scrum-master.md"
       ],
       "estimatedTokens": 4000
+    },
+    "kubernetes": {
+      "path": "agents/kubernetes/",
+      "agents": [
+        "k8s-architect.md",
+        "helm-specialist.md",
+        "gitops-engineer.md",
+        "k8s-security.md",
+        "service-mesh-expert.md"
+      ],
+      "estimatedTokens": 3500
     }
   },
   "skills": {
@@ -98,6 +108,15 @@
         "write-plan",
         "execute-plan",
         "plan-manager"
+      ]
+    },
+    "kubernetes": {
+      "path": "skills/",
+      "skills": [
+        "gitops-workflow",
+        "helm-chart-scaffolding",
+        "k8s-manifest-generator",
+        "k8s-security-policies"
       ]
     }
   },
@@ -151,6 +170,11 @@
         "command": "pm",
         "description": "Load product management agent",
         "category": "product-management"
+      },
+      {
+        "command": "k8s",
+        "description": "Load Kubernetes specialist agent",
+        "category": "kubernetes"
       }
     ],
     "plan-management": [

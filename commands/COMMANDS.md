@@ -34,7 +34,6 @@ All commands use the `/rlg:` namespace to avoid conflicts with other plugins.
 ### /rlg:infra [agent-name]
 **Description:** Load infrastructure category agent
 **Available agents:**
-- `kubernetes` - kubernetes-specialist
 - `terraform` - terraform-engineer
 - `devops` - devops-engineer
 - `cloud` - cloud-architect
@@ -44,9 +43,11 @@ All commands use the `/rlg:` namespace to avoid conflicts with other plugins.
 
 **Examples:**
 ```
-/rlg:infra kubernetes    # Load kubernetes specialist
+/rlg:infra terraform     # Load terraform engineer
 /rlg:infra               # Show available infrastructure agents
 ```
+
+**Note:** For Kubernetes specialists, use `/rlg:k8s` instead.
 
 ### /rlg:dev [agent-name]
 **Description:** Smart dispatch or direct load development agent
@@ -106,6 +107,39 @@ All commands use the `/rlg:` namespace to avoid conflicts with other plugins.
 ```
 /rlg:pm story            # Load story writer
 /rlg:pm                  # Show available PM agents
+```
+
+### /rlg:k8s [agent-name]
+**Description:** Load Kubernetes specialist agent
+**Available agents:**
+- `architect` - k8s-architect (cluster design, platform engineering)
+- `helm` - helm-specialist (chart development, templating)
+- `gitops` - gitops-engineer (ArgoCD, Flux, progressive delivery)
+- `security` - k8s-security (policies, RBAC, admission control)
+- `mesh` - service-mesh-expert (Istio, Linkerd, Cilium)
+
+**Available skills:**
+- `gitops-workflow` - GitOps patterns with ArgoCD/Flux
+- `helm-chart-scaffolding` - Helm chart creation templates
+- `k8s-manifest-generator` - Kubernetes YAML generation
+- `k8s-security-policies` - OPA, Kyverno, network policies
+
+**Examples:**
+```
+/rlg:k8s architect       # Load K8s architect for cluster design
+/rlg:k8s helm            # Load Helm specialist for chart work
+/rlg:k8s gitops          # Load GitOps engineer for ArgoCD/Flux
+/rlg:k8s security        # Load K8s security specialist
+/rlg:k8s mesh            # Load service mesh expert
+/rlg:k8s                 # Show available K8s agents
+```
+
+**Parallel dispatch example:**
+```
+# Load multiple K8s specialists for complex task
+/rlg:k8s helm
+/rlg:k8s security
+/rlg:k8s gitops
 ```
 
 ## Plan Management

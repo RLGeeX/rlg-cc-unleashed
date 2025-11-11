@@ -83,10 +83,9 @@ After installation, restart Claude Code or reload plugins, then verify:
 - Manages context budget
 - Coordinates multi-agent tasks
 
-### On-Demand Specialists (25000 tokens available)
+### On-Demand Specialists (28500 tokens available)
 
-#### Infrastructure (7 agents, ~6000 tokens)
-- kubernetes-specialist
+#### Infrastructure (6 agents, ~5000 tokens)
 - terraform-engineer
 - devops-engineer
 - sre-engineer
@@ -115,6 +114,13 @@ After installation, restart Claude Code or reload plugins, then verify:
 - story-writer
 - jira-specialist
 - scrum-master
+
+#### Kubernetes (5 agents, ~3500 tokens)
+- k8s-architect - cluster design, platform engineering
+- helm-specialist - chart development, templating
+- gitops-engineer - ArgoCD, Flux, progressive delivery
+- k8s-security - policies, RBAC, admission control
+- service-mesh-expert - Istio, Linkerd, Cilium
 
 ## Chunked Planning System
 
@@ -193,6 +199,7 @@ All commands use `/rlg:` namespace to avoid conflicts.
 | `/rlg:dev [agent]` | Development agents | **Yes** |
 | `/rlg:quality [agent]` | Quality agents | No |
 | `/rlg:pm [agent]` | Product management | No |
+| `/rlg:k8s [agent]` | Kubernetes specialists | No |
 
 **Smart Dispatch Example:**
 ```bash
@@ -203,6 +210,23 @@ All commands use `/rlg:` namespace to avoid conflicts.
 # Working on Python + Django
 /rlg:dev
 # → Auto-loads django-developer
+```
+
+**Kubernetes Specialists:**
+```bash
+/rlg:k8s architect      # Cluster design, platform engineering
+/rlg:k8s helm           # Chart development, templating
+/rlg:k8s gitops         # ArgoCD, Flux, progressive delivery
+/rlg:k8s security       # Policies, RBAC, admission control
+/rlg:k8s mesh           # Istio, Linkerd, Cilium
+```
+
+**Parallel Dispatch for Complex Tasks:**
+```bash
+# Load multiple agents in parallel for K8s migration
+/rlg:k8s architect
+/rlg:k8s security
+/rlg:k8s gitops
 ```
 
 ### Plan Management
