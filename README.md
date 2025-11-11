@@ -2,7 +2,7 @@
 
 Streamlined Claude Code plugin with intelligent context management, core agents, on-demand specialists, and chunked planning system.
 
-**Version:** 1.0.0
+**Version:** 1.0.1
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 
