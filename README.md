@@ -37,24 +37,24 @@ git clone https://github.com/RLGeeX/rlg-cc-unleashed ~/.claude/plugins/rlg-cc-un
 After installation, restart Claude Code or reload plugins, then verify:
 
 ```bash
-/rlg:plan-list
+/rlg-plan-list
 ```
 
 ### First Steps
 
 **Start a new feature with TDD:**
 ```
-/rlg:worktree           # Create isolated workspace
-/rlg:brainstorm         # Design your feature
-/rlg:plan-new my-feature  # Create chunked plan
-/rlg:plan-next          # Start first chunk with TDD
+/rlg-worktree           # Create isolated workspace
+/rlg-brainstorm         # Design your feature
+/rlg-plan-new my-feature  # Create chunked plan
+/rlg-plan-next          # Start first chunk with TDD
 ```
 
 **Get help with specific technology:**
 ```
-/rlg:dev                # Auto-detect and load relevant agent
-/rlg:infra kubernetes   # Load Kubernetes specialist
-/rlg:quality security   # Load security auditor
+/rlg-dev                # Auto-detect and load relevant agent
+/rlg-infra terraform    # Load Terraform specialist
+/rlg-quality security   # Load security auditor
 ```
 
 ## Core Architecture
@@ -140,7 +140,7 @@ Traditional plans put all 30 tasks in one file, bloating your context. RLG CC Un
 ### Creating a Plan
 
 ```bash
-/rlg:plan-new feature-name
+/rlg-plan-new feature-name
 ```
 
 This will:
@@ -152,7 +152,7 @@ This will:
 ### Executing Plans
 
 ```bash
-/rlg:plan-next    # Execute next chunk (or resume current)
+/rlg-plan-next    # Execute next chunk (or resume current)
 ```
 
 Execution flow:
@@ -165,77 +165,77 @@ Execution flow:
 ### Managing Plans
 
 ```bash
-/rlg:plan-list                 # List all plans
-/rlg:plan-status               # Show current progress
-/rlg:plan-status feature-name  # Check specific plan
-/rlg:plan-resume feature-name  # Resume interrupted plan
+/rlg-plan-list                 # List all plans
+/rlg-plan-status               # Show current progress
+/rlg-plan-status feature-name  # Check specific plan
+/rlg-plan-resume feature-name  # Resume interrupted plan
 ```
 
 ## Commands Reference
 
-All commands use `/rlg:` namespace to avoid conflicts.
+All commands use the `/rlg-` prefix to avoid conflicts.
 
 ### Workflow Triggers
 
 | Command | Description | Loads |
 |---------|-------------|-------|
-| `/rlg:tdd` | Start TDD workflow | test-driven-development skill |
-| `/rlg:debug` | Launch debugging | systematic-debugging skill |
-| `/rlg:review` | Request code review | code-reviewer agent |
-| `/rlg:brainstorm` | Design session | brainstorming skill |
-| `/rlg:worktree` | Create worktree | using-git-worktrees skill |
+| `/rlg-tdd` | Start TDD workflow | test-driven-development skill |
+| `/rlg-debug` | Launch debugging | systematic-debugging skill |
+| `/rlg-review` | Request code review | code-reviewer agent |
+| `/rlg-brainstorm` | Design session | brainstorming skill |
+| `/rlg-worktree` | Create worktree | using-git-worktrees skill |
 
 ### Agent Dispatchers
 
 | Command | Description | Smart Dispatch |
 |---------|-------------|----------------|
-| `/rlg:infra [agent]` | Infrastructure agents | No |
-| `/rlg:dev [agent]` | Development agents | **Yes** |
-| `/rlg:quality [agent]` | Quality agents | No |
-| `/rlg:pm [agent]` | Product management | No |
-| `/rlg:k8s [agent]` | Kubernetes specialists | No |
+| `/rlg-infra [agent]` | Infrastructure agents | No |
+| `/rlg-dev [agent]` | Development agents | **Yes** |
+| `/rlg-quality [agent]` | Quality agents | No |
+| `/rlg-pm [agent]` | Product management | No |
+| `/rlg-k8s [agent]` | Kubernetes specialists | No |
 
 **Smart Dispatch Example:**
 ```bash
 # Working on React app
-/rlg:dev
+/rlg-dev
 # → Auto-loads react-specialist
 
 # Working on Python + Django
-/rlg:dev
+/rlg-dev
 # → Auto-loads django-developer
 ```
 
 **Kubernetes Specialists:**
 ```bash
-/rlg:k8s architect      # Cluster design, platform engineering
-/rlg:k8s helm           # Chart development, templating
-/rlg:k8s gitops         # ArgoCD, Flux, progressive delivery
-/rlg:k8s security       # Policies, RBAC, admission control
-/rlg:k8s mesh           # Istio, Linkerd, Cilium
+/rlg-k8s architect      # Cluster design, platform engineering
+/rlg-k8s helm           # Chart development, templating
+/rlg-k8s gitops         # ArgoCD, Flux, progressive delivery
+/rlg-k8s security       # Policies, RBAC, admission control
+/rlg-k8s mesh           # Istio, Linkerd, Cilium
 ```
 
 **Parallel Dispatch for Complex Tasks:**
 ```bash
 # Load multiple agents in parallel for K8s migration
-/rlg:k8s architect
-/rlg:k8s security
-/rlg:k8s gitops
+/rlg-k8s architect
+/rlg-k8s security
+/rlg-k8s gitops
 ```
 
 ### Plan Management
 
 | Command | Description |
 |---------|-------------|
-| `/rlg:plan-new [name]` | Create chunked plan |
-| `/rlg:plan-status [name]` | Show progress |
-| `/rlg:plan-next` | Execute next chunk |
-| `/rlg:plan-resume [name]` | Resume plan |
-| `/rlg:plan-list` | List all plans |
+| `/rlg-plan-new [name]` | Create chunked plan |
+| `/rlg-plan-status [name]` | Show progress |
+| `/rlg-plan-next` | Execute next chunk |
+| `/rlg-plan-resume [name]` | Resume plan |
+| `/rlg-plan-list` | List all plans |
 
 ## Smart Dispatch
 
-The `/rlg:dev` command with no arguments analyzes your codebase and automatically loads relevant agents.
+The `/rlg-dev` command with no arguments analyzes your codebase and automatically loads relevant agents.
 
 **Detection signals:**
 - File extensions (`.py`, `.ts`, `.go`)
@@ -276,21 +276,21 @@ Context: 3150/50000 tokens (6%)
 
 ```bash
 # 1. Setup
-/rlg:worktree            # Isolated workspace
+/rlg-worktree            # Isolated workspace
 
 # 2. Design
-/rlg:brainstorm          # Refine idea
+/rlg-brainstorm          # Refine idea
 
 # 3. Plan
-/rlg:plan-new feature    # Create chunked plan
+/rlg-plan-new feature    # Create chunked plan
 
 # 4. Implement
-/rlg:plan-next           # Chunk 1: Setup
-/rlg:plan-next           # Chunk 2: Implementation
-/rlg:plan-next           # Chunk 3: Tests
+/rlg-plan-next           # Chunk 1: Setup
+/rlg-plan-next           # Chunk 2: Implementation
+/rlg-plan-next           # Chunk 3: Tests
 
 # 5. Review
-/rlg:review              # Code review
+/rlg-review              # Code review
 
 # 6. Finish
 # Use superpowers:finishing-a-development-branch
@@ -300,29 +300,29 @@ Context: 3150/50000 tokens (6%)
 
 ```bash
 # 1. Debug
-/rlg:debug               # Systematic debugging
+/rlg-debug               # Systematic debugging
 
 # 2. Fix with TDD
-/rlg:tdd                 # Write test first
+/rlg-tdd                 # Write test first
 
 # 3. Verify
-/rlg:quality test        # Load test automator
+/rlg-quality test        # Load test automator
 
 # 4. Review
-/rlg:review              # Final check
+/rlg-review              # Final check
 ```
 
 ### Infrastructure Work
 
 ```bash
-# Kubernetes deployment issue
-/rlg:infra kubernetes    # Load specialist
-
 # Terraform changes
-/rlg:infra terraform     # Load engineer
+/rlg-infra terraform     # Load Terraform engineer
+
+# Kubernetes work
+/rlg-k8s architect       # Load K8s architect
 
 # Incident response
-/rlg:infra incident      # Load responder
+/rlg-infra incident      # Load incident responder
 ```
 
 ## Configuration
@@ -395,7 +395,7 @@ Actions:
 **Plan Not Found:**
 ```
 Error: Plan metadata not found for 'feature-name'
-Available plans: [use /rlg:plan-list]
+Available plans: [use /rlg-plan-list]
 ```
 
 **Agent Not Loading:**
