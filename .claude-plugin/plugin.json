@@ -1,6 +1,6 @@
 {
   "name": "cc-unleashed",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Streamlined Claude Code plugin with intelligent context management, core agents, on-demand specialists, and chunked planning system",
   "author": {
     "name": "RLGeeX",
