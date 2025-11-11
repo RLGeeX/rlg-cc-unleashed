@@ -20,17 +20,31 @@ RLG CC Unleashed combines the best features from multiple Claude Code plugins (s
 
 ### Installation
 
-1. Clone this repository to your Claude Code plugins directory:
-   ```bash
-   git clone https://github.com/rlgeex/rlg-cc-unleashed ~/.claude/plugins/rlg-cc-unleashed
-   ```
+Choose one of the following methods:
 
-2. Restart Claude Code or reload plugins
+#### Method 1: Direct Plugin Installation (Recommended)
 
-3. Verify installation:
-   ```
-   /rlg:plan-list
-   ```
+```bash
+/plugin add github:RLGeeX/rlg-cc-unleashed
+```
+
+#### Method 2: Marketplace Installation
+
+```bash
+/plugin marketplace add RLGeeX/rlg-cc-unleashed
+```
+
+#### Method 3: Manual Installation
+
+```bash
+git clone https://github.com/RLGeeX/rlg-cc-unleashed ~/.claude/plugins/rlg-cc-unleashed
+```
+
+After installation, restart Claude Code or reload plugins, then verify:
+
+```bash
+/rlg:plan-list
+```
 
 ### First Steps
 
@@ -395,4 +409,22 @@ Built on top of:
 
 ## Support
 
-Issues: https://github.com/rlgeex/rlg-cc-unleashed/issues
+Issues: https://github.com/RLGeeX/rlg-cc-unleashed/issues
+
+## Distribution
+
+This plugin is available through multiple channels:
+
+1. **Direct Installation**: `/plugin add github:RLGeeX/rlg-cc-unleashed`
+2. **Marketplace**: `/plugin marketplace add RLGeeX/rlg-cc-unleashed`
+3. **Community Marketplaces**: Submit PRs to:
+   - [ingpoc/claude-code-plugins-marketplace](https://github.com/ingpoc/claude-code-plugins-marketplace)
+   - [ccplugins/marketplace](https://github.com/ccplugins/marketplace)
+
+**GitHub Topics**: Add these topics to the repository for discoverability:
+- `claude-code`
+- `claude-code-plugin`
+- `ai-assistant`
+- `productivity`
+- `tdd`
+- `agents`

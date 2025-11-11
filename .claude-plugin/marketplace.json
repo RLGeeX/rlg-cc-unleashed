@@ -1,0 +1,39 @@
+{
+  "name": "rlg-unleashed-marketplace",
+  "owner": {
+    "name": "RLGeeX",
+    "url": "https://github.com/RLGeeX"
+  },
+  "metadata": {
+    "description": "RLG's curated Claude Code plugin with intelligent context management",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "rlg-cc-unleashed",
+      "source": "./",
+      "description": "Streamlined Claude Code plugin with intelligent context management, core agents, on-demand specialists, and chunked planning system",
+      "version": "1.0.0",
+      "author": {
+        "name": "RLGeeX",
+        "url": "https://github.com/RLGeeX"
+      },
+      "homepage": "https://github.com/RLGeeX/rlg-cc-unleashed",
+      "repository": "https://github.com/RLGeeX/rlg-cc-unleashed",
+      "license": "MIT",
+      "keywords": [
+        "productivity",
+        "agents",
+        "tdd",
+        "planning",
+        "context-management",
+        "workflows",
+        "infrastructure",
+        "development",
+        "quality",
+        "product-management"
+      ],
+      "category": "productivity"
+    }
+  ]
+}
