@@ -13,7 +13,7 @@
       "name": "rlg-cc-unleashed",
       "source": "./",
       "description": "Streamlined Claude Code plugin with intelligent context management, core agents, on-demand specialists, and chunked planning system",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "author": {
         "name": "RLGeeX",
         "url": "https://github.com/RLGeeX"

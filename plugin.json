@@ -1,6 +1,6 @@
 {
   "name": "rlg",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Streamlined Claude Code plugin with intelligent context management, core agents, on-demand specialists, and chunked planning system",
   "author": {
     "name": "RLGeeX",
