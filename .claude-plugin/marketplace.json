@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "RLG's curated Claude Code plugin with intelligent context management",
-    "version": "1.0.3"
+    "version": "1.0.4"
   },
   "plugins": [
     {
