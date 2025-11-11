@@ -1,6 +1,6 @@
 {
   "name": "rlg-cc-unleashed",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "Streamlined Claude Code plugin with core agents, on-demand specialists, and chunked planning",
   "claudeCodeVersion": ">=2.0.31",
   "author": "RLGeeX",
@@ -21,66 +21,74 @@
     "infrastructure": {
       "path": "agents/infrastructure/",
       "agents": [
-        "terraform-engineer.md",
-        "devops-engineer.md",
-        "sre-engineer.md",
         "cloud-architect.md",
+        "database-administrator.md",
         "deployment-engineer.md",
-        "incident-responder.md"
+        "devops-engineer.md",
+        "incident-responder.md",
+        "security-engineer.md",
+        "sre-engineer.md",
+        "terraform-engineer.md"
       ],
-      "estimatedTokens": 5000
+      "estimatedTokens": 6500
     },
     "development": {
       "path": "agents/development/",
       "agents": [
-        "python-pro.md",
-        "typescript-pro.md",
-        "golang-pro.md",
-        "react-specialist.md",
-        "nextjs-developer.md",
-        "django-developer.md",
-        "fastapi-developer.md",
+        "api-designer.md",
+        "api-documenter.md",
         "backend-architect.md",
+        "csharp-developer.md",
+        "dotnet-core-expert.md",
+        "fastapi-developer.md",
         "frontend-developer.md",
         "fullstack-developer.md",
-        "mobile-developer.md",
-        "api-designer.md"
+        "microservices-architect.md",
+        "postgres-pro.md",
+        "python-pro.md",
+        "react-specialist.md",
+        "ui-designer.md"
       ],
-      "estimatedTokens": 10000
+      "estimatedTokens": 11000
     },
     "quality": {
       "path": "agents/quality/",
       "agents": [
+        "architect-reviewer.md",
+        "build-engineer.md",
+        "chaos-engineer.md",
         "code-reviewer.md",
-        "test-automator.md",
-        "qa-expert.md",
         "debugger.md",
-        "refactoring-specialist.md",
-        "security-auditor.md"
+        "dependency-manager.md",
+        "git-workflow-manager.md",
+        "qa-expert.md",
+        "security-auditor.md",
+        "test-automator.md"
       ],
-      "estimatedTokens": 5000
+      "estimatedTokens": 8500
     },
     "product-management": {
       "path": "agents/product-management/",
       "agents": [
         "business-analyst.md",
-        "product-owner.md",
-        "story-writer.md",
+        "documentation-engineer.md",
         "jira-specialist.md",
-        "scrum-master.md"
+        "product-owner.md",
+        "scrum-master.md",
+        "story-writer.md",
+        "technical-writer.md"
       ],
-      "estimatedTokens": 4000
+      "estimatedTokens": 5500
     },
     "kubernetes": {
       "path": "agents/kubernetes/",
       "agents": [
-        "k8s-architect.md",
-        "helm-specialist.md",
         "gitops-engineer.md",
-        "k8s-security.md",
-        "service-mesh-expert.md"
+        "helm-specialist.md",
+        "k8s-architect.md",
+        "k8s-security.md"
       ],
-      "estimatedTokens": 3500
+      "estimatedTokens": 3000
     }
   },
   "skills": {
