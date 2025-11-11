@@ -1,0 +1,26 @@
+{
+  "name": "rlg-cc-unleashed",
+  "version": "1.0.0",
+  "description": "Streamlined Claude Code plugin with intelligent context management, core agents, on-demand specialists, and chunked planning system",
+  "author": {
+    "name": "RLGeeX",
+    "url": "https://github.com/RLGeeX"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RLGeeX/rlg-cc-unleashed"
+  },
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "plugin",
+    "agents",
+    "tdd",
+    "planning",
+    "orchestration",
+    "chunked-plans",
+    "context-management",
+    "productivity",
+    "workflows"
+  ]
+}
