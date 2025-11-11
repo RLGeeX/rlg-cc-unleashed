@@ -1,6 +1,6 @@
 {
   "name": "rlg-cc-unleashed",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Streamlined Claude Code plugin with core agents, on-demand specialists, and chunked planning",
   "claudeCodeVersion": ">=2.0.31",
   "author": "RLGeeX",
