@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "RLG's curated Claude Code plugin with intelligent context management",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "plugins": [
     {
       "name": "rlg-cc-unleashed",
       "source": "./",
       "description": "Streamlined Claude Code plugin with intelligent context management, core agents, on-demand specialists, and chunked planning system",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "RLGeeX",
         "url": "https://github.com/RLGeeX"
