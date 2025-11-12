@@ -5,15 +5,15 @@
     "url": "https://github.com/RLGeeX"
   },
   "metadata": {
-    "description": "RLG's curated Claude Code plugin with intelligent context management",
-    "version": "1.1.0"
+    "description": "RLG's curated Claude Code plugin with intelligent context management and micro-chunked planning",
+    "version": "2.0.0"
   },
   "plugins": [
     {
       "name": "cc-unleashed",
       "source": "./",
-      "description": "Streamlined Claude Code plugin with intelligent context management, core agents, on-demand specialists, and chunked planning system",
-      "version": "1.1.0",
+      "description": "Advanced Claude Code plugin with micro-chunked planning (300-500 tokens), smart orchestration, automated subagent execution, and adaptive complexity detection",
+      "version": "2.0.0",
       "author": {
         "name": "RLGeeX",
         "url": "https://github.com/RLGeeX"

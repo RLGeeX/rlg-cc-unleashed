@@ -1,13 +1,13 @@
 ---
 name: write-plan
-description: Creates chunked implementation plans stored in .claude/plans/[feature-name]/ - breaks large features into digestible 5-10 task chunks for better context management
+description: Creates micro-chunked implementation plans stored in .claude/plans/[feature-name]/ - breaks large features into 2-3 task chunks (300-500 tokens) optimized for subagent execution and human review
 ---
 
-# Writing Chunked Plans
+# Writing Micro-Chunked Plans
 
 ## Overview
 
-Write comprehensive implementation plans broken into chunks of 5-10 tasks each. Each chunk is stored separately for optimal context management. Plans are saved to `.claude/plans/[feature-name]/` instead of docs.
+Write comprehensive implementation plans broken into micro-chunks of 2-3 tasks each (300-500 tokens per chunk). This chunk size is optimized for AI agent context windows, faster human review, and better progress tracking. Plans are saved to `.claude/plans/[feature-name]/`.
 
 Assume the engineer is skilled but has zero context for our codebase. Document everything: which files to touch, exact code, testing steps, verification commands. DRY. YAGNI. TDD. Frequent commits.
 
@@ -20,48 +20,87 @@ Assume the engineer is skilled but has zero context for our codebase. Document e
 ## Plan Structure
 
 Each feature gets its own directory with:
-- `plan-meta.json` - Metadata about the plan
-- `chunk-001.md` - First batch of tasks
-- `chunk-002.md` - Second batch
-- `chunk-NNN.md` - Additional chunks as needed
+- `plan-meta.json` - Enhanced metadata with execution configuration
+- `chunk-001-descriptive-name.md` - First micro-chunk (2-3 tasks)
+- `chunk-002-descriptive-name.md` - Second micro-chunk
+- `chunk-NNN-descriptive-name.md` - Additional micro-chunks
 
-## Creating plan-meta.json
+**Chunk Naming:** Use descriptive names, not just numbers (e.g., `chunk-001-project-init.md`, `chunk-002-dependencies.md`)
+
+## Creating plan-meta.json (Enhanced)
 
 ```json
 {
   "feature": "feature-name",
-  "created": "2025-11-11T14:30:00Z",
-  "totalChunks": 4,
+  "created": "2025-11-12T14:30:00Z",
+  "totalChunks": 24,
   "currentChunk": 1,
   "status": "pending",
-  "contextTokens": 1200,
-  "description": "Brief description of what this feature implements"
+  "contextTokens": 9600,
+  "description": "Brief description of what this feature implements",
+
+  "executionConfig": {
+    "defaultMode": "auto-detect",
+    "chunkComplexity": [
+      {"chunk": 1, "complexity": "simple", "reason": "boilerplate setup"},
+      {"chunk": 2, "complexity": "simple", "reason": "config files"},
+      {"chunk": 8, "complexity": "medium", "reason": "API client logic"},
+      {"chunk": 15, "complexity": "complex", "reason": "rate limiting algorithm"}
+    ],
+    "reviewCheckpoints": [5, 10, 15, 20, 24],
+    "parallelizable": [[1,2,3], [6,7], [10,11,12]],
+    "estimatedMinutes": 360
+  }
 }
 ```
 
-## Chunk Sizing Strategy
+**Complexity Ratings:**
+- **simple:** Boilerplate, config files, well-defined patterns → recommend automated execution
+- **medium:** Business logic with clear tests, standard CRUD → recommend automated with review
+- **complex:** Novel algorithms, tricky integration, architectural decisions → recommend supervised execution
 
-**Natural breakpoints for chunks:**
-1. **Setup chunk** - Project structure, dependencies, config
-2. **Core logic chunk** - Main implementation (may be multiple chunks)
-3. **Integration chunk** - Connect components, wire up
-4. **Testing chunk** - Comprehensive tests
-5. **Documentation chunk** - README, API docs, examples
+## Micro-Chunking Strategy (Based on 2025 AI Research)
+
+**Target:** 300-500 tokens per chunk, 2-3 tasks maximum
+
+**Research Foundation:**
+- Optimal chunk size for AI agent context windows: 300-500 tokens
+- Modern AI can handle 30+ hour continuous tasks (Claude Sonnet 4.5)
+- Smaller, well-scoped chunks improve accuracy and token efficiency
+- Better for both subagent execution and human review
+
+**Chunking Boundaries (Priority Order):**
+1. **Natural code boundaries** - setup → models → api → tests → docs
+2. **File groupings** - All files for one self-contained feature
+3. **TDD cycles** - test → implement → refactor as atomic unit
+4. **Task independence** - Can be done in parallel or any order
 
 **Rules:**
-- 5-10 tasks per chunk maximum
-- Each chunk should be completable in one session
+- 2-3 tasks per chunk maximum (not 5-10!)
+- 300-500 tokens per chunk (~100-200 lines)
+- Each chunk completable in 5-15 minutes
 - Natural stopping points between chunks
 - Track dependencies between chunks
+- Identify complexity per chunk (simple/medium/complex)
+
+**Benefits of Micro-Chunks:**
+- ✅ Fits in subagent context windows
+- ✅ Faster human review (2-3 min vs 30 min)
+- ✅ Better parallelization potential
+- ✅ Easier to resume from interruptions
+- ✅ Clearer progress tracking
+- ✅ More checkpoints for validation
 
 ## Chunk Document Structure
 
 ```markdown
-# Chunk N: [Phase Name]
+# Chunk N: [Descriptive Phase Name]
 
 **Status:** pending
-**Dependencies:** chunk-001, chunk-002 (or "none")
-**Estimated Time:** 30-60 minutes
+**Dependencies:** chunk-001-project-init, chunk-002-dependencies (or "none")
+**Complexity:** simple | medium | complex
+**Estimated Time:** 5-15 minutes
+**Tasks:** 2-3
 
 ---
 
@@ -131,21 +170,31 @@ git commit -m "feat: add specific feature"
 ## Writing Process
 
 1. **Design first** - Use brainstorming skill to understand feature fully
-2. **Identify chunks** - Break down into natural phases
+2. **Identify phases** - Break down into natural phases (setup, core, integration, tests, docs)
 3. **Create directory** - `.claude/plans/[feature-name]/`
-4. **Write plan-meta.json** - Set totalChunks, description
-5. **Write chunk-001.md** - First 5-10 tasks
-6. **Write subsequent chunks** - Continue until complete
-7. **Review chunking** - Ensure logical breaks, dependencies clear
+4. **Micro-chunk each phase:**
+   - Take each phase
+   - Break into 2-3 task chunks
+   - Target 300-500 tokens per chunk
+   - Use descriptive chunk names
+5. **Analyze complexity** - Rate each chunk (simple/medium/complex)
+6. **Identify checkpoints** - Review points every 5-7 chunks
+7. **Find parallelizable chunks** - Groups that can run concurrently
+8. **Write plan-meta.json** - Include executionConfig with all metadata
+9. **Write chunk files** - Create chunk-NNN-name.md files
+10. **Review chunking** - Ensure logical breaks, dependencies clear, token counts reasonable
 
 ## Remember
 
+- **Micro-chunks:** 2-3 tasks, 300-500 tokens per chunk (not 5-10!)
+- **Descriptive names:** chunk-001-project-init.md (not just chunk-001.md)
+- **Complexity ratings:** Simple/medium/complex per chunk in plan-meta.json
+- **Review checkpoints:** Every 5-7 chunks
 - Exact file paths always
 - Complete code in plan (not "add validation")
 - Exact commands with expected output
 - Reference relevant skills with @ syntax
 - DRY, YAGNI, TDD, frequent commits
-- 5-10 tasks per chunk maximum
 - Clear dependencies between chunks
 
 ## Execution Handoff
@@ -153,32 +202,45 @@ git commit -m "feat: add specific feature"
 After saving the plan, offer execution choice:
 
 **Option 1:** Execute now
-- Use `/rlg:plan-next` command to load and execute chunk-001
+- Use `/cc-unleashed:plan-next` command to start execution
+- Orchestrator will analyze complexity and recommend mode per chunk
 
 **Option 2:** Execute later
 - Plan saved to `.claude/plans/[feature-name]/`
-- Use `/rlg:plan-list` to see all plans
-- Use `/rlg:plan-next` when ready to start
+- Use `/cc-unleashed:plan-list` to see all plans
+- Use `/cc-unleashed:plan-status` to check progress
+- Use `/cc-unleashed:plan-next` when ready to start
 
-## Example Chunk Flow
+## Example: Transformation from Old to New
 
-**Feature:** Add OAuth login
+**Feature:** Add OAuth login (30 tasks total)
 
-**plan-meta.json:**
-```json
-{
-  "feature": "add-oauth-login",
-  "created": "2025-11-11T14:30:00Z",
-  "totalChunks": 4,
-  "currentChunk": 1,
-  "status": "pending"
-}
+**Old Way (4 large chunks):**
+```
+chunk-001.md: Setup - 7 tasks (~1,500 tokens)
+chunk-002.md: Auth flow - 8 tasks (~1,800 tokens)
+chunk-003.md: User integration - 6 tasks (~1,200 tokens)
+chunk-004.md: Testing & docs - 9 tasks (~2,000 tokens)
 ```
 
-**Chunks:**
-1. chunk-001.md: Setup (OAuth config, dependencies, env vars) - 7 tasks
-2. chunk-002.md: Auth flow (routes, handlers, session) - 8 tasks
-3. chunk-003.md: User integration (DB, profile, linking) - 6 tasks
-4. chunk-004.md: Testing & docs (unit, integration, docs) - 9 tasks
+**New Way (12 micro-chunks):**
+```
+chunk-001-oauth-config.md: 2 tasks (~350 tokens) - simple
+chunk-002-dependencies.md: 2 tasks (~300 tokens) - simple
+chunk-003-env-setup.md: 3 tasks (~450 tokens) - simple
+chunk-004-routes.md: 2 tasks (~400 tokens) - medium
+chunk-005-handlers.md: 3 tasks (~500 tokens) - medium
+chunk-006-session-mgmt.md: 3 tasks (~450 tokens) - complex
+chunk-007-db-models.md: 2 tasks (~350 tokens) - simple
+chunk-008-profile-logic.md: 2 tasks (~400 tokens) - medium
+chunk-009-account-linking.md: 2 tasks (~400 tokens) - complex
+chunk-010-unit-tests.md: 3 tasks (~450 tokens) - simple
+chunk-011-integration-tests.md: 3 tasks (~500 tokens) - medium
+chunk-012-docs.md: 3 tasks (~400 tokens) - simple
+```
 
-Total: 30 tasks across 4 manageable chunks instead of one overwhelming 30-task plan.
+**Benefits:**
+- 3x more chunks, but each takes 5-10 min vs 30-60 min
+- Clear complexity per chunk enables smart execution mode selection
+- Better checkpoints: review after chunks 6 and 12
+- Parallelizable: chunks 1-3 can run concurrently, 7-8 can run concurrently

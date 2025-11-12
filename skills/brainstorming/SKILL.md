@@ -35,14 +35,17 @@ Start by understanding the current project context, then ask questions one at a 
 ## After the Design
 
 **Documentation:**
-- Write the validated design to `docs/plans/YYYY-MM-DD-<topic>-design.md`
-- Use elements-of-style:writing-clearly-and-concisely skill if available
-- Commit the design document to git
+- Write the validated design to `.claude/plans/YYYY-MM-DD-<topic>-design.md`
+- User manages git commits (not you)
 
 **Implementation (if continuing):**
 - Ask: "Ready to set up for implementation?"
-- Use superpowers:using-git-worktrees to create isolated workspace
-- Use superpowers:writing-plans to create detailed implementation plan
+- Use cc-unleashed:using-git-worktrees to create isolated workspace
+- Use cc-unleashed:write-plan to create detailed micro-chunked implementation plan
+  * Will generate 2-3 task chunks (300-500 tokens each)
+  * Will add complexity ratings per chunk
+  * Will identify review checkpoints
+- Offer execution: "Use /cc-unleashed:plan-next to begin execution"
 
 ## Key Principles
 
