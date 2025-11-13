@@ -1,17 +1,21 @@
 ---
 name: execute-plan
-description: Smart orchestrator for chunked plans - auto-detects complexity, recommends execution mode (automated/supervised/hybrid), dispatches to appropriate executor, tracks progress
+description: Smart orchestrator for chunked plans - auto-detects complexity, detects parallelizable groups, recommends execution mode (parallel/automated/supervised/hybrid), dispatches to appropriate executor, tracks progress
 ---
 
 # Execute Plan (Smart Orchestrator)
 
 ## Overview
 
-Intelligent execution orchestrator for micro-chunked plans. Analyzes chunk complexity, checks workspace safety, recommends execution mode, and dispatches to the appropriate executor (subagents for automation, human-in-loop for supervision).
+Intelligent execution orchestrator for micro-chunked plans. Analyzes chunk complexity, detects parallelizable groups, checks workspace safety, recommends execution mode, and dispatches to the appropriate executor (subagents for automation, human-in-loop for supervision).
 
-**Core principle:** Right execution mode for each chunk based on complexity + user confirmation
+**Core principle:** Right execution mode for each chunk/group based on complexity + parallelization opportunity + user confirmation
 
-**Announce at start:** "I'm using the execute-plan orchestrator to execute chunk N."
+**NEW: Parallel Group Detection** - Automatically detects when currentChunk is part of a parallelizable group (from plan-meta.json), loads all chunks in the group, calculates time savings, and offers parallel execution as an option. Dispatches entire chunk group to execute-plan-with-subagents for simultaneous execution.
+
+**Announce at start:**
+- Single chunk: "I'm using the execute-plan orchestrator to execute chunk N."
+- Parallel group: "I'm using the execute-plan orchestrator to execute chunks N-M in parallel."
 
 ---
 
@@ -49,18 +53,37 @@ If supervised mode:
    - Get executionConfig (if present)
    - Get executionHistory (to learn from past choices)
 
-2. Load chunk-NNN-name.md:
-   - Now only 2-3 tasks (~300-500 tokens)
-   - Parse all task details
-   - Check chunk metadata (complexity, dependencies, estimated time)
+2. Check for parallelizable group (NEW):
+   - Read executionConfig.parallelizable (e.g., [[1,2,3], [6,7], [10,11,12]])
+   - Is currentChunk in a parallelizable group?
+   - If YES:
+     * Identify all chunks in the group (e.g., chunks 3,4,5)
+     * Check if other chunks in group are still pending
+     * Set parallel_execution_candidate = true
+     * Store chunk_group = [3, 4, 5]
+   - If NO:
+     * Set parallel_execution_candidate = false
+     * Continue with single chunk execution
 
-3. Check dependencies:
+3. Load chunk(s):
+   - If parallel_execution_candidate:
+     * Load ALL chunk files in the group
+     * Parse all task details from all chunks
+     * Aggregate complexity ratings
+   - If single chunk:
+     * Load chunk-NNN-name.md (2-3 tasks, ~300-500 tokens)
+     * Parse all task details
+     * Check chunk metadata (complexity, dependencies, estimated time)
+
+4. Check dependencies:
    - Verify prerequisite chunks complete
+   - For parallel groups: ALL chunks in group must have same dependencies satisfied
    - If dependency missing: Stop and report
 
-4. Get complexity rating:
-   - From chunk file (if present)
+5. Get complexity rating:
+   - From chunk file(s) (if present)
    - From plan-meta.json executionConfig
+   - For parallel groups: Use highest complexity in group
    - Or infer from task descriptions:
      * simple: Boilerplate, config, well-defined patterns
      * medium: Business logic with tests, standard CRUD
@@ -74,11 +97,49 @@ Analyze and recommend execution mode:
 
 Factors:
 - Chunk complexity (simple → automated, complex → supervised)
+- Parallel execution candidate (from Step 1)
 - Worktree status (in worktree → safer for automation)
 - User history (from executionHistory - does user prefer automation?)
 - Chunk size (2-3 tasks is perfect for automated)
 
-Present to user:
+** If parallel_execution_candidate == true: **
+
+Present parallel option first:
+"Chunks [N-M]: '[Group Description]'
+• Chunk N: [name] - [brief description] (X tasks)
+• Chunk M: [name] - [brief description] (Y tasks)
+• Chunk K: [name] - [brief description] (Z tasks)
+
+Complexity: [SIMPLE/MEDIUM/COMPLEX] (highest in group)
+Worktree: [✓ in worktree / ✗ in main repo]
+Parallelizable: ✓ Detected in plan-meta.json
+
+Time estimate:
+• Sequential: ~45 minutes (3 chunks × 15 min each)
+• Parallel: ~15 minutes (all chunks simultaneously)
+• Potential savings: 30 minutes
+
+Recommendation: Parallel Automated Execution
+
+Options:
+A) Parallel Automated (all chunks run simultaneously with subagents)
+   → 3× faster, single code review at end
+   → Uses execute-plan-with-subagents skill in parallel mode
+   → File conflict check will be performed
+
+B) Sequential Automated (chunks run one at a time)
+   → Slower but safer, review after each chunk
+   → Traditional automated execution
+
+C) Supervised (you execute with my help, review every step)
+   → Full control and visibility
+   → Traditional human-in-loop
+
+Your choice? [A/B/C, or 'auto' to follow my recommendation]"
+
+** If parallel_execution_candidate == false: **
+
+Present to user (original format):
 "Chunk N: '[Chunk Name]' (X tasks, ~Y tokens)
 Complexity: [SIMPLE/MEDIUM/COMPLEX] - [Reason]
 Worktree: [✓ in worktree / ✗ in main repo]
@@ -119,11 +180,25 @@ update_user_preference_pattern(mode, complexity)
 
 Based on confirmed mode:
 
-**Mode: Automated**
+**Mode: Parallel Automated (NEW)**
+```
+Invoke execute-plan-with-subagents skill with chunk group:
+- Pass: chunk_group = [3, 4, 5], plan directory
+- Skill will:
+  * Load all chunks in the group
+  * Perform file conflict analysis
+  * Ask user confirmation (with time estimate)
+  * Dispatch all chunks in parallel if approved
+  * Return when all chunks complete or blocked
+- Handle result (see Step 4)
+- Note: Multiple chunks will be marked complete simultaneously
+```
+
+**Mode: Automated (Sequential)**
 ```
 Invoke execute-plan-with-subagents skill:
 - Pass: chunk file path, chunk number, plan directory
-- Skill dispatches subagents for each task
+- Skill dispatches subagents for each task sequentially
 - Returns when chunk complete or blocked
 - Handle result (see Step 4)
 ```
@@ -491,7 +566,65 @@ Ready to proceed?"
 [Human-in-loop execution continues]
 ```
 
-### Example 3: Not in Worktree (Warning)
+### Example 3: Parallel Execution (NEW)
+
+```
+User: /cc-unleashed:plan-next
+
+Orchestrator: [Loads chunk 3]
+[Detects chunk 3 is in parallelizable group [3,4,5]]
+[Loads all chunks in group]
+
+"Chunks 3-5: 'Type Definitions'
+• Chunk 3: User types (2 tasks, ~350 tokens)
+• Chunk 4: Role types (2 tasks, ~350 tokens)
+• Chunk 5: Permission types (2 tasks, ~400 tokens)
+
+Complexity: SIMPLE (independent type definitions)
+Worktree: ✓ in .worktrees/descope-mgmt/
+Parallelizable: ✓ Detected in plan-meta.json
+
+Time estimate:
+• Sequential: ~45 minutes (3 chunks × 15 min each)
+• Parallel: ~15 minutes (all chunks simultaneously)
+• Potential savings: 30 minutes
+
+Recommendation: Parallel Automated Execution
+
+Options:
+A) Parallel Automated (all chunks run simultaneously with subagents)
+   → 3× faster, single code review at end
+   → File conflict check will be performed
+
+B) Sequential Automated (chunks run one at a time)
+   → Slower but safer, review after each chunk
+
+C) Supervised (you execute with my help, review every step)
+   → Full control and visibility
+
+Your choice? [A/B/C, or 'auto']"
+
+User: A
+
+Orchestrator: "Executing chunks 3-5 in parallel with subagents..."
+[Invokes execute-plan-with-subagents with chunk_group=[3,4,5]]
+[Skill performs file conflict check]
+[Skill asks user confirmation]
+User confirms parallel execution
+[15 minutes later]
+
+"✅ Chunks 3-5 complete (parallel execution): Type definitions implemented
+Duration: 15 min (saved 30 min vs sequential) | Tests: 6 added, all passing
+Files: 6 created (3 source + 3 test)
+Progress: 5 of 24 chunks (21%)
+
+Next: Chunk 6 - 'API Handlers' (medium)
+Recommendation: Sequential Automated
+
+/cc-unleashed:plan-next to continue"
+```
+
+### Example 4: Not in Worktree (Warning)
 
 ```
 User: /cc-unleashed:plan-next
