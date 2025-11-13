@@ -33,11 +33,13 @@ Automated execution of micro-chunked plans using fresh subagents per task or chu
 2. Read chunk file (2-3 tasks max, ~300-500 tokens)
 3. Parse tasks with all details:
    - Task descriptions
+   - **Agent** field (e.g., "cc-unleashed:development:python-pro")
    - Files to create/modify
    - Tests required
    - Verification commands
 4. Verify dependencies satisfied (check previous chunks complete)
-5. Create TodoWrite with tasks from chunk
+5. Validate agent ID exists (check against available agents)
+6. Create TodoWrite with tasks from chunk
 ```
 
 ### Step 1B: Check for Parallel Execution Opportunity (NEW)
@@ -136,8 +138,11 @@ When user approves parallel execution for chunks N-M:
 3. Dispatch ALL chunks in parallel (single message with multiple Task calls)
 
    For chunk N in parallel_group:
-     Use Task tool (general-purpose subagent):
+     Read agent ID from chunk file (e.g., "cc-unleashed:development:python-pro")
 
+     Use Task tool with specified agent:
+
+     subagent_type: "[agent-id-from-chunk]"  # e.g., "cc-unleashed:development:python-pro"
      description: "Implement chunk-N-[name] (parallel execution)"
 
      prompt: |
@@ -182,8 +187,9 @@ When user approves parallel execution for chunks N-M:
 
 6. Dispatch SINGLE unified code reviewer
 
-   Use Task tool (code-reviewer agent):
+   Use Task tool with code-reviewer agent:
 
+   subagent_type: "cc-unleashed:quality:code-reviewer"
    description: "Review parallel execution of chunks N-M"
 
    prompt: |
@@ -269,8 +275,11 @@ For each task (2-3 max per chunk):
 **A. Dispatch Implementation Subagent**
 
 ```
-Use Task tool (general-purpose subagent):
+Read agent ID from task (e.g., "cc-unleashed:development:python-pro")
 
+Use Task tool with specified agent:
+
+subagent_type: "[agent-id-from-task]"  # e.g., "cc-unleashed:development:python-pro"
 description: "Implement Task N from chunk-005-authentication"
 
 prompt: |
@@ -330,8 +339,9 @@ head_sha=$(git rev-parse HEAD)
 **D. Dispatch Code Reviewer Subagent**
 
 ```
-Use Task tool (code-reviewer agent):
+Use Task tool with code-reviewer agent:
 
+subagent_type: "cc-unleashed:quality:code-reviewer"
 description: "Review Task N implementation"
 
 prompt: |
@@ -422,6 +432,9 @@ Return to execute-plan orchestrator with:
 ## Subagent Prompt Template
 
 **Implementation Subagent (Full Template):**
+
+Note: Subagent type is read from chunk file's **Agent** field for each task.
+Examples: `cc-unleashed:development:python-pro`, `cc-unleashed:development:react-specialist`
 
 ```markdown
 You are implementing Task N from [chunk-file].
@@ -595,8 +608,8 @@ if test_results.failed():
 - **execute-plan** (orchestrator) - dispatches this skill for automated execution
 
 **Uses:**
-- Task tool with general-purpose subagents (for implementation)
-- Task tool with code-reviewer agent (for quality checks)
+- Task tool with specialist agents (python-pro, react-specialist, etc. for implementation)
+- Task tool with cc-unleashed:quality:code-reviewer agent (for quality checks)
 - **test-driven-development** (subagents follow TDD)
 
 **Updates:**

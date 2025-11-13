@@ -106,6 +106,7 @@ Each feature gets its own directory with:
 
 ## Task 1: [Component Name]
 
+**Agent:** cc-unleashed:development:python-pro
 **Files:**
 - Create: `exact/path/to/file.py`
 - Modify: `exact/path/to/existing.py:123-145`
@@ -178,17 +179,129 @@ git commit -m "feat: add specific feature"
    - Target 300-500 tokens per chunk
    - Use descriptive chunk names
 5. **Analyze complexity** - Rate each chunk (simple/medium/complex)
-6. **Identify checkpoints** - Review points every 5-7 chunks
-7. **Find parallelizable chunks** - Groups that can run concurrently
-8. **Write plan-meta.json** - Include executionConfig with all metadata
-9. **Write chunk files** - Create chunk-NNN-name.md files
-10. **Review chunking** - Ensure logical breaks, dependencies clear, token counts reasonable
+6. **Select agents for tasks** - For each task:
+   - Load available agents from manifest.json
+   - Read agent descriptions to understand their capabilities
+   - Match task requirements to best available agent
+   - Validate selected agent exists
+   - Add **Agent** field to task
+7. **Identify checkpoints** - Review points every 5-7 chunks
+8. **Find parallelizable chunks** - Groups that can run concurrently
+9. **Write plan-meta.json** - Include executionConfig with all metadata
+10. **Write chunk files** - Create chunk-NNN-name.md files with agent fields
+11. **Review chunking** - Ensure logical breaks, dependencies clear, token counts reasonable, agents valid
+
+## Agent Selection (Dynamic Discovery)
+
+For each task, dynamically select the best available agent:
+
+### Step 1: Discover Available Agents
+
+```
+1. Read manifest.json
+2. Extract all agent categories and their agents:
+   {
+     "development": ["python-pro.md", "react-specialist.md", ...],
+     "quality": ["code-reviewer.md", "debugger.md", ...],
+     "infrastructure": ["terraform-engineer.md", ...],
+     ...
+   }
+3. Build full agent IDs:
+   - "cc-unleashed:development:python-pro"
+   - "cc-unleashed:quality:code-reviewer"
+   - etc.
+```
+
+### Step 2: Load Agent Capabilities
+
+```
+For each available agent:
+  1. Read agents/{category}/{agent-name}.md
+  2. Extract frontmatter (name, description)
+  3. Build capability profile:
+     - Agent ID: cc-unleashed:development:python-pro
+     - Description: "Expert Python developer specializing in..."
+     - Category: development
+     - Inferred capabilities: [python, fastapi, async, testing]
+```
+
+### Step 3: Match Task to Best Agent
+
+```
+For each task in chunk:
+  1. Analyze task:
+     - Extract file extensions: [.py, .ts, .sql, etc.]
+     - Extract keywords from description: ["API", "database", "UI", etc.]
+     - Determine primary work type: implementation, review, infrastructure, etc.
+
+  2. Score each available agent:
+     - Match file extensions (exact match = +10 points)
+     - Match keywords in description (+5 per keyword)
+     - Match category (+3 points)
+     - Prefer specific specialists over generalists (+2)
+
+  3. Select highest scoring agent
+  4. Fallback if no good match:
+     - Development tasks → fullstack-developer (if exists)
+     - Infrastructure → devops-engineer (if exists)
+     - Last resort → general-purpose (Claude Code built-in)
+```
+
+### Step 4: Validation
+
+```
+Before writing agent to chunk:
+  1. Verify agent ID format: cc-unleashed:{category}:{agent-name}
+  2. Confirm agent exists in manifest.json
+  3. Confirm file exists: agents/{category}/{agent-name}.md
+  4. If validation fails:
+     - Log warning
+     - Try fallback agent
+     - If fallback fails, use general-purpose
+```
+
+### Example Selection Process
+
+```
+Task: "Create UserService with CRUD operations"
+Files: ["src/services/user_service.py", "tests/test_user_service.py"]
+
+Analysis:
+- File extensions: .py (Python)
+- Keywords: ["service", "CRUD", "database"]
+- Work type: implementation
+
+Available agents (from manifest):
+- python-pro: "Expert Python developer..." → Score: 10 (file) + 5 (keywords) + 3 (dev) = 18
+- fastapi-developer: "FastAPI specialist..." → Score: 10 (file) + 3 (dev) = 13
+- fullstack-developer: "Full-stack..." → Score: 5 (general) + 3 (dev) = 8
+
+Selected: cc-unleashed:development:python-pro (highest score)
+```
+
+### Implementation Notes
+
+**Dynamic Discovery Benefits:**
+- Works with any agent set (user's custom agents, future additions)
+- No hardcoded mappings to maintain
+- Adapts to available agents automatically
+- Supports user-created custom agents
+
+**Agent Fallback Chain:**
+```
+Best match agent
+  ↓ (if not found)
+Category-appropriate generalist (fullstack-developer, devops-engineer)
+  ↓ (if not found)
+general-purpose (built-in Claude Code agent)
+```
 
 ## Remember
 
 - **Micro-chunks:** 2-3 tasks, 300-500 tokens per chunk (not 5-10!)
 - **Descriptive names:** chunk-001-project-init.md (not just chunk-001.md)
 - **Complexity ratings:** Simple/medium/complex per chunk in plan-meta.json
+- **Agent fields:** Every task must have valid **Agent:** field
 - **Review checkpoints:** Every 5-7 chunks
 - Exact file paths always
 - Complete code in plan (not "add validation")
