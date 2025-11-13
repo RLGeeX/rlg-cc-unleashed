@@ -23,23 +23,35 @@ Automated execution of micro-chunked plans using fresh subagents per task or chu
 
 ## The Process
 
-### Step 1: Load Chunk
+### Step 1: Load Chunk and Discover Agents
 
 ```
 1. Receive chunk info from orchestrator:
    - Chunk file path (e.g., chunk-005-authentication.md)
    - Current chunk number
    - Plan directory
-2. Read chunk file (2-3 tasks max, ~300-500 tokens)
-3. Parse tasks with all details:
+
+2. Discover available agents (one-time per execution):
+   - Read manifest.json
+   - Load all agent categories and their agents
+   - Build agent registry with IDs and capabilities
+   - Cache for this execution
+
+3. Read chunk file (2-3 tasks max, ~300-500 tokens)
+4. Parse tasks with all details:
    - Task descriptions
    - **Agent** field (e.g., "cc-unleashed:development:python-pro")
    - Files to create/modify
    - Tests required
    - Verification commands
-4. Verify dependencies satisfied (check previous chunks complete)
-5. Validate agent ID exists (check against available agents)
-6. Create TodoWrite with tasks from chunk
+5. Verify dependencies satisfied (check previous chunks complete)
+6. Validate agent IDs exist (check against discovered agents)
+7. Select code reviewer agent:
+   - Find quality agents with "review" in name/description
+   - Prefer: code-reviewer, architect-reviewer, qa-expert
+   - Fallback: general-purpose if none found
+   - Cache for this execution
+8. Create TodoWrite with tasks from chunk
 ```
 
 ### Step 1B: Check for Parallel Execution Opportunity (NEW)
@@ -187,9 +199,15 @@ When user approves parallel execution for chunks N-M:
 
 6. Dispatch SINGLE unified code reviewer
 
-   Use Task tool with code-reviewer agent:
+   Select code reviewer agent dynamically:
+     1. Read manifest.json quality category
+     2. Find agents with "review" in name or description
+     3. Prefer: code-reviewer, architect-reviewer, qa-expert
+     4. Fallback: general-purpose if no reviewer found
 
-   subagent_type: "cc-unleashed:quality:code-reviewer"
+   Use Task tool with selected reviewer agent:
+
+   subagent_type: "[selected-reviewer-agent-id]"  # e.g., "cc-unleashed:quality:code-reviewer"
    description: "Review parallel execution of chunks N-M"
 
    prompt: |
@@ -339,9 +357,15 @@ head_sha=$(git rev-parse HEAD)
 **D. Dispatch Code Reviewer Subagent**
 
 ```
-Use Task tool with code-reviewer agent:
+Select code reviewer agent dynamically:
+  1. Read manifest.json quality category
+  2. Find agents with "review" in name or description
+  3. Prefer: code-reviewer, architect-reviewer, qa-expert
+  4. Fallback: general-purpose if no reviewer found
 
-subagent_type: "cc-unleashed:quality:code-reviewer"
+Use Task tool with selected reviewer agent:
+
+subagent_type: "[selected-reviewer-agent-id]"  # e.g., "cc-unleashed:quality:code-reviewer"
 description: "Review Task N implementation"
 
 prompt: |
@@ -609,7 +633,7 @@ if test_results.failed():
 
 **Uses:**
 - Task tool with specialist agents (python-pro, react-specialist, etc. for implementation)
-- Task tool with cc-unleashed:quality:code-reviewer agent (for quality checks)
+- Task tool with dynamically selected reviewer agent (code-reviewer, architect-reviewer, etc.)
 - **test-driven-development** (subagents follow TDD)
 
 **Updates:**
