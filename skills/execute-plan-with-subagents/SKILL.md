@@ -67,7 +67,9 @@ Before executing tasks, check if this chunk is part of a parallelizable group:
       - Fall back to sequential (Step 2)
       - Log: "Chunks N-M have file conflicts, executing sequentially"
 
-4. User Confirmation (using AskUserQuestion):
+4. User Confirmation using AskUserQuestion:
+
+   Present context:
    "Chunks N-M can be executed in parallel:
 
    • Chunk N: [name] - [brief description]
@@ -79,13 +81,29 @@ Before executing tasks, check if this chunk is part of a parallelizable group:
    Time estimate:
    • Sequential: ~45 minutes (3 chunks × 15 min)
    • Parallel: ~15 minutes (all chunks simultaneously)
-   • Potential savings: 30 minutes
+   • Potential savings: 30 minutes"
 
-   Proceed with parallel execution?"
+   Use AskUserQuestion:
+   {
+     "questions": [{
+       "question": "Proceed with parallel execution of these chunks?",
+       "header": "Parallel",
+       "multiSelect": false,
+       "options": [
+         {
+           "label": "Yes - Execute in parallel",
+           "description": "Run all chunks simultaneously. 3× faster, single code review at end."
+         },
+         {
+           "label": "No - Execute sequentially",
+           "description": "Run chunks one at a time with review after each. Slower but more controlled."
+         }
+       ]
+     }]
+   }
 
-   Options:
-   - Yes: Proceed to Step 2A (Parallel Execution)
-   - No: Fall back to Step 2 (Sequential Execution)
+   If user selects "Yes": Proceed to Step 2A (Parallel Execution)
+   If user selects "No": Fall back to Step 2 (Sequential Execution)
 
 5. Track choice in executionHistory for learning
 ```
@@ -656,7 +674,7 @@ Chunk 5: src/types/permission.py, tests/types/test_permission.py
 
 [File conflict check: ✓ No overlaps]
 
-[AskUserQuestion]
+[Present context to user]
 "Chunks 3-5 can be executed in parallel:
 
 • Chunk 3: User type definitions (2 tasks)
@@ -668,11 +686,9 @@ File conflict analysis: ✓ No overlaps detected
 Time estimate:
 • Sequential: ~45 minutes (3 chunks × 15 min)
 • Parallel: ~15 minutes (all chunks simultaneously)
-• Potential savings: 30 minutes
+• Potential savings: 30 minutes"
 
-Proceed with parallel execution?"
-
-User: Yes
+[Use AskUserQuestion - user selects "Yes - Execute in parallel"]
 
 [Get base SHA: abc000]
 [Create TodoWrite: 6 tasks from all 3 chunks]

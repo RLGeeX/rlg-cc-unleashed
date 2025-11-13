@@ -28,12 +28,31 @@ If chunk complexity suggests automated mode:
   Check: Am I in a worktree? (git rev-parse --git-dir)
 
   If NO (in main repo):
-    Warn: "Subagent execution works best in isolated worktree.
+    Present context:
+    "⚠️  Subagent execution works best in isolated worktree."
 
-    Options:
-    A) Create worktree now (recommended) - use using-git-worktrees skill
-    B) Execute in current directory anyway (your code, your choice)
-    C) Switch to supervised mode instead (safer without worktree)"
+    Use AskUserQuestion:
+    {
+      "questions": [{
+        "question": "How would you like to proceed without a worktree?",
+        "header": "Worktree",
+        "multiSelect": false,
+        "options": [
+          {
+            "label": "Create worktree now (Recommended)",
+            "description": "Use the using-git-worktrees skill to create an isolated workspace first."
+          },
+          {
+            "label": "Execute here anyway",
+            "description": "Continue in the current directory. Your code, your choice."
+          },
+          {
+            "label": "Use supervised mode",
+            "description": "Switch to human-in-loop execution, safer without worktree."
+          }
+        ]
+      }]
+    }
 
   If YES (in worktree):
     ✓ Safe to proceed with subagents
@@ -104,7 +123,10 @@ Factors:
 
 ** If parallel_execution_candidate == true: **
 
-Present parallel option first:
+Present parallel option using AskUserQuestion:
+
+```
+Present context to user:
 "Chunks [N-M]: '[Group Description]'
 • Chunk N: [name] - [brief description] (X tasks)
 • Chunk M: [name] - [brief description] (Y tasks)
@@ -117,60 +139,74 @@ Parallelizable: ✓ Detected in plan-meta.json
 Time estimate:
 • Sequential: ~45 minutes (3 chunks × 15 min each)
 • Parallel: ~15 minutes (all chunks simultaneously)
-• Potential savings: 30 minutes
+• Potential savings: 30 minutes"
 
-Recommendation: Parallel Automated Execution
-
-Options:
-A) Parallel Automated (all chunks run simultaneously with subagents)
-   → 3× faster, single code review at end
-   → Uses execute-plan-with-subagents skill in parallel mode
-   → File conflict check will be performed
-
-B) Sequential Automated (chunks run one at a time)
-   → Slower but safer, review after each chunk
-   → Traditional automated execution
-
-C) Supervised (you execute with my help, review every step)
-   → Full control and visibility
-   → Traditional human-in-loop
-
-Your choice? [A/B/C, or 'auto' to follow my recommendation]"
+Then use AskUserQuestion:
+{
+  "questions": [{
+    "question": "How would you like to execute these chunks?",
+    "header": "Exec mode",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "Parallel Automated (Recommended)",
+        "description": "All chunks run simultaneously with subagents. 3× faster, single code review at end. File conflict check will be performed."
+      },
+      {
+        "label": "Sequential Automated",
+        "description": "Chunks run one at a time. Slower but safer, review after each chunk."
+      },
+      {
+        "label": "Supervised",
+        "description": "You execute with my help, review every step. Full control and visibility."
+      }
+    ]
+  }]
+}
+```
 
 ** If parallel_execution_candidate == false: **
 
-Present to user (original format):
+Present context to user:
 "Chunk N: '[Chunk Name]' (X tasks, ~Y tokens)
 Complexity: [SIMPLE/MEDIUM/COMPLEX] - [Reason]
-Worktree: [✓ in worktree / ✗ in main repo]
-Recommendation: [Automated / Supervised / Hybrid]
+Worktree: [✓ in worktree / ✗ in main repo]"
 
-Options:
-A) Automated (subagents execute all tasks, code review after each)
-   → Fast, unattended execution
-   → Uses execute-plan-with-subagents skill
-
-B) Supervised (you execute with my help, review every step)
-   → Full control and visibility
-   → Traditional human-in-loop
-
-C) Hybrid (subagent handles simple tasks, you review before complex ones)
-   → Best of both worlds
-   → Smart delegation
-
-Your choice? [A/B/C, or 'auto' to follow my recommendation]"
+Then use AskUserQuestion:
+```
+{
+  "questions": [{
+    "question": "How would you like to execute this chunk?",
+    "header": "Exec mode",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "Automated (Recommended for [COMPLEXITY])",
+        "description": "Subagents execute all tasks with code review after each. Fast, unattended execution."
+      },
+      {
+        "label": "Supervised",
+        "description": "You execute with my help, reviewing every step. Full control and visibility."
+      },
+      {
+        "label": "Hybrid",
+        "description": "Subagent handles simple tasks, you review before complex ones. Smart delegation."
+      }
+    ]
+  }]
+}
 ```
 
 **User Preference Handling:**
 ```
-if user_choice == "auto":
-    # Follow recommendation
-    mode = recommended_mode
-elif user_choice in ["A", "B", "C"]:
-    mode = map_choice_to_mode(user_choice)
-else:
-    # Invalid, ask again
-    ask_again()
+# Map user's selection to mode
+mode_mapping = {
+  "Automated (Recommended for [COMPLEXITY])": "automated",
+  "Supervised": "supervised",
+  "Hybrid": "hybrid"
+}
+
+mode = mode_mapping[user_selection]
 
 # Remember choice for future
 update_user_preference_pattern(mode, complexity)
@@ -284,15 +320,34 @@ Use /cc-unleashed:plan-status for detailed progress"
 
 **If Blocked:**
 ```
+Present context:
 "⚠️  Chunk N blocked at task X:
 [Error/issue description]
 
-Recommendation: [Switch to supervised mode / Fix manually / Revisit plan]
+Recommendation: [Switch to supervised mode / Fix manually / Revisit plan]"
 
-Options:
-A) Continue with supervised mode
-B) Let me attempt to fix
-C) Pause and review plan"
+Use AskUserQuestion:
+{
+  "questions": [{
+    "question": "How would you like to proceed with this blocked chunk?",
+    "header": "Next step",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "Continue with supervised mode",
+        "description": "Switch to human-in-loop execution for better control over the problem."
+      },
+      {
+        "label": "Let me attempt to fix",
+        "description": "I'll try to debug and resolve the issue automatically."
+      },
+      {
+        "label": "Pause and review plan",
+        "description": "Stop execution to manually investigate and potentially revise the plan."
+      }
+    ]
+  }]
+}
 ```
 
 ### Step 5: Complete All Chunks
@@ -454,30 +509,66 @@ def get_recommendation(complexity):
 **Automated mode blocked:**
 ```
 if automated_executor.status == "blocked":
-    "Automated execution blocked: [reason]
+    Present context:
+    "Automated execution blocked: [reason]"
 
-    Options:
-    A) Switch to supervised mode for this chunk
-    B) Let me attempt to debug and retry
-    C) Pause and review the plan
-
-    Your choice?"
+    Use AskUserQuestion:
+    {
+      "questions": [{
+        "question": "How would you like to handle this automation failure?",
+        "header": "Recovery",
+        "multiSelect": false,
+        "options": [
+          {
+            "label": "Switch to supervised mode",
+            "description": "Continue this chunk with human-in-loop for better control."
+          },
+          {
+            "label": "Debug and retry",
+            "description": "Let me investigate the issue and attempt automated execution again."
+          },
+          {
+            "label": "Pause and review plan",
+            "description": "Stop to manually investigate and potentially revise the plan."
+          }
+        ]
+      }]
+    }
 ```
 
 **Tests failing:**
 ```
 if tests.failed():
+    Present context:
     "⚠️  Tests failing after chunk completion
 
     Output:
     [test output]
 
-    This is a blocker. Options:
-    A) Let me debug and fix
-    B) Review together (supervised mode)
-    C) Pause and investigate manually
+    This is a blocker."
 
-    Your choice?"
+    Use AskUserQuestion:
+    {
+      "questions": [{
+        "question": "How would you like to fix the failing tests?",
+        "header": "Fix tests",
+        "multiSelect": false,
+        "options": [
+          {
+            "label": "Let me debug and fix",
+            "description": "I'll investigate the test failures and attempt to fix them automatically."
+          },
+          {
+            "label": "Review together (supervised)",
+            "description": "We'll review the failures together and fix them step-by-step."
+          },
+          {
+            "label": "Pause for manual investigation",
+            "description": "Stop execution so you can investigate and fix the issues manually."
+          }
+        ]
+      }]
+    }
 ```
 
 ---
@@ -632,19 +723,34 @@ User: /cc-unleashed:plan-next
 Orchestrator: "Chunk 5: 'OAuth Handler' (3 tasks, ~450 tokens)
 Complexity: MEDIUM (business logic with tests)
 Worktree: ✗ NOT in worktree (in main repo: ~/pcc/core/pcc-descope-mgmt/)
-Recommendation: Create worktree OR use supervised mode
 
 ⚠️  You're not in an isolated worktree. Automated subagent execution works best
-in isolation to avoid affecting your main workspace.
+in isolation to avoid affecting your main workspace."
 
-Options:
-A) Create worktree now (using-git-worktrees skill)
-B) Execute here anyway with automated mode (your code, your choice)
-C) Use supervised mode instead (safer without worktree)
+[Use AskUserQuestion]
+{
+  "questions": [{
+    "question": "How would you like to proceed without a worktree?",
+    "header": "Worktree",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "Create worktree now (Recommended)",
+        "description": "Use the using-git-worktrees skill to create an isolated workspace, then proceed with automated execution."
+      },
+      {
+        "label": "Execute here anyway",
+        "description": "Continue with automated mode in the current directory. Your code, your choice."
+      },
+      {
+        "label": "Use supervised mode",
+        "description": "Switch to human-in-loop execution, which is safer without worktree isolation."
+      }
+    ]
+  }]
+}
 
-Your choice?"
-
-User: A
+User selects: "Create worktree now (Recommended)"
 
 Orchestrator: "Creating worktree..."
 [Invokes using-git-worktrees]
