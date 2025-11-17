@@ -1,263 +1,156 @@
-# RLG CC Unleashed Commands
+# CC Unleashed Commands
 
-All commands use the `/rlg:` namespace to avoid conflicts with other plugins.
+All commands use the `/cc-unleashed:` namespace. The plugin provides 10 workflow commands for TDD, debugging, planning, and git workflows.
+
+**Note:** For agent invocation, use `@agent-name` directly (e.g., `@python-pro`, `@terraform-specialist`). Agents are installed separately from the standalone agents repository.
 
 ## Workflow Triggers
 
-### /rlg:tdd
+### /cc-unleashed:tdd
 **Description:** Start test-driven development workflow
 **Action:** Loads `skills/workflows/test-driven-development/`
 **Use when:** Implementing new feature or fixing bug with tests
 
-### /rlg:debug
+### /cc-unleashed:debug
 **Description:** Launch systematic debugging workflow
 **Action:** Loads `skills/workflows/systematic-debugging/`
 **Use when:** Investigating bugs or unexpected behavior
 
-### /rlg:review
+### /cc-unleashed:review
 **Description:** Request code review workflow
 **Action:** Loads superpowers `code-reviewer` agent
 **Use when:** Ready to review completed code
 
-### /rlg:brainstorm
+### /cc-unleashed:brainstorm
 **Description:** Start brainstorming session
 **Action:** Loads `skills/workflows/brainstorming/`
 **Use when:** Refining ideas into concrete designs
 
-### /rlg:worktree
+### /cc-unleashed:worktree
 **Description:** Create isolated git worktree
 **Action:** Loads `skills/workflows/using-git-worktrees/`
 **Use when:** Starting new feature work in isolation
 
-## Agent Dispatchers
-
-### /rlg:infra [agent-name]
-**Description:** Load infrastructure category agent
-**Available agents:**
-- `terraform` - terraform-engineer
-- `devops` - devops-engineer
-- `cloud` - cloud-architect
-- `deploy` - deployment-engineer
-- `incident` - incident-responder
-- `sre` - sre-engineer
-
-**Examples:**
-```
-/rlg:infra terraform     # Load terraform engineer
-/rlg:infra               # Show available infrastructure agents
-```
-
-**Note:** For Kubernetes specialists, use `/rlg:k8s` instead.
-
-### /rlg:dev [agent-name]
-**Description:** Smart dispatch or direct load development agent
-
-**Smart Dispatch (no arguments):**
-- Analyzes current files, extensions, imports
-- Auto-loads 1-2 most relevant agents
-- Falls back to menu if ambiguous
-
-**Direct Loading:**
-- `python` - python-pro
-- `typescript` - typescript-pro
-- `golang` - golang-pro
-- `react` - react-specialist
-- `nextjs` - nextjs-developer
-- `django` - django-developer
-- `fastapi` - fastapi-developer
-- `backend` - backend-architect
-- `frontend` - frontend-developer
-- `fullstack` - fullstack-developer
-- `mobile` - mobile-developer
-- `api` - api-designer
-
-**Examples:**
-```
-/rlg:dev                 # Smart dispatch based on context
-/rlg:dev python          # Load Python specialist directly
-/rlg:dev ?               # Show all available dev agents
-```
-
-### /rlg:quality [agent-name]
-**Description:** Load quality category agent
-**Available agents:**
-- `review` - code-reviewer
-- `test` - test-automator
-- `qa` - qa-expert
-- `debug` - debugger
-- `refactor` - refactoring-specialist
-- `security` - security-auditor
-
-**Examples:**
-```
-/rlg:quality security    # Load security auditor
-/rlg:quality             # Show available quality agents
-```
-
-### /rlg:pm [agent-name]
-**Description:** Load product management agent
-**Available agents:**
-- `analyst` - business-analyst
-- `owner` - product-owner
-- `story` - story-writer
-- `jira` - jira-specialist
-- `scrum` - scrum-master
-
-**Examples:**
-```
-/rlg:pm story            # Load story writer
-/rlg:pm                  # Show available PM agents
-```
-
-### /rlg:k8s [agent-name]
-**Description:** Load Kubernetes specialist agent
-**Available agents:**
-- `architect` - k8s-architect (cluster design, platform engineering)
-- `helm` - helm-specialist (chart development, templating)
-- `gitops` - gitops-engineer (ArgoCD, Flux, progressive delivery)
-- `security` - k8s-security (policies, RBAC, admission control)
-- `mesh` - service-mesh-expert (Istio, Linkerd, Cilium)
-
-**Available skills:**
-- `gitops-workflow` - GitOps patterns with ArgoCD/Flux
-- `helm-chart-scaffolding` - Helm chart creation templates
-- `k8s-manifest-generator` - Kubernetes YAML generation
-- `k8s-security-policies` - OPA, Kyverno, network policies
-
-**Examples:**
-```
-/rlg:k8s architect       # Load K8s architect for cluster design
-/rlg:k8s helm            # Load Helm specialist for chart work
-/rlg:k8s gitops          # Load GitOps engineer for ArgoCD/Flux
-/rlg:k8s security        # Load K8s security specialist
-/rlg:k8s mesh            # Load service mesh expert
-/rlg:k8s                 # Show available K8s agents
-```
-
-**Parallel dispatch example:**
-```
-# Load multiple K8s specialists for complex task
-/rlg:k8s helm
-/rlg:k8s security
-/rlg:k8s gitops
-```
-
 ## Plan Management
 
-### /rlg:plan-new [feature-name]
+### /cc-unleashed:plan-new [feature-name]
 **Description:** Create new chunked implementation plan
 **Action:** Invokes `skills/planning/write-plan.md`
 **Output:** Creates `.claude/plans/[feature-name]/` with plan-meta.json and chunks
 
 **Example:**
 ```
-/rlg:plan-new add-oauth-login
+/cc-unleashed:plan-new add-oauth-login
 ```
 
-### /rlg:plan-status [feature-name]
+### /cc-unleashed:plan-status [feature-name]
 **Description:** Show current plan progress
 **Action:** Invokes `skills/planning/plan-manager.md`
 **Output:** Displays chunk progress, completed/remaining tasks
 
 **Example:**
 ```
-/rlg:plan-status                    # Current feature (if in worktree)
-/rlg:plan-status add-oauth-login    # Specific feature
+/cc-unleashed:plan-status                    # Current feature (if in worktree)
+/cc-unleashed:plan-status add-oauth-login    # Specific feature
 ```
 
-### /rlg:plan-next
+### /cc-unleashed:plan-next
 **Description:** Load and execute next chunk
 **Action:** Invokes `skills/planning/execute-plan.md`
 **Output:** Loads current/next chunk and begins execution
 
 **Example:**
 ```
-/rlg:plan-next    # Continue current plan
+/cc-unleashed:plan-next    # Continue current plan
 ```
 
-### /rlg:plan-resume [feature-name]
+### /cc-unleashed:plan-resume [feature-name]
 **Description:** Resume interrupted plan
 **Action:** Invokes `skills/planning/plan-manager.md`
 **Output:** Resumes from last incomplete task in current chunk
 
 **Example:**
 ```
-/rlg:plan-resume add-oauth-login
+/cc-unleashed:plan-resume add-oauth-login
 ```
 
-### /rlg:plan-list
+### /cc-unleashed:plan-list
 **Description:** List all feature plans
 **Action:** Invokes `skills/planning/plan-manager.md`
 **Output:** Table of all plans with status and progress
 
 **Example:**
 ```
-/rlg:plan-list
+/cc-unleashed:plan-list
 ```
 
 ## Command Implementation
 
-Commands are implemented as Claude Code slash commands that:
-1. Parse command and arguments
-2. Route to orchestrator for agent loading
-3. Or directly invoke skills
-4. Provide feedback on what's loaded
-5. Track context usage
+Commands are simple markdown files in the `commands/` directory that:
+1. Get automatically discovered by Claude Code
+2. Expand to prompts that invoke skills or workflows
+3. Use the plugin name as prefix (e.g., `dev.md` → `/cc-unleashed:dev`)
 
 ### Command File Structure
 
+Each command is a markdown file containing the prompt that gets expanded when invoked.
+
+**Example (`tdd.md`):**
 ```markdown
----
-name: rlg:command-name
-description: What this command does
----
+Start test-driven development workflow
 
-# Command Implementation
-
-Invoke: [skill or agent path]
-Arguments: [parameter descriptions]
-Output: [what user sees]
+Use @tdd-enforcer or invoke the TDD skill to enforce RED-GREEN-REFACTOR cycle.
 ```
-
-### Integration with Orchestrator
-
-Commands trigger orchestrator decision tree:
-1. Command parsed
-2. Orchestrator analyzes intent
-3. Loads appropriate agents/skills
-4. Provides context feedback
-5. Executes requested action
 
 ## Usage Tips
 
-**Chaining commands:**
+**Chaining workflow commands:**
 ```
-/rlg:worktree          # Create isolated workspace
-/rlg:brainstorm        # Design feature
-/rlg:plan-new feature  # Create chunked plan
-/rlg:plan-next         # Start implementation
-/rlg:tdd               # Use TDD for each task
-/rlg:plan-next         # Continue to next chunk
-/rlg:review            # Review when complete
+/cc-unleashed:worktree          # Create isolated workspace
+/cc-unleashed:brainstorm        # Design feature
+/cc-unleashed:plan-new feature  # Create chunked plan
+/cc-unleashed:plan-next         # Start implementation
+/cc-unleashed:tdd               # Use TDD for each task
+/cc-unleashed:plan-next         # Continue to next chunk
+/cc-unleashed:review            # Review when complete
 ```
 
-**Context management:**
+**Direct agent invocation (recommended):**
 ```
-/rlg:dev               # Smart load based on context
+@python-pro                     # Load Python specialist
 [work on code]
-/rlg:quality security  # Add security review
+@security-auditor              # Add security review
 [address issues]
-[orchestrator auto-unloads when idle]
 ```
 
 **Planning workflow:**
 ```
-/rlg:plan-new user-auth
+/cc-unleashed:plan-new user-auth
 [plan created with 4 chunks]
-/rlg:plan-next
+/cc-unleashed:plan-next
 [chunk-001 executes]
-/rlg:plan-status
+/cc-unleashed:plan-status
 [check progress]
-/rlg:plan-next
+/cc-unleashed:plan-next
 [chunk-002 executes]
 ```
+
+## Available Agents
+
+The cc-unleashed ecosystem includes 59 specialized agents installed separately. Invoke with `@agent-name`:
+
+**Development:** `@python-pro`, `@typescript-pro`, `@react-specialist`, `@nextjs-specialist`, `@fastapi-pro`, `@backend-architect`, `@frontend-developer`, `@fullstack-developer`, `@api-architect`, `@microservices-architect`, `@dotnet-core-expert`, `@csharp-developer`, `@postgres-pro`, `@ui-designer`, `@slack-integration-specialist`, `@material-ui-specialist`, `@graphql-specialist`, `@data-visualization-specialist`
+
+**Infrastructure:** `@terraform-specialist`, `@cloud-architect`, `@deployment-engineer`, `@sre-engineer`, `@incident-responder`, `@database-administrator`, `@security-engineer`, `@python-devops-engineer`, `@gcp-serverless-specialist`, `@aws-amplify-gen2-specialist`, `@aws-lambda-specialist`, `@dynamodb-specialist`, `@enterprise-sso-specialist`
+
+**Quality:** `@code-reviewer`, `@architect-reviewer`, `@test-automator`, `@qa-expert`, `@debugger`, `@security-auditor`, `@build-engineer`, `@git-workflow-manager`, `@dependency-manager`, `@chaos-engineer`, `@playwright-specialist`
+
+**Kubernetes:** `@k8s-architect`, `@helm-specialist`, `@gitops-engineer`, `@k8s-security`
+
+**Product Management:** `@product-manager`, `@scrum-master`, `@business-analyst`, `@technical-writer`, `@documentation-engineer`, `@jira-specialist`, `@story-writer`
+
+**AI/ML:** `@langgraph-specialist`, `@vector-search-specialist`
+
+**Business:** `@financial-data-analyst`
+
+For full details, see the [agents catalog](https://github.com/rlgeex/rlg-cc-subagents).

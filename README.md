@@ -1,20 +1,20 @@
-# RLG CC Unleashed
+# CC Unleashed
 
-Streamlined Claude Code plugin with intelligent context management, core agents, on-demand specialists, and chunked planning system.
+Streamlined Claude Code plugin with workflow automation, chunked planning, and integration with 59 specialized agents.
 
-**Version:** 2.1.0
+**Version:** 2.1.2
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 
 ## Overview
 
-RLG CC Unleashed combines the best features from multiple Claude Code plugins (superpowers, claude-code-sub-agents, etc.) into a single, optimized plugin that:
+CC Unleashed provides workflow automation and planning tools that integrate seamlessly with 59 specialized agents:
 
-- **Manages context efficiently**: 3 core agents (~2300 tokens) always loaded, 42 specialists on-demand
-- **Enforces best practices**: TDD, documentation, code quality baked in
-- **Breaks down complexity**: Chunked planning system for large features
-- **Smart agent dispatch**: Auto-loads relevant agents based on code context
-- **Comprehensive coverage**: Infrastructure, Development, Quality, Product Management
+- **Workflow automation**: TDD, debugging, code review, git worktrees, brainstorming
+- **Chunked planning**: Break down large features into manageable chunks
+- **Agent integration**: Works with separately-installed agents (59 specialists)
+- **Clean separation**: 10 workflow commands, agents invoked with `@agent-name`
+- **Comprehensive coverage**: Infrastructure, Development, Quality, Product Management, K8s, AI/ML
 
 ## Quick Start
 
@@ -50,79 +50,58 @@ After installation, restart Claude Code or reload plugins, then verify:
 /cc-unleashed:plan-next          # Start first chunk with TDD
 ```
 
-**Get help with specific technology:**
+**Work with specialized agents:**
 ```
-/cc-unleashed:dev                # Auto-detect and load relevant agent
-/cc-unleashed:infra terraform    # Load Terraform specialist
-/cc-unleashed:quality security   # Load security auditor
+@python-pro                      # Load Python specialist
+@terraform-specialist            # Load Terraform specialist
+@security-auditor               # Load security auditor
 ```
 
-## Core Architecture
+## Architecture
 
-### Always-Loaded Core (2300 tokens)
+### Plugin Components
 
-**TDD Enforcer** (~500 tokens)
-- Enforces test-driven development
-- Verifies RED-GREEN-REFACTOR cycle
-- Blocks untested code
+The cc-unleashed plugin provides:
 
-**Doc Assistant** (~800 tokens)
-- Maintains README, CLAUDE.md, API docs
-- Suggests updates on code changes
-- Generates documentation
+**20 Workflow Skills**
+- TDD, debugging, code review, git workflows, brainstorming
+- Chunked planning system (write-plan, execute-plan, plan-manager)
+- Kubernetes workflows (GitOps, Helm scaffolding, manifest generation)
 
-**Orchestrator** (~1000 tokens)
-- Analyzes requests and loads agents
-- Smart dispatch for development agents
-- Manages context budget
-- Coordinates multi-agent tasks
+**10 Slash Commands**
+- Workflow triggers: `/cc-unleashed:tdd`, `/cc-unleashed:debug`, `/cc-unleashed:review`, `/cc-unleashed:brainstorm`, `/cc-unleashed:worktree`
+- Plan management: `/cc-unleashed:plan-new`, `/cc-unleashed:plan-status`, `/cc-unleashed:plan-next`, `/cc-unleashed:plan-resume`, `/cc-unleashed:plan-list`
 
-### On-Demand Specialists (28500 tokens available)
+### Specialized Agents (Installed Separately)
 
-#### Infrastructure (8 agents, ~5000 tokens)
-- terraform-specialist
-- devops-engineer
-- sre-engineer
-- cloud-architect
-- deployment-engineer
-- incident-responder
-- database-administrator
-- security-engineer
+The cc-unleashed ecosystem includes 59 specialized agents installed via the separate [rlg-cc-subagents](https://github.com/rlgeex/rlg-cc-subagents) repository. Invoke with `@agent-name`:
 
-#### Development (13 agents, ~10000 tokens)
-- python-pro, typescript-pro, golang-pro
-- react-specialist, nextjs-developer
-- django-developer, fastapi-developer
-- backend-architect, frontend-developer, fullstack-developer
-- mobile-developer, api-designer
-- microservices-architect, postgres-pro, api-documenter
+#### Infrastructure (13 agents)
+`@terraform-specialist`, `@cloud-architect`, `@deployment-engineer`, `@sre-engineer`, `@incident-responder`, `@database-administrator`, `@security-engineer`, `@python-devops-engineer`, `@gcp-serverless-specialist`, `@aws-amplify-gen2-specialist`, `@aws-lambda-specialist`, `@dynamodb-specialist`, `@enterprise-sso-specialist`
 
-#### Quality (10 agents, ~5000 tokens)
-- code-reviewer
-- test-automator
-- qa-expert
-- debugger
-- refactoring-specialist
-- security-auditor
-- architect-reviewer
-- build-engineer
-- git-workflow-manager
-- dependency-manager
+#### Development (18 agents)
+`@python-pro`, `@typescript-pro`, `@react-specialist`, `@nextjs-specialist`, `@fastapi-pro`, `@backend-architect`, `@frontend-developer`, `@fullstack-developer`, `@api-architect`, `@microservices-architect`, `@dotnet-core-expert`, `@csharp-developer`, `@postgres-pro`, `@ui-designer`, `@slack-integration-specialist`, `@material-ui-specialist`, `@graphql-specialist`, `@data-visualization-specialist`
 
-#### Product Management (7 agents, ~4000 tokens)
-- business-analyst
-- product-owner
-- story-writer
-- jira-specialist
-- scrum-master
-- documentation-engineer
-- technical-writer
+#### Quality (11 agents)
+`@code-reviewer`, `@architect-reviewer`, `@test-automator`, `@qa-expert`, `@debugger`, `@security-auditor`, `@build-engineer`, `@git-workflow-manager`, `@dependency-manager`, `@chaos-engineer`, `@playwright-specialist`
 
-#### Kubernetes (4 agents, ~3500 tokens)
-- k8s-architect - cluster design, platform engineering
-- helm-specialist - chart development, templating
-- gitops-engineer - ArgoCD, Flux, progressive delivery
-- k8s-security - policies, RBAC, admission control
+#### Kubernetes (4 agents)
+`@k8s-architect`, `@helm-specialist`, `@gitops-engineer`, `@k8s-security`
+
+#### Product Management (7 agents)
+`@product-manager`, `@scrum-master`, `@business-analyst`, `@technical-writer`, `@documentation-engineer`, `@jira-specialist`, `@story-writer`
+
+#### AI/ML (2 agents)
+`@langgraph-specialist`, `@vector-search-specialist`
+
+#### Business (1 agent)
+`@financial-data-analyst`
+
+**Installation:**
+```bash
+# Install agents separately
+git clone https://github.com/rlgeex/rlg-cc-subagents ~/.claude/agents/cc-unleashed
+```
 
 ## Chunked Planning System
 
@@ -181,7 +160,7 @@ Execution flow:
 
 ## Commands Reference
 
-All commands use the `/cc-unleashed:` prefix to avoid conflicts.
+All commands use the `/cc-unleashed:` prefix. The plugin provides 10 workflow commands:
 
 ### Workflow Triggers
 
@@ -193,43 +172,6 @@ All commands use the `/cc-unleashed:` prefix to avoid conflicts.
 | `/cc-unleashed:brainstorm` | Design session | brainstorming skill |
 | `/cc-unleashed:worktree` | Create worktree | using-git-worktrees skill |
 
-### Agent Dispatchers
-
-| Command | Description | Smart Dispatch |
-|---------|-------------|----------------|
-| `/cc-unleashed:infra [agent]` | Infrastructure agents | No |
-| `/cc-unleashed:dev [agent]` | Development agents | **Yes** |
-| `/cc-unleashed:quality [agent]` | Quality agents | No |
-| `/cc-unleashed:pm [agent]` | Product management | No |
-| `/cc-unleashed:k8s [agent]` | Kubernetes specialists | No |
-
-**Smart Dispatch Example:**
-```bash
-# Working on React app
-/cc-unleashed:dev
-# → Auto-loads react-specialist
-
-# Working on Python + Django
-/cc-unleashed:dev
-# → Auto-loads django-developer
-```
-
-**Kubernetes Specialists:**
-```bash
-/cc-unleashed:k8s architect      # Cluster design, platform engineering
-/cc-unleashed:k8s helm           # Chart development, templating
-/cc-unleashed:k8s gitops         # ArgoCD, Flux, progressive delivery
-/cc-unleashed:k8s security       # Policies, RBAC, admission control
-```
-
-**Parallel Dispatch for Complex Tasks:**
-```bash
-# Load multiple agents in parallel for K8s migration
-/cc-unleashed:k8s architect
-/cc-unleashed:k8s security
-/cc-unleashed:k8s gitops
-```
-
 ### Plan Management
 
 | Command | Description |
@@ -240,42 +182,18 @@ All commands use the `/cc-unleashed:` prefix to avoid conflicts.
 | `/cc-unleashed:plan-resume [name]` | Resume plan |
 | `/cc-unleashed:plan-list` | List all plans |
 
-## Smart Dispatch
+### Agent Invocation
 
-The `/cc-unleashed:dev` command with no arguments analyzes your codebase and automatically loads relevant agents.
+For specialized help, invoke agents directly:
 
-**Detection signals:**
-- File extensions (`.py`, `.ts`, `.go`)
-- Package files (`package.json`, `requirements.txt`)
-- Import statements (`from django`, `import React`)
-- Framework indicators (config files)
-
-**Examples:**
-
-| Your Code | Auto-Loaded Agent |
-|-----------|-------------------|
-| `*.py` + `django` imports | django-developer |
-| `*.ts` + `package.json` with React | react-specialist |
-| `*.go` + `go.mod` | golang-pro |
-| `*.py` + `fastapi` imports | fastapi-developer |
-
-## Context Management
-
-**Budget:** 50000 tokens (configurable)
-**Core:** 2300 tokens (always loaded)
-**Available:** 47700 tokens for specialists
-
-**Tracking:**
-- Orchestrator monitors token usage
-- Warns at 80% (40K tokens)
-- Blocks at 90% (45K tokens)
-- Auto-unloads idle agents (5 min default)
-
-**Feedback:**
+```bash
+@python-pro              # Python specialist
+@terraform-specialist    # Infrastructure
+@code-reviewer          # Quality assurance
+@k8s-architect          # Kubernetes
 ```
-🔧 Loaded kubernetes-specialist (850 tokens)
-Context: 3150/50000 tokens (6%)
-```
+
+**Agent discovery:** Type `@` and start typing to see autocomplete suggestions, or let Claude automatically delegate based on your code context.
 
 ## Workflows
 
@@ -313,7 +231,7 @@ Context: 3150/50000 tokens (6%)
 /cc-unleashed:tdd                 # Write test first
 
 # 3. Verify
-/cc-unleashed:quality test        # Load test automator
+@test-automator                   # Load test automator
 
 # 4. Review
 /cc-unleashed:review              # Final check
@@ -323,41 +241,33 @@ Context: 3150/50000 tokens (6%)
 
 ```bash
 # Terraform changes
-/cc-unleashed:infra terraform     # Load Terraform specialist
+@terraform-specialist             # Load Terraform specialist
 
 # Kubernetes work
-/cc-unleashed:k8s architect       # Load K8s architect
+@k8s-architect                    # Load K8s architect
 
 # Incident response
-/cc-unleashed:infra incident      # Load incident responder
+@incident-responder               # Load incident responder
 ```
 
 ## Configuration
 
-Edit `manifest.json` to customize:
+Edit `manifest.json` to customize planning settings:
 
 ```json
 {
   "settings": {
     "plansDirectory": ".claude/plans",
     "maxChunkSize": 10,
-    "contextBudget": 50000,
-    "contextWarningThreshold": 40000,
-    "contextCriticalThreshold": 45000,
-    "autoUnloadIdleTime": 300000,
     "strictTDD": false
   }
 }
 ```
 
 **Settings:**
-- `plansDirectory`: Where to store plans
-- `maxChunkSize`: Max tasks per chunk
-- `contextBudget`: Total context limit
-- `contextWarningThreshold`: Warn at this level
-- `contextCriticalThreshold`: Block at this level
-- `autoUnloadIdleTime`: Unload after ms idle
-- `strictTDD`: Block or warn on TDD violations
+- `plansDirectory`: Where to store chunked plans (default: `.claude/plans`)
+- `maxChunkSize`: Maximum tasks per plan chunk (default: 10)
+- `strictTDD`: Enforce strict TDD workflow (default: false)
 
 ## Best Practices
 
@@ -374,11 +284,11 @@ Edit `manifest.json` to customize:
 - Refactor with confidence
 - Commit frequently
 
-### Context Management
-- Let orchestrator manage loading/unloading
-- Complete tasks before loading new agents
-- Use chunked plans for large features
-- Monitor context feedback
+### Agent Usage
+- Use `@agent-name` for direct invocation
+- Let Claude auto-delegate based on context
+- Combine multiple agents for complex tasks
+- Check agent descriptions for capabilities
 
 ### Documentation
 - Update docs alongside code
@@ -388,27 +298,21 @@ Edit `manifest.json` to customize:
 
 ## Troubleshooting
 
-**Context Budget Exceeded:**
-```
-❌ Cannot Load Agent
-Current: 47000/50000 tokens (94%)
-
-Actions:
-- Complete current work
-- Unload idle agents
-- Increase contextBudget in settings
-```
-
 **Plan Not Found:**
 ```
 Error: Plan metadata not found for 'feature-name'
 Available plans: [use /cc-unleashed:plan-list]
 ```
 
-**Agent Not Loading:**
-- Check manifest.json for agent path
-- Verify agent file exists
-- Check for syntax errors in agent markdown
+**Command Not Found:**
+- Run `/plugin update` to reload the plugin
+- Check that you're using `/cc-unleashed:` prefix
+- Verify installation with `/cc-unleashed:plan-list`
+
+**Agent Not Available:**
+- Ensure agents repository is installed: `~/.claude/agents/cc-unleashed/`
+- Check agent name with `@` autocomplete
+- See available agents in [rlg-cc-subagents](https://github.com/rlgeex/rlg-cc-subagents)
 
 ## Contributing
 
