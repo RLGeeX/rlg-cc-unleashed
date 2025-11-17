@@ -6,7 +6,7 @@ description: Request code review workflow
 
 Invoke the code reviewer agent to provide comprehensive code review.
 
-Load the agent from: `agents/quality/code-reviewer.md`
+Load the `code-reviewer` agent.
 
 This review includes:
 - Code quality and maintainability assessment

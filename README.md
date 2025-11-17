@@ -2,7 +2,7 @@
 
 Streamlined Claude Code plugin with intelligent context management, core agents, on-demand specialists, and chunked planning system.
 
-**Version:** 1.0.4
+**Version:** 2.1.0
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 
@@ -10,7 +10,7 @@ Streamlined Claude Code plugin with intelligent context management, core agents,
 
 RLG CC Unleashed combines the best features from multiple Claude Code plugins (superpowers, claude-code-sub-agents, etc.) into a single, optimized plugin that:
 
-- **Manages context efficiently**: 3 core agents (~2300 tokens) always loaded, 30+ specialists on-demand
+- **Manages context efficiently**: 3 core agents (~2300 tokens) always loaded, 42 specialists on-demand
 - **Enforces best practices**: TDD, documentation, code quality baked in
 - **Breaks down complexity**: Chunked planning system for large features
 - **Smart agent dispatch**: Auto-loads relevant agents based on code context
@@ -37,24 +37,24 @@ git clone https://github.com/RLGeeX/rlg-cc-unleashed ~/.claude/plugins/rlg-cc-un
 After installation, restart Claude Code or reload plugins, then verify:
 
 ```bash
-/rlg-plan-list
+/cc-unleashed:plan-list
 ```
 
 ### First Steps
 
 **Start a new feature with TDD:**
 ```
-/rlg-worktree           # Create isolated workspace
-/rlg-brainstorm         # Design your feature
-/rlg-plan-new my-feature  # Create chunked plan
-/rlg-plan-next          # Start first chunk with TDD
+/cc-unleashed:worktree           # Create isolated workspace
+/cc-unleashed:brainstorm         # Design your feature
+/cc-unleashed:plan-new my-feature  # Create chunked plan
+/cc-unleashed:plan-next          # Start first chunk with TDD
 ```
 
 **Get help with specific technology:**
 ```
-/rlg-dev                # Auto-detect and load relevant agent
-/rlg-infra terraform    # Load Terraform specialist
-/rlg-quality security   # Load security auditor
+/cc-unleashed:dev                # Auto-detect and load relevant agent
+/cc-unleashed:infra terraform    # Load Terraform specialist
+/cc-unleashed:quality security   # Load security auditor
 ```
 
 ## Core Architecture
@@ -79,42 +79,50 @@ After installation, restart Claude Code or reload plugins, then verify:
 
 ### On-Demand Specialists (28500 tokens available)
 
-#### Infrastructure (6 agents, ~5000 tokens)
-- terraform-engineer
+#### Infrastructure (8 agents, ~5000 tokens)
+- terraform-specialist
 - devops-engineer
 - sre-engineer
 - cloud-architect
 - deployment-engineer
 - incident-responder
+- database-administrator
+- security-engineer
 
-#### Development (12 agents, ~10000 tokens)
+#### Development (13 agents, ~10000 tokens)
 - python-pro, typescript-pro, golang-pro
 - react-specialist, nextjs-developer
 - django-developer, fastapi-developer
 - backend-architect, frontend-developer, fullstack-developer
 - mobile-developer, api-designer
+- microservices-architect, postgres-pro, api-documenter
 
-#### Quality (6 agents, ~5000 tokens)
+#### Quality (10 agents, ~5000 tokens)
 - code-reviewer
 - test-automator
 - qa-expert
 - debugger
 - refactoring-specialist
 - security-auditor
+- architect-reviewer
+- build-engineer
+- git-workflow-manager
+- dependency-manager
 
-#### Product Management (5 agents, ~4000 tokens)
+#### Product Management (7 agents, ~4000 tokens)
 - business-analyst
 - product-owner
 - story-writer
 - jira-specialist
 - scrum-master
+- documentation-engineer
+- technical-writer
 
-#### Kubernetes (5 agents, ~3500 tokens)
+#### Kubernetes (4 agents, ~3500 tokens)
 - k8s-architect - cluster design, platform engineering
 - helm-specialist - chart development, templating
 - gitops-engineer - ArgoCD, Flux, progressive delivery
 - k8s-security - policies, RBAC, admission control
-- service-mesh-expert - Istio, Linkerd, Cilium
 
 ## Chunked Planning System
 
@@ -140,7 +148,7 @@ Traditional plans put all 30 tasks in one file, bloating your context. RLG CC Un
 ### Creating a Plan
 
 ```bash
-/rlg-plan-new feature-name
+/cc-unleashed:plan-new feature-name
 ```
 
 This will:
@@ -152,7 +160,7 @@ This will:
 ### Executing Plans
 
 ```bash
-/rlg-plan-next    # Execute next chunk (or resume current)
+/cc-unleashed:plan-next    # Execute next chunk (or resume current)
 ```
 
 Execution flow:
@@ -165,77 +173,76 @@ Execution flow:
 ### Managing Plans
 
 ```bash
-/rlg-plan-list                 # List all plans
-/rlg-plan-status               # Show current progress
-/rlg-plan-status feature-name  # Check specific plan
-/rlg-plan-resume feature-name  # Resume interrupted plan
+/cc-unleashed:plan-list                 # List all plans
+/cc-unleashed:plan-status               # Show current progress
+/cc-unleashed:plan-status feature-name  # Check specific plan
+/cc-unleashed:plan-resume feature-name  # Resume interrupted plan
 ```
 
 ## Commands Reference
 
-All commands use the `/rlg-` prefix to avoid conflicts.
+All commands use the `/cc-unleashed:` prefix to avoid conflicts.
 
 ### Workflow Triggers
 
 | Command | Description | Loads |
 |---------|-------------|-------|
-| `/rlg-tdd` | Start TDD workflow | test-driven-development skill |
-| `/rlg-debug` | Launch debugging | systematic-debugging skill |
-| `/rlg-review` | Request code review | code-reviewer agent |
-| `/rlg-brainstorm` | Design session | brainstorming skill |
-| `/rlg-worktree` | Create worktree | using-git-worktrees skill |
+| `/cc-unleashed:tdd` | Start TDD workflow | test-driven-development skill |
+| `/cc-unleashed:debug` | Launch debugging | systematic-debugging skill |
+| `/cc-unleashed:review` | Request code review | code-reviewer agent |
+| `/cc-unleashed:brainstorm` | Design session | brainstorming skill |
+| `/cc-unleashed:worktree` | Create worktree | using-git-worktrees skill |
 
 ### Agent Dispatchers
 
 | Command | Description | Smart Dispatch |
 |---------|-------------|----------------|
-| `/rlg-infra [agent]` | Infrastructure agents | No |
-| `/rlg-dev [agent]` | Development agents | **Yes** |
-| `/rlg-quality [agent]` | Quality agents | No |
-| `/rlg-pm [agent]` | Product management | No |
-| `/rlg-k8s [agent]` | Kubernetes specialists | No |
+| `/cc-unleashed:infra [agent]` | Infrastructure agents | No |
+| `/cc-unleashed:dev [agent]` | Development agents | **Yes** |
+| `/cc-unleashed:quality [agent]` | Quality agents | No |
+| `/cc-unleashed:pm [agent]` | Product management | No |
+| `/cc-unleashed:k8s [agent]` | Kubernetes specialists | No |
 
 **Smart Dispatch Example:**
 ```bash
 # Working on React app
-/rlg-dev
+/cc-unleashed:dev
 # → Auto-loads react-specialist
 
 # Working on Python + Django
-/rlg-dev
+/cc-unleashed:dev
 # → Auto-loads django-developer
 ```
 
 **Kubernetes Specialists:**
 ```bash
-/rlg-k8s architect      # Cluster design, platform engineering
-/rlg-k8s helm           # Chart development, templating
-/rlg-k8s gitops         # ArgoCD, Flux, progressive delivery
-/rlg-k8s security       # Policies, RBAC, admission control
-/rlg-k8s mesh           # Istio, Linkerd, Cilium
+/cc-unleashed:k8s architect      # Cluster design, platform engineering
+/cc-unleashed:k8s helm           # Chart development, templating
+/cc-unleashed:k8s gitops         # ArgoCD, Flux, progressive delivery
+/cc-unleashed:k8s security       # Policies, RBAC, admission control
 ```
 
 **Parallel Dispatch for Complex Tasks:**
 ```bash
 # Load multiple agents in parallel for K8s migration
-/rlg-k8s architect
-/rlg-k8s security
-/rlg-k8s gitops
+/cc-unleashed:k8s architect
+/cc-unleashed:k8s security
+/cc-unleashed:k8s gitops
 ```
 
 ### Plan Management
 
 | Command | Description |
 |---------|-------------|
-| `/rlg-plan-new [name]` | Create chunked plan |
-| `/rlg-plan-status [name]` | Show progress |
-| `/rlg-plan-next` | Execute next chunk |
-| `/rlg-plan-resume [name]` | Resume plan |
-| `/rlg-plan-list` | List all plans |
+| `/cc-unleashed:plan-new [name]` | Create chunked plan |
+| `/cc-unleashed:plan-status [name]` | Show progress |
+| `/cc-unleashed:plan-next` | Execute next chunk |
+| `/cc-unleashed:plan-resume [name]` | Resume plan |
+| `/cc-unleashed:plan-list` | List all plans |
 
 ## Smart Dispatch
 
-The `/rlg-dev` command with no arguments analyzes your codebase and automatically loads relevant agents.
+The `/cc-unleashed:dev` command with no arguments analyzes your codebase and automatically loads relevant agents.
 
 **Detection signals:**
 - File extensions (`.py`, `.ts`, `.go`)
@@ -276,21 +283,21 @@ Context: 3150/50000 tokens (6%)
 
 ```bash
 # 1. Setup
-/rlg-worktree            # Isolated workspace
+/cc-unleashed:worktree            # Isolated workspace
 
 # 2. Design
-/rlg-brainstorm          # Refine idea
+/cc-unleashed:brainstorm          # Refine idea
 
 # 3. Plan
-/rlg-plan-new feature    # Create chunked plan
+/cc-unleashed:plan-new feature    # Create chunked plan
 
 # 4. Implement
-/rlg-plan-next           # Chunk 1: Setup
-/rlg-plan-next           # Chunk 2: Implementation
-/rlg-plan-next           # Chunk 3: Tests
+/cc-unleashed:plan-next           # Chunk 1: Setup
+/cc-unleashed:plan-next           # Chunk 2: Implementation
+/cc-unleashed:plan-next           # Chunk 3: Tests
 
 # 5. Review
-/rlg-review              # Code review
+/cc-unleashed:review              # Code review
 
 # 6. Finish
 # Use superpowers:finishing-a-development-branch
@@ -300,29 +307,29 @@ Context: 3150/50000 tokens (6%)
 
 ```bash
 # 1. Debug
-/rlg-debug               # Systematic debugging
+/cc-unleashed:debug               # Systematic debugging
 
 # 2. Fix with TDD
-/rlg-tdd                 # Write test first
+/cc-unleashed:tdd                 # Write test first
 
 # 3. Verify
-/rlg-quality test        # Load test automator
+/cc-unleashed:quality test        # Load test automator
 
 # 4. Review
-/rlg-review              # Final check
+/cc-unleashed:review              # Final check
 ```
 
 ### Infrastructure Work
 
 ```bash
 # Terraform changes
-/rlg-infra terraform     # Load Terraform engineer
+/cc-unleashed:infra terraform     # Load Terraform specialist
 
 # Kubernetes work
-/rlg-k8s architect       # Load K8s architect
+/cc-unleashed:k8s architect       # Load K8s architect
 
 # Incident response
-/rlg-infra incident      # Load incident responder
+/cc-unleashed:infra incident      # Load incident responder
 ```
 
 ## Configuration
@@ -395,7 +402,7 @@ Actions:
 **Plan Not Found:**
 ```
 Error: Plan metadata not found for 'feature-name'
-Available plans: [use /rlg-plan-list]
+Available plans: [use /cc-unleashed:plan-list]
 ```
 
 **Agent Not Loading:**

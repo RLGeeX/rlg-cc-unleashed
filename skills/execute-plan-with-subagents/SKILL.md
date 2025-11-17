@@ -40,7 +40,7 @@ Automated execution of micro-chunked plans using fresh subagents per task or chu
 3. Read chunk file (2-3 tasks max, ~300-500 tokens)
 4. Parse tasks with all details:
    - Task descriptions
-   - **Agent** field (e.g., "cc-unleashed:development:python-pro")
+   - **Agent** field (e.g., "python-pro")
    - Files to create/modify
    - Tests required
    - Verification commands
@@ -150,11 +150,11 @@ When user approves parallel execution for chunks N-M:
 3. Dispatch ALL chunks in parallel (single message with multiple Task calls)
 
    For chunk N in parallel_group:
-     Read agent ID from chunk file (e.g., "cc-unleashed:development:python-pro")
+     Read agent ID from chunk file (e.g., "python-pro")
 
      Use Task tool with specified agent:
 
-     subagent_type: "[agent-id-from-chunk]"  # e.g., "cc-unleashed:development:python-pro"
+     subagent_type: "[agent-id-from-chunk]"  # e.g., "python-pro"
      description: "Implement chunk-N-[name] (parallel execution)"
 
      prompt: |
@@ -207,7 +207,7 @@ When user approves parallel execution for chunks N-M:
 
    Use Task tool with selected reviewer agent:
 
-   subagent_type: "[selected-reviewer-agent-id]"  # e.g., "cc-unleashed:quality:code-reviewer"
+   subagent_type: "[selected-reviewer-agent-id]"  # e.g., "code-reviewer"
    description: "Review parallel execution of chunks N-M"
 
    prompt: |
@@ -293,11 +293,11 @@ For each task (2-3 max per chunk):
 **A. Dispatch Implementation Subagent**
 
 ```
-Read agent ID from task (e.g., "cc-unleashed:development:python-pro")
+Read agent ID from task (e.g., "python-pro")
 
 Use Task tool with specified agent:
 
-subagent_type: "[agent-id-from-task]"  # e.g., "cc-unleashed:development:python-pro"
+subagent_type: "[agent-id-from-task]"  # e.g., "python-pro"
 description: "Implement Task N from chunk-005-authentication"
 
 prompt: |
@@ -365,7 +365,7 @@ Select code reviewer agent dynamically:
 
 Use Task tool with selected reviewer agent:
 
-subagent_type: "[selected-reviewer-agent-id]"  # e.g., "cc-unleashed:quality:code-reviewer"
+subagent_type: "[selected-reviewer-agent-id]"  # e.g., "code-reviewer"
 description: "Review Task N implementation"
 
 prompt: |
@@ -458,7 +458,7 @@ Return to execute-plan orchestrator with:
 **Implementation Subagent (Full Template):**
 
 Note: Subagent type is read from chunk file's **Agent** field for each task.
-Examples: `cc-unleashed:development:python-pro`, `cc-unleashed:development:react-specialist`
+Examples: `python-pro`, `react-specialist`
 
 ```markdown
 You are implementing Task N from [chunk-file].

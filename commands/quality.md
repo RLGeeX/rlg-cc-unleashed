@@ -7,16 +7,16 @@ description: Load quality assurance specialist agent
 Load a specialized quality agent for testing, review, and security tasks.
 
 **Available Agents:**
-- `review` - Code reviewer (agents/quality/code-reviewer.md)
-- `test` - Test automation specialist (agents/quality/test-automator.md)
-- `qa` - QA expert (agents/quality/qa-expert.md)
-- `debug` - Debugger specialist (agents/quality/debugger.md)
-- `refactor` - Refactoring expert (agents/quality/refactoring-specialist.md)
-- `security` - Security auditor (agents/quality/security-auditor.md)
+- `code-reviewer` - Code reviewer
+- `test-automator` - Test automation specialist
+- `qa-expert` - QA expert
+- `debugger` - Debugger specialist
+- `refactoring-specialist` - Refactoring expert
+- `security-auditor` - Security auditor
 
 **Usage:**
-- `/rlg-quality review` - Load code reviewer
-- `/rlg-quality security` - Load security auditor
-- `/rlg-quality` - Show available quality agents
+- `/cc-unleashed:quality code-reviewer` - Load code reviewer
+- `/cc-unleashed:quality security-auditor` - Load security auditor
+- `/cc-unleashed:quality` - Show available quality agents
 
 If no agent is specified, present the list of available agents and ask the user which one to load.

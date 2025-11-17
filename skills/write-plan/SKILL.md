@@ -106,7 +106,7 @@ Each feature gets its own directory with:
 
 ## Task 1: [Component Name]
 
-**Agent:** cc-unleashed:development:python-pro
+**Agent:** python-pro
 **Files:**
 - Create: `exact/path/to/file.py`
 - Modify: `exact/path/to/existing.py:123-145`
@@ -206,9 +206,9 @@ For each task, dynamically select the best available agent:
      "infrastructure": ["terraform-engineer.md", ...],
      ...
    }
-3. Build full agent IDs:
-   - "cc-unleashed:development:python-pro"
-   - "cc-unleashed:quality:code-reviewer"
+3. Build agent ID list:
+   - "python-pro"
+   - "code-reviewer"
    - etc.
 ```
 
@@ -219,7 +219,7 @@ For each available agent:
   1. Read agents/{category}/{agent-name}.md
   2. Extract frontmatter (name, description)
   3. Build capability profile:
-     - Agent ID: cc-unleashed:development:python-pro
+     - Agent ID: python-pro
      - Description: "Expert Python developer specializing in..."
      - Category: development
      - Inferred capabilities: [python, fastapi, async, testing]
@@ -251,9 +251,9 @@ For each task in chunk:
 
 ```
 Before writing agent to chunk:
-  1. Verify agent ID format: cc-unleashed:{category}:{agent-name}
+  1. Verify agent ID format: {agent-name}
   2. Confirm agent exists in manifest.json
-  3. Confirm file exists: agents/{category}/{agent-name}.md
+  3. Confirm file exists in ~/.claude/agents/cc-unleashed/{agent-name}.md
   4. If validation fails:
      - Log warning
      - Try fallback agent
@@ -276,7 +276,7 @@ Available agents (from manifest):
 - fastapi-developer: "FastAPI specialist..." → Score: 10 (file) + 3 (dev) = 13
 - fullstack-developer: "Full-stack..." → Score: 5 (general) + 3 (dev) = 8
 
-Selected: cc-unleashed:development:python-pro (highest score)
+Selected: python-pro (highest score)
 ```
 
 ### Implementation Notes
