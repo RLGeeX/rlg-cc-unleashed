@@ -2,7 +2,7 @@
 
 Streamlined Claude Code plugin with workflow automation, chunked planning, and integration with 59 specialized agents.
 
-**Version:** 2.1.2
+**Version:** 2.2.0
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 
@@ -11,9 +11,9 @@ Streamlined Claude Code plugin with workflow automation, chunked planning, and i
 CC Unleashed provides workflow automation and planning tools that integrate seamlessly with 59 specialized agents:
 
 - **Workflow automation**: TDD, debugging, code review, git worktrees, brainstorming
-- **Chunked planning**: Break down large features into manageable chunks
+- **Chunked planning**: Break down large features into manageable chunks with autonomous execution
 - **Agent integration**: Works with separately-installed agents (59 specialists)
-- **Clean separation**: 10 workflow commands, agents invoked with `@agent-name`
+- **Clean separation**: 11 workflow commands, agents invoked with `@agent-name`
 - **Comprehensive coverage**: Infrastructure, Development, Quality, Product Management, K8s, AI/ML
 
 ## Quick Start
@@ -42,7 +42,15 @@ After installation, restart Claude Code or reload plugins, then verify:
 
 ### First Steps
 
-**Start a new feature with TDD:**
+**Start a new feature with autonomous execution:**
+```
+/cc-unleashed:worktree           # Create isolated workspace
+/cc-unleashed:brainstorm         # Design your feature
+/cc-unleashed:plan-new my-feature  # Create chunked plan
+/cc-unleashed:plan-execute       # Execute all chunks automatically
+```
+
+**Or execute chunks manually:**
 ```
 /cc-unleashed:worktree           # Create isolated workspace
 /cc-unleashed:brainstorm         # Design your feature
@@ -68,9 +76,9 @@ The cc-unleashed plugin provides:
 - Chunked planning system (write-plan, execute-plan, plan-manager)
 - Kubernetes workflows (GitOps, Helm scaffolding, manifest generation)
 
-**10 Slash Commands**
+**11 Slash Commands**
 - Workflow triggers: `/cc-unleashed:tdd`, `/cc-unleashed:debug`, `/cc-unleashed:review`, `/cc-unleashed:brainstorm`, `/cc-unleashed:worktree`
-- Plan management: `/cc-unleashed:plan-new`, `/cc-unleashed:plan-status`, `/cc-unleashed:plan-next`, `/cc-unleashed:plan-resume`, `/cc-unleashed:plan-list`
+- Plan management: `/cc-unleashed:plan-new`, `/cc-unleashed:plan-status`, `/cc-unleashed:plan-execute`, `/cc-unleashed:plan-next`, `/cc-unleashed:plan-resume`, `/cc-unleashed:plan-list`
 
 ### Specialized Agents (Installed Separately)
 
@@ -138,11 +146,25 @@ This will:
 
 ### Executing Plans
 
+**Autonomous Execution (Fastest):**
+```bash
+/cc-unleashed:plan-execute    # Execute all chunks automatically
+```
+
+Autonomous flow:
+1. Confirms with user before starting
+2. Executes all remaining chunks with subagents
+3. Code review after each chunk
+4. Progress updates between chunks
+5. Stops on errors or test failures
+6. Comprehensive summary at end
+
+**Manual Execution (More Control):**
 ```bash
 /cc-unleashed:plan-next    # Execute next chunk (or resume current)
 ```
 
-Execution flow:
+Manual flow:
 1. Load current chunk
 2. Execute tasks in batches (default 3)
 3. Report and get feedback
@@ -160,7 +182,7 @@ Execution flow:
 
 ## Commands Reference
 
-All commands use the `/cc-unleashed:` prefix. The plugin provides 10 workflow commands:
+All commands use the `/cc-unleashed:` prefix. The plugin provides 11 workflow commands:
 
 ### Workflow Triggers
 
@@ -178,7 +200,8 @@ All commands use the `/cc-unleashed:` prefix. The plugin provides 10 workflow co
 |---------|-------------|
 | `/cc-unleashed:plan-new [name]` | Create chunked plan |
 | `/cc-unleashed:plan-status [name]` | Show progress |
-| `/cc-unleashed:plan-next` | Execute next chunk |
+| `/cc-unleashed:plan-execute` | Execute all chunks automatically |
+| `/cc-unleashed:plan-next` | Execute next chunk manually |
 | `/cc-unleashed:plan-resume [name]` | Resume plan |
 | `/cc-unleashed:plan-list` | List all plans |
 

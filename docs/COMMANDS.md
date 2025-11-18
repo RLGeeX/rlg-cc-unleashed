@@ -1,6 +1,6 @@
 # CC Unleashed Commands
 
-All commands use the `/cc-unleashed:` namespace. The plugin provides 10 workflow commands for TDD, debugging, planning, and git workflows.
+All commands use the `/cc-unleashed:` namespace. The plugin provides 11 workflow commands for TDD, debugging, planning, and git workflows.
 
 **Note:** For agent invocation, use `@agent-name` directly (e.g., `@python-pro`, `@terraform-specialist`). Agents are installed separately from the standalone agents repository.
 
@@ -54,8 +54,24 @@ All commands use the `/cc-unleashed:` namespace. The plugin provides 10 workflow
 /cc-unleashed:plan-status add-oauth-login    # Specific feature
 ```
 
+### /cc-unleashed:plan-execute
+**Description:** Execute entire plan automatically with subagents
+**Action:** Invokes `skills/autonomous-execute.md`
+**Output:** Executes all remaining chunks autonomously, stops on errors
+
+**Example:**
+```
+/cc-unleashed:plan-execute    # Run all chunks automatically
+```
+
+**Use when:**
+- You've created a plan and want full automation
+- You trust the micro-chunked plan quality
+- You want fastest possible implementation
+- You're ready to review all code at the end
+
 ### /cc-unleashed:plan-next
-**Description:** Load and execute next chunk
+**Description:** Load and execute next chunk one at a time
 **Action:** Invokes `skills/planning/execute-plan.md`
 **Output:** Loads current/next chunk and begins execution
 
@@ -63,6 +79,11 @@ All commands use the `/cc-unleashed:` namespace. The plugin provides 10 workflow
 ```
 /cc-unleashed:plan-next    # Continue current plan
 ```
+
+**Use when:**
+- You want to execute chunks one at a time
+- You want to review progress after each chunk
+- You want more control over the process
 
 ### /cc-unleashed:plan-resume [feature-name]
 **Description:** Resume interrupted plan
@@ -104,7 +125,16 @@ Use @tdd-enforcer or invoke the TDD skill to enforce RED-GREEN-REFACTOR cycle.
 
 ## Usage Tips
 
-**Chaining workflow commands:**
+**Chaining workflow commands (autonomous):**
+```
+/cc-unleashed:worktree          # Create isolated workspace
+/cc-unleashed:brainstorm        # Design feature
+/cc-unleashed:plan-new feature  # Create chunked plan
+/cc-unleashed:plan-execute      # Execute all chunks automatically
+/cc-unleashed:review            # Review when complete
+```
+
+**Chaining workflow commands (manual):**
 ```
 /cc-unleashed:worktree          # Create isolated workspace
 /cc-unleashed:brainstorm        # Design feature
