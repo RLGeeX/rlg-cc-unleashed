@@ -1,8 +1,8 @@
 # CC Unleashed
 
-Streamlined Claude Code plugin with workflow automation, chunked planning, and integration with 59 specialized agents.
+Streamlined Claude Code plugin with workflow automation, chunked planning, Jira integration, and integration with 59 specialized agents.
 
-**Version:** 2.2.0
+**Version:** 2.3.0
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 
@@ -12,7 +12,8 @@ CC Unleashed provides workflow automation and planning tools that integrate seam
 
 - **Workflow automation**: TDD, debugging, code review, git worktrees, brainstorming
 - **Chunked planning**: Break down large features into manageable chunks with autonomous execution
-- **Agent integration**: Works with separately-installed agents (59 specialists)
+- **Jira integration**: Automatic issue creation and status tracking throughout plan execution
+- **Agent integration**: Works with separately-installed agents (59 specialists with full MCP tool access)
 - **Clean separation**: 11 workflow commands, agents invoked with `@agent-name`
 - **Comprehensive coverage**: Infrastructure, Development, Quality, Product Management, K8s, AI/ML
 

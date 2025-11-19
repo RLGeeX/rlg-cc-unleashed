@@ -1,7 +1,7 @@
 {
   "name": "cc-unleashed",
-  "version": "2.2.0",
-  "description": "Claude Code plugin with workflow automation, autonomous plan execution, and chunked planning - works with 59 specialized agents",
+  "version": "2.3.0",
+  "description": "Claude Code plugin with workflow automation, autonomous plan execution, Jira integration, and chunked planning - works with 59 specialized agents",
   "author": {
     "name": "RLGeeX",
     "url": "https://github.com/RLGeeX"
