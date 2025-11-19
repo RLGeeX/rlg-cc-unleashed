@@ -19,6 +19,45 @@ Intelligent execution orchestrator for micro-chunked plans. Analyzes chunk compl
 
 ---
 
+## Jira Integration (Automatic Tracking)
+
+If `jiraTracking.enabled` is true in plan-meta.json, automatically manage Jira issue transitions:
+
+**On Chunk Start:**
+```
+1. Check if chunk has jiraIssueKey in plan-meta.json chunkMapping
+2. If yes:
+   - Transition Jira issue to "In Progress" using MCP Jira tools
+   - Update chunk status in chunkMapping: "todo" → "in_progress"
+   - Log transition in executionHistory
+```
+
+**On Chunk Complete:**
+```
+1. If chunk has jiraIssueKey:
+   - Transition Jira issue to "Done" using MCP Jira tools
+   - Update chunk status in chunkMapping: "in_progress" → "done"
+   - Add jiraIssueKey to executionHistory entry
+   - Log successful transition
+```
+
+**On Chunk Failure/Block:**
+```
+1. If chunk has jiraIssueKey:
+   - Keep status as "in_progress" (don't transition to done)
+   - Add comment to Jira issue describing the blocker
+   - Log in executionHistory with issue details
+```
+
+**Error Handling:**
+```
+- If Jira transition fails: Log warning, continue execution (don't block on Jira failures)
+- If Jira issue not found: Log error, update chunkMapping to note missing issue
+- If MCP Jira tools unavailable: Skip Jira updates, log warning once
+```
+
+---
+
 ## The Orchestration Flow
 
 ### Step 0: Workspace Safety Check
@@ -71,6 +110,7 @@ If supervised mode:
    - Get totalChunks
    - Get executionConfig (if present)
    - Get executionHistory (to learn from past choices)
+   - Get jiraTracking (if present) - check enabled, get chunkMapping
 
 2. Check for parallelizable group (NEW):
    - Read executionConfig.parallelizable (e.g., [[1,2,3], [6,7], [10,11,12]])
@@ -212,7 +252,21 @@ mode = mode_mapping[user_selection]
 update_user_preference_pattern(mode, complexity)
 ```
 
-### Step 3: Dispatch to Executor
+### Step 3: Transition Jira & Dispatch to Executor
+
+**Before Dispatch - Transition Jira to "In Progress":**
+```
+If jiraTracking.enabled:
+  For each chunk about to execute:
+    1. Find jiraIssueKey in chunkMapping
+    2. If found:
+       - Transition Jira issue to "In Progress" using MCP Jira tools
+       - Update status in chunkMapping: "todo" → "in_progress"
+       - Log transition
+    3. If not found or transition fails:
+       - Log warning
+       - Continue execution (don't block on Jira)
+```
 
 Based on confirmed mode:
 
@@ -272,9 +326,34 @@ This gives speed for simple tasks,
 control for complex ones.
 ```
 
-### Step 4: Track & Report
+### Step 4: Track, Transition Jira & Report
 
 After chunk complete (or blocked):
+
+**If Chunk Complete - Transition Jira to "Done":**
+```
+If jiraTracking.enabled:
+  For each completed chunk:
+    1. Find jiraIssueKey in chunkMapping
+    2. If found:
+       - Transition Jira issue to "Done" using MCP Jira tools
+       - Update status in chunkMapping: "in_progress" → "done"
+       - Add jiraIssueKey to executionHistory entry
+       - Log successful completion
+    3. If transition fails:
+       - Log warning
+       - Continue (don't block on Jira)
+```
+
+**If Chunk Blocked - Add Jira Comment:**
+```
+If jiraTracking.enabled && chunk blocked:
+  1. Find jiraIssueKey in chunkMapping
+  2. If found:
+     - Add comment to Jira issue: "Blocked: [error description]"
+     - Keep status as "in_progress"
+     - Log blocker in executionHistory
+```
 
 **Update plan-meta.json:**
 ```json
@@ -282,10 +361,19 @@ After chunk complete (or blocked):
   "currentChunk": N+1,
   "status": "in-progress",
 
+  "jiraTracking": {
+    "enabled": true,
+    "project": "PROJ",
+    "chunkMapping": [
+      {"chunk": N, "jiraIssueKey": "PROJ-101", "status": "done"}
+    ]
+  },
+
   "executionHistory": [
     ...previous entries...,
     {
       "chunk": N,
+      "jiraIssueKey": "PROJ-101",
       "mode": "automated",
       "startedAt": "2025-11-12T15:00:00Z",
       "completedAt": "2025-11-12T15:08:00Z",

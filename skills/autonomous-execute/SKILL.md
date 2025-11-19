@@ -13,6 +13,8 @@ Fully autonomous execution of micro-chunked plans from start to finish. This ski
 
 **Called by:** `/cc-unleashed:plan-execute` command
 
+**Jira Integration:** If `jiraTracking.enabled` in plan-meta.json, the execute-plan orchestrator automatically transitions Jira issues to "In Progress" when starting each chunk and to "Done" when completing. All Jira transitions happen transparently via the orchestrator.
+
 **Announce at start:**
 "I'm executing the entire plan autonomously with subagents. This will continue until all chunks are complete or an error occurs."
 
@@ -218,10 +220,16 @@ print(f"- Tests added: {total_tests_added}")
 print(f"- Subagent invocations: {total_subagent_calls}")
 print(f"- Average time per chunk: {total_duration / len(chunks_executed):.1f} min")
 
+# If Jira tracking enabled, note it
+if jira_tracking_enabled:
+    print(f"- Jira issues: All {totalChunks} issues transitioned to Done")
+
 print(f"\n**Chunks executed:**")
 for chunk_info in chunks_executed:
     print(f"  ✅ Chunk {chunk_info['chunk']}: {chunk_info['name']}")
     print(f"     Duration: {chunk_info['duration']} min, Tests: {chunk_info['tests_added']}")
+    if chunk_info.get('jiraIssueKey'):
+        print(f"     Jira: {chunk_info['jiraIssueKey']} → Done")
 
 print(f"\n**Next Steps:**")
 print(f"1. Review all changes: git diff origin/main")
