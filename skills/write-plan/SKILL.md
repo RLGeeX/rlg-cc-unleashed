@@ -226,14 +226,29 @@ git commit -m "feat: add specific feature"
 
 ## Optional: Jira Integration
 
-After plan files are created, ask the user:
+After plan files are created, use AskUserQuestion tool:
 
-**Question:** "Would you like to create Jira issues for tracking this plan?"
-**Options:**
-- Yes - Run jira-plan skill to create Epic → Stories → Sub-tasks
-- No - Skip Jira integration
+```
+{
+  "questions": [{
+    "question": "Would you like to create Jira issues for tracking this plan?",
+    "header": "Jira",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "Yes - Create Jira hierarchy",
+        "description": "Run jira-plan skill to create Epic → Stories → Sub-tasks with proper hierarchy"
+      },
+      {
+        "label": "No - Skip for now",
+        "description": "Plan is ready without Jira. You can run /cc-unleashed:jira-plan later if needed"
+      }
+    ]
+  }]
+}
+```
 
-**If Yes:**
+**If user selects "Yes - Create Jira hierarchy":**
 - Tell user: "Running jira-plan skill to create Jira hierarchy..."
 - Use Skill tool to invoke jira-plan
 - jira-plan will:
@@ -244,9 +259,9 @@ After plan files are created, ask the user:
   - Update plan-meta.json with jiraTracking section
   - Update chunk files with jiraIssueKey fields
 
-**If No:**
+**If user selects "No - Skip for now":**
 - Plan is complete and ready for execution
-- User can run jira-plan later if needed
+- User can run `/cc-unleashed:jira-plan [feature-name]` later if needed
 
 ## Agent Selection (Dynamic Discovery)
 
