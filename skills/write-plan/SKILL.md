@@ -39,16 +39,20 @@ Each feature gets its own directory with:
   "contextTokens": 9600,
   "description": "Brief description of what this feature implements",
 
-  "jiraTracking": {
-    "enabled": true,
-    "project": "PROJ",
-    "story": "PROJ-100",
-    "cloudId": "cloud-id-from-mcp",
-    "chunkMapping": [
-      {"chunk": 1, "jiraIssueKey": "PROJ-101", "status": "todo"},
-      {"chunk": 2, "jiraIssueKey": "PROJ-102", "status": "todo"}
-    ]
-  },
+  "phases": [
+    {
+      "name": "Setup & Dependencies",
+      "chunks": [1, 2, 3]
+    },
+    {
+      "name": "Core Implementation",
+      "chunks": [4, 5, 6, 7, 8]
+    },
+    {
+      "name": "Testing & Documentation",
+      "chunks": [9, 10]
+    }
+  ],
 
   "executionConfig": {
     "defaultMode": "auto-detect",
@@ -65,7 +69,7 @@ Each feature gets its own directory with:
 }
 ```
 
-**Note:** If Jira integration is disabled, omit the `jiraTracking` section entirely.
+**Note:** The `phases` array groups chunks into logical development phases. Jira integration (optional) is handled separately by the jira-plan skill.
 
 **Complexity Ratings:**
 - **simple:** Boilerplate, config files, well-defined patterns → recommend automated execution
@@ -110,11 +114,11 @@ Each feature gets its own directory with:
 # Chunk N: [Descriptive Phase Name]
 
 **Status:** pending
-**jiraIssueKey:** PROJ-123 (if Jira integration enabled, otherwise omit)
 **Dependencies:** chunk-001-project-init, chunk-002-dependencies (or "none")
 **Complexity:** simple | medium | complex
 **Estimated Time:** 5-15 minutes
 **Tasks:** 2-3
+**Phase:** Setup & Dependencies
 
 ---
 
@@ -184,118 +188,65 @@ git commit -m "feat: add specific feature"
 
 ## Writing Process
 
-1. **Design first** - Use brainstorming skill to understand feature fully
-2. **Ask about Jira integration** - See Jira Integration section below
-3. **Identify phases** - Break down into natural phases (setup, core, integration, tests, docs)
-4. **Create directory** - `.claude/plans/[feature-name]/`
-5. **Micro-chunk each phase:**
-   - Take each phase
+1. **Design with @story-writer** - Launch @story-writer subagent to:
+   - Convert requirements into Epic → Stories breakdown
+   - Define acceptance criteria for each story
+   - Identify dependencies and complexity
+   - Group into logical phases (setup, core, integration, tests, docs)
+   - Capture phase names and groupings for plan-meta.json
+
+2. **Create directory** - `.claude/plans/[feature-name]/`
+
+3. **Micro-chunk each phase:**
+   - Take each phase from @story-writer output
    - Break into 2-3 task chunks
    - Target 300-500 tokens per chunk
    - Use descriptive chunk names
-6. **Analyze complexity** - Rate each chunk (simple/medium/complex)
-7. **Select agents for tasks** - For each task:
+
+4. **Analyze complexity** - Rate each chunk (simple/medium/complex)
+
+5. **Select agents for tasks** - For each task:
    - Load available agents from manifest.json
    - Read agent descriptions to understand their capabilities
    - Match task requirements to best available agent
    - Validate selected agent exists
    - Add **Agent** field to task
-8. **Create Jira issues** - If Jira integration enabled, create issues for each chunk
-9. **Identify checkpoints** - Review points every 5-7 chunks
-10. **Find parallelizable chunks** - Groups that can run concurrently
-11. **Write plan-meta.json** - Include executionConfig and jiraTracking (if enabled)
-12. **Write chunk files** - Create chunk-NNN-name.md files with agent fields and jiraIssueKey
-13. **Review chunking** - Ensure logical breaks, dependencies clear, token counts reasonable, agents valid
 
-## Jira Integration
+6. **Identify checkpoints** - Review points every 5-7 chunks
 
-### Step 1: Ask User About Jira Integration
+7. **Find parallelizable chunks** - Groups that can run concurrently
 
-Use AskUserQuestion tool to ask:
+8. **Write plan-meta.json** - Include phases array and executionConfig
+
+9. **Write chunk files** - Create chunk-NNN-name.md files with agent fields and phase names
+
+10. **Review chunking** - Ensure logical breaks, dependencies clear, token counts reasonable, agents valid
+
+11. **Offer Jira integration** - Ask user if they want to create Jira issues via jira-plan skill
+
+## Optional: Jira Integration
+
+After plan files are created, ask the user:
 
 **Question:** "Would you like to create Jira issues for tracking this plan?"
 **Options:**
-- Yes - Create Jira issues for each chunk
+- Yes - Run jira-plan skill to create Epic → Stories → Sub-tasks
 - No - Skip Jira integration
 
-### Step 2: If Yes, Gather Jira Configuration
+**If Yes:**
+- Tell user: "Running jira-plan skill to create Jira hierarchy..."
+- Use Skill tool to invoke jira-plan
+- jira-plan will:
+  - Read plan-meta.json phases structure
+  - Create Epic (feature-level)
+  - Create Stories (one per phase)
+  - Create Sub-tasks (one per chunk, linked to story)
+  - Update plan-meta.json with jiraTracking section
+  - Update chunk files with jiraIssueKey fields
 
-Use AskUserQuestion tool to gather:
-
-**Question 1:** "What is the Jira project key?" (e.g., "RLGEEX", "PROJ", "DEV")
-**Question 2:** "Is there a parent epic/story key?" (Optional, e.g., "RLGEEX-5")
-
-### Step 3: Create Jira Issues
-
-For each chunk in the plan:
-
-1. **Create Jira issue** using MCP Jira tools:
-   ```
-   Summary: "Chunk N: [Descriptive Name]"
-   Description: Brief overview of tasks in this chunk
-   Issue Type: Task (or Sub-task if parent epic provided)
-   Project: [project-key from user]
-   Parent: [epic-key if provided]
-   ```
-
-2. **Capture Jira issue key** returned (e.g., "RLGEEX-19")
-
-3. **Store mapping** for plan-meta.json jiraTracking section
-
-### Step 4: Update plan-meta.json with Jira Tracking
-
-Add jiraTracking section to plan-meta.json:
-
-```json
-{
-  "feature": "feature-name",
-  "created": "2025-11-18T20:00:00Z",
-  "totalChunks": 13,
-  "currentChunk": 1,
-  "status": "pending",
-
-  "jiraTracking": {
-    "enabled": true,
-    "project": "RLGEEX",
-    "story": "RLGEEX-5",
-    "cloudId": "[cloudId-from-MCP]",
-    "chunkMapping": [
-      {"chunk": 1, "jiraIssueKey": "RLGEEX-19", "status": "todo"},
-      {"chunk": 2, "jiraIssueKey": "RLGEEX-20", "status": "todo"},
-      {"chunk": 3, "jiraIssueKey": "RLGEEX-21", "status": "todo"}
-    ]
-  },
-
-  "executionConfig": { ... }
-}
-```
-
-**Status Values:**
-- `todo` - Not started
-- `in_progress` - Currently being executed
-- `done` - Completed
-
-### Step 5: Add jiraIssueKey to Chunk Files
-
-In each chunk-NNN-name.md file header:
-
-```markdown
-# Chunk 1: GCP Project Creation
-
-**Status:** pending
-**jiraIssueKey:** RLGEEX-19
-**Dependencies:** none
-**Complexity:** simple
-**Estimated Time:** 10 minutes
-**Tasks:** 2
-```
-
-### Jira Integration Notes
-
-- **If Jira integration disabled:** Omit jiraTracking section entirely from plan-meta.json
-- **If Jira creation fails:** Log error, continue with plan creation, set jiraTracking.enabled = false
-- **Parent epic:** If provided, create issues as sub-tasks linked to epic
-- **cloudId:** Retrieve from MCP Jira tool response for future transitions
+**If No:**
+- Plan is complete and ready for execution
+- User can run jira-plan later if needed
 
 ## Agent Selection (Dynamic Discovery)
 
@@ -418,17 +369,17 @@ general-purpose (built-in Claude Code agent)
 
 ## Execution Handoff
 
-After saving the plan, offer execution choice:
+After saving the plan, provide user with next steps:
 
-**Option 1:** Execute now
-- Use `/cc-unleashed:plan-next` command to start execution
-- Orchestrator will analyze complexity and recommend mode per chunk
+**Jira Integration (Optional):**
+- `/cc-unleashed:jira-plan [feature-name]` - Create Jira Epic → Stories → Sub-tasks
+- Can be run now or later
 
-**Option 2:** Execute later
-- Plan saved to `.claude/plans/[feature-name]/`
-- Use `/cc-unleashed:plan-list` to see all plans
-- Use `/cc-unleashed:plan-status` to check progress
-- Use `/cc-unleashed:plan-next` when ready to start
+**Plan Execution:**
+- `/cc-unleashed:plan-next` - Execute next chunk (manual mode)
+- `/cc-unleashed:plan-execute` - Execute all remaining chunks (autonomous mode)
+- `/cc-unleashed:plan-status` - Check current progress
+- `/cc-unleashed:plan-list` - See all available plans
 
 ## Example: Transformation from Old to New
 

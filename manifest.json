@@ -1,7 +1,7 @@
 {
   "name": "rlg-cc-unleashed",
-  "version": "2.2.0",
-  "description": "Claude Code plugin with workflow automation, autonomous plan execution, and chunked planning - works with 59 specialized agents",
+  "version": "2.4.0",
+  "description": "Claude Code plugin with workflow automation, Jira integration, and chunked planning - works with 59 specialized agents",
   "claudeCodeVersion": ">=2.0.31",
   "author": "RLGeeX",
   "repository": {
@@ -36,7 +36,8 @@
         "write-plan",
         "execute-plan",
         "plan-manager",
-        "autonomous-execute"
+        "autonomous-execute",
+        "jira-plan"
       ]
     },
     "kubernetes": {

@@ -49,11 +49,34 @@ If `jiraTracking.enabled` is true in plan-meta.json, automatically manage Jira i
    - Log in executionHistory with issue details
 ```
 
-**Error Handling:**
+**Error Handling with User Choice:**
 ```
-- If Jira transition fails: Log warning, continue execution (don't block on Jira failures)
-- If Jira issue not found: Log error, update chunkMapping to note missing issue
-- If MCP Jira tools unavailable: Skip Jira updates, log warning once
+If Jira MCP connection fails or transition errors:
+  Use AskUserQuestion tool:
+
+  Question: "Jira update failed: [error message]. How would you like to proceed?"
+  Options:
+    - "Restart MCP & Retry" → Save state to TodoList, tell user to run `/mcp restart jira-pcc`
+    - "Skip Jira Updates" → Continue execution without Jira tracking
+    - "Retry Now" → Retry transition immediately (max 3 attempts)
+    - "Pause Execution" → Stop chunk execution to investigate
+
+  If "Restart MCP & Retry":
+    - Add to TodoList: "Resume chunk execution after Jira MCP restart"
+    - Tell user: "Please run `/mcp restart jira-pcc` then ask me to resume"
+    - Exit gracefully
+
+  If "Skip Jira Updates":
+    - Continue execution
+    - Log skipped updates for later reconciliation
+
+  If "Retry Now":
+    - Retry transition (max 3 times with 5-second delays)
+    - If all retries fail → Ask again with same options
+
+  If "Pause Execution":
+    - Stop execution, preserve chunk state
+    - User can investigate and resume manually
 ```
 
 ---
@@ -260,12 +283,14 @@ If jiraTracking.enabled:
   For each chunk about to execute:
     1. Find jiraIssueKey in chunkMapping
     2. If found:
-       - Transition Jira issue to "In Progress" using MCP Jira tools
-       - Update status in chunkMapping: "todo" → "in_progress"
-       - Log transition
-    3. If not found or transition fails:
-       - Log warning
-       - Continue execution (don't block on Jira)
+       Try: Transition Jira issue to "In Progress" using MCP Jira tools
+       If MCP error: Use error handling (see Jira Integration section above)
+       If success:
+         - Update status in chunkMapping: "todo" → "in_progress"
+         - Log transition
+    3. If not found:
+       - Log warning (issue key missing)
+       - Continue execution
 ```
 
 Based on confirmed mode:
@@ -336,13 +361,15 @@ If jiraTracking.enabled:
   For each completed chunk:
     1. Find jiraIssueKey in chunkMapping
     2. If found:
-       - Transition Jira issue to "Done" using MCP Jira tools
-       - Update status in chunkMapping: "in_progress" → "done"
-       - Add jiraIssueKey to executionHistory entry
-       - Log successful completion
-    3. If transition fails:
-       - Log warning
-       - Continue (don't block on Jira)
+       Try: Transition Jira issue to "Done" using MCP Jira tools
+       If MCP error: Use error handling (see Jira Integration section above)
+       If success:
+         - Update status in chunkMapping: "in_progress" → "done"
+         - Add jiraIssueKey to executionHistory entry
+         - Log successful completion
+    3. If not found:
+       - Log warning (issue key missing)
+       - Continue
 ```
 
 **If Chunk Blocked - Add Jira Comment:**
