@@ -1,6 +1,6 @@
 # CC Unleashed Commands
 
-All commands use the `/cc-unleashed:` namespace. The plugin provides 11 workflow commands for TDD, debugging, planning, and git workflows.
+All commands use the `/cc-unleashed:` namespace. The plugin provides 12 workflow commands for TDD, debugging, planning, consensus queries, and git workflows.
 
 **Note:** For agent invocation, use `@agent-name` directly (e.g., `@python-pro`, `@terraform-specialist`). Agents are installed separately from the standalone agents repository.
 
@@ -30,6 +30,36 @@ All commands use the `/cc-unleashed:` namespace. The plugin provides 11 workflow
 **Description:** Create isolated git worktree
 **Action:** Loads `skills/workflows/using-git-worktrees/`
 **Use when:** Starting new feature work in isolation
+
+## Decision Support
+
+### /cc-unleashed:consensus
+**Description:** Query multiple AI models for consensus on a decision question
+**Action:** Loads `skills/consensus/` - queries GPT-4, Gemini, and Grok via OpenRouter
+**Use when:** Facing a specific decision with clear alternatives (not brainstorming)
+
+**Prerequisites:**
+- `OPENROUTER_API_KEY` environment variable set
+- Optional: `~/.claude/config/consensus.json` to customize models
+
+**Good questions:**
+- "Should I use Redis or Memcached for session caching?"
+- "PostgreSQL vs MySQL for time-series analytics?"
+- "Monorepo or separate repos for 3 microservices?"
+
+**Better for brainstorming:**
+- "How should I architect my application?" (too broad)
+- "What features should I add?" (exploratory)
+
+**Cost:** ~$0.03-0.06 per query (3 API calls)
+
+**Example:**
+```
+/cc-unleashed:consensus
+> Should I use GraphQL or REST for a mobile app with offline support?
+```
+
+**Output:** Shows recommendations from each model with confidence levels, then presents consensus (3/3), majority (2/3), or split decision.
 
 ## Plan Management
 

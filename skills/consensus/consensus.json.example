@@ -1,0 +1,9 @@
+{
+  "models": [
+    "openai/gpt-4o-mini",
+    "google/gemini-2.5-flash",
+    "x-ai/grok-4-fast"
+  ],
+  "max_tokens": 500,
+  "timeout_seconds": 60
+}

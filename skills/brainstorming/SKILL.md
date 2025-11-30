@@ -9,6 +9,29 @@ description: Use when creating or developing, before writing code or implementat
 
 Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
 
+## Brainstorming vs Consensus
+
+**Before starting**, determine if this is the right approach:
+
+- **Brainstorming** (this skill): Open-ended exploration, creative ideation, architecture design, feature discovery
+- **Consensus** (`/cc-unleashed:consensus`): Specific decision questions with clear alternatives (e.g., "Redis vs Memcached?")
+
+If the user's request is a specific decision question rather than exploratory design, use AskUserQuestion:
+```
+AskUserQuestion:
+{
+  "question": "This seems like a specific decision question. Would you prefer consensus (query multiple AI models) or brainstorming (explore options together)?",
+  "header": "Approach",
+  "multiSelect": false,
+  "options": [
+    {"label": "Consensus", "description": "Query GPT, Gemini, and Grok for their recommendations"},
+    {"label": "Brainstorming", "description": "Explore options collaboratively and discuss trade-offs"}
+  ]
+}
+```
+
+If they choose Consensus, invoke the consensus skill instead.
+
 Start by understanding the current project context, then ask questions one at a time to refine the idea. Once you understand what you're building, present the design in small sections (200-300 words), checking after each section whether it looks right so far.
 
 ## The Process

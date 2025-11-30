@@ -5,15 +5,15 @@
     "url": "https://github.com/RLGeeX"
   },
   "metadata": {
-    "description": "RLG's curated Claude Code plugin with intelligent context management, micro-chunked planning, Jira Epic/Story/Sub-task integration, and @story-writer design workflow",
-    "version": "2.4.1"
+    "description": "RLG's curated Claude Code plugin with intelligent context management, multi-AI consensus queries, Jira integration, and micro-chunked planning",
+    "version": "2.5.0"
   },
   "plugins": [
     {
       "name": "cc-unleashed",
       "source": "./",
-      "description": "Advanced Claude Code plugin with @story-writer design, micro-chunked planning (300-500 tokens), Jira Epic/Story/Sub-task hierarchy, MCP error handling, smart orchestration, and automated subagent execution",
-      "version": "2.4.1",
+      "description": "Advanced Claude Code plugin with multi-AI consensus queries (GPT/Gemini/Grok via OpenRouter), micro-chunked planning, Jira hierarchy, smart orchestration, and automated subagent execution",
+      "version": "2.5.0",
       "author": {
         "name": "RLGeeX",
         "url": "https://github.com/RLGeeX"
