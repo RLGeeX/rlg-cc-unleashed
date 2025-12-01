@@ -13,16 +13,16 @@ Query multiple AI models (GPT-4, Gemini, Grok) via OpenRouter to get diverse per
 **DO NOT** dispatch a Task agent or make API calls manually.
 **DO** run the consensus script directly using the Bash tool.
 
-### Script Location
+### Script Path
 
-```
-/home/jfogarty/git/rlgeex/rlg-cc/rlg-cc-unleashed/skills/consensus/scripts/consensus.sh
+```bash
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/consensus/scripts/consensus.sh
 ```
 
 ### Execution
 
 ```bash
-/home/jfogarty/git/rlgeex/rlg-cc/rlg-cc-unleashed/skills/consensus/scripts/consensus.sh "YOUR QUESTION HERE"
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/consensus/scripts/consensus.sh "YOUR QUESTION HERE"
 ```
 
 ## Process
@@ -40,7 +40,7 @@ If vague, ask user to clarify before running.
 
 Execute with the Bash tool:
 ```bash
-/home/jfogarty/git/rlgeex/rlg-cc/rlg-cc-unleashed/skills/consensus/scripts/consensus.sh "Should I use X or Y for Z?"
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/consensus/scripts/consensus.sh "Should I use X or Y for Z?"
 ```
 
 ### 3. Summarize Results

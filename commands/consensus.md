@@ -18,10 +18,10 @@ If the user provided a question with the command, use it. Otherwise, ask:
 
 ### Step 2: Run the Script
 
-Execute this command with the user's question:
+Execute with the user's question:
 
 ```bash
-/home/jfogarty/git/rlgeex/rlg-cc/rlg-cc-unleashed/skills/consensus/scripts/consensus.sh "USER'S QUESTION HERE"
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/consensus/scripts/consensus.sh "USER'S QUESTION HERE"
 ```
 
 ### Step 3: Present Results

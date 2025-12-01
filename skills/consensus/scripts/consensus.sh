@@ -183,7 +183,13 @@ extract_response() {
     # Check for error in response
     if jq -e '.error' "$file" &>/dev/null; then
         local error_msg
-        error_msg=$(jq -r '.error.message // .error // "Unknown error"' "$file")
+        # Handle both string errors and object errors with .message field
+        error_msg=$(jq -r '
+          if (.error | type) == "string" then .error
+          elif (.error | type) == "object" then (.error.message // "Unknown error")
+          else "Unknown error"
+          end
+        ' "$file" 2>/dev/null || echo "Error parsing response")
         echo "ERROR: $error_msg"
         return 1
     fi

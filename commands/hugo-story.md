@@ -28,7 +28,7 @@ Create a blog story for the rlg-hugo site from a Jira ticket using the `hugo-sto
 - The story goes in: `hugo/content/news/[slug].md`
 - Use placeholder image: `/images/news/placeholder.svg`
 - Author is always: "Chris Fogarty"
-- Git repo is at: `/home/jfogarty/git/rlgeex/rlg-hugo`
+- Git repo is at: current working directory (start Claude in Hugo project root)
 
 ## If No Jira Key Provided
 

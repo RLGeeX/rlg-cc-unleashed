@@ -9,9 +9,10 @@ Autonomous workflow for creating Hugo blog stories from Jira tickets with multi-
 
 ## Prerequisites
 
-1. **Jira MCP Server**: Any connected Jira MCP (e.g., jira-pcc, jira-ti, jira-rlg, etc.)
-2. **Git**: Configured for rlg-hugo repository
-3. **gcloud CLI**: Authenticated for Cloud Build monitoring
+1. **Working Directory**: Start Claude in the Hugo project root directory
+2. **Jira MCP Server**: Any connected Jira MCP (e.g., jira-pcc, jira-ti, jira-rlg, etc.)
+3. **Git**: Configured for Hugo repository
+4. **gcloud CLI**: Authenticated for Cloud Build monitoring
 
 ## Workflow Overview
 
@@ -117,7 +118,7 @@ tags: [\"tag1\", \"tag2\", \"tag3\"]
 **Step 2.3: Write Draft File**
 
 After ghost-writer returns, write the content to:
-`/home/jfogarty/git/rlgeex/rlg-hugo/hugo/content/news/[slug].md`
+`hugo/content/news/[slug].md`
 
 ### Phase 3: Review Loop
 
@@ -240,7 +241,7 @@ Respond with EXACTLY one of:
 **Step 5.1: Git Operations**
 
 ```bash
-cd /home/jfogarty/git/rlgeex/rlg-hugo
+# Already in Hugo project root
 
 # Add the story file
 git add hugo/content/news/[slug].md
