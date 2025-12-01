@@ -5,6 +5,20 @@ description: Automated subagent execution for micro-chunked plans - dispatches f
 
 # Execute Plan With Subagents
 
+## CRITICAL: Agent Selection Rules
+
+**YOU MUST FOLLOW THESE RULES - NO EXCEPTIONS:**
+
+1. **Every task MUST have an Agent field** in the chunk file (e.g., `**Agent:** python-pro`)
+2. **Use the specified agent** from the chunk - python-pro, security-engineer, react-specialist, etc.
+3. **NEVER use general-purpose for implementation** - it lacks domain expertise and will produce inferior code
+4. **If chunk is missing Agent field: STOP and ask user** - don't guess, don't fallback to general-purpose
+5. **NEVER abandon this workflow** to "do it yourself" - the orchestrated process exists for quality control
+
+**Why this matters:** Using general-purpose for everything bypasses specialized expertise (security-engineer for security fixes, python-pro for Python code, test-automator for tests). This leads to poor quality code and missed issues.
+
+---
+
 ## Overview
 
 Automated execution of micro-chunked plans using fresh subagents per task or chunk. This skill is called by the execute-plan orchestrator when automated mode is selected. It reads chunk files (2-3 tasks, 300-500 tokens), dispatches implementation and code-review subagents, and tracks progress.
@@ -46,10 +60,14 @@ Automated execution of micro-chunked plans using fresh subagents per task or chu
    - Verification commands
 5. Verify dependencies satisfied (check previous chunks complete)
 6. Validate agent IDs exist (check against discovered agents)
+   - If ANY task is missing Agent field: STOP immediately
+   - Report: "Task N missing agent assignment - cannot proceed"
+   - Ask user to update chunk file with correct agent
+   - NEVER fallback to general-purpose for implementation
 7. Select code reviewer agent:
    - Find quality agents with "review" in name/description
    - Prefer: code-reviewer, architect-reviewer, qa-expert
-   - Fallback: general-purpose if none found
+   - Fallback for review ONLY: general-purpose (review is less specialized)
    - Cache for this execution
 8. Create TodoWrite with tasks from chunk
 ```
@@ -828,7 +846,10 @@ Return to orchestrator:
 
 ## Red Flags
 
-**Never:**
+**NEVER:**
+- **Use general-purpose subagent for implementation tasks** - use the specialized agent from the chunk file
+- **Abandon the plan-execute workflow** to "do it yourself" - the workflow exists for quality control
+- **Guess an agent** if chunk is missing Agent field - STOP and ask user
 - Skip code review (always review after task/chunk)
 - Proceed with critical issues unfixed
 - Dispatch parallel chunks with file conflicts (check first!)
@@ -836,7 +857,10 @@ Return to orchestrator:
 - Exceed 2 fix attempts (escalate to human)
 - Parallel execute without user confirmation
 
-**Always:**
+**ALWAYS:**
+- **Read the Agent field from each task** and use that specific agent
+- **Use specialized agents**: python-pro for Python, security-engineer for security, test-automator for tests
+- **Stop if Agent field missing** - ask user to fix the chunk file
 - Fresh subagent per task/chunk (no reuse)
 - Full task context in prompt (self-contained)
 - TDD approach (test first)

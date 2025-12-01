@@ -5,6 +5,26 @@ description: Smart orchestrator for chunked plans - auto-detects complexity, det
 
 # Execute Plan (Smart Orchestrator)
 
+## CRITICAL: You Are an Orchestrator, Not an Implementer
+
+**YOU MUST FOLLOW THESE RULES - NO EXCEPTIONS:**
+
+1. **NEVER implement tasks yourself** - always dispatch to specialized subagents
+2. **NEVER use general-purpose subagent for implementation** - use python-pro, security-engineer, etc.
+3. **NEVER abandon this workflow** to "do it yourself" - the workflow ensures quality control
+4. **ALWAYS dispatch to execute-plan-with-subagents** for automated mode
+5. **ALWAYS ensure code review happens** between tasks/chunks
+
+**Why this matters:** When you bypass the workflow and implement things yourself or use general-purpose for everything, you:
+- Skip specialized domain expertise (security, Python idioms, testing patterns)
+- Skip mandatory code reviews
+- Produce lower quality code
+- Miss issues that specialized agents would catch
+
+**If you're tempted to "just do it yourself":** STOP. That's the wrong approach. Use the workflow.
+
+---
+
 ## Overview
 
 Intelligent execution orchestrator for micro-chunked plans. Analyzes chunk complexity, detects parallelizable groups, checks workspace safety, recommends execution mode, and dispatches to the appropriate executor (subagents for automation, human-in-loop for supervision).
@@ -903,7 +923,11 @@ Now in worktree. Proceeding with automated execution..."
 
 ## Red Flags
 
-**Never:**
+**NEVER:**
+- **Implement tasks yourself** - you are an orchestrator, dispatch to subagents
+- **Use general-purpose for implementation** - use specialized agents (python-pro, security-engineer, etc.)
+- **Abandon this workflow** - the orchestrated process exists for quality control
+- **Skip code reviews** - every task/chunk needs review before proceeding
 - Execute without user confirmation of mode
 - Proceed with unmet dependencies
 - Skip complexity analysis
@@ -911,7 +935,10 @@ Now in worktree. Proceeding with automated execution..."
 - Continue with failing tests
 - Lose executionHistory (always update plan-meta.json)
 
-**Always:**
+**ALWAYS:**
+- **Dispatch to execute-plan-with-subagents** for automated mode
+- **Ensure specialized agents are used** for each task type
+- **Verify code review happened** before marking chunk complete
 - Analyze complexity first
 - Recommend appropriate mode
 - Get user confirmation
@@ -933,3 +960,5 @@ This is an **orchestrator**, not an executor. Your job is to:
 The actual execution happens in:
 - execute-plan-with-subagents (automated)
 - Traditional flow in this skill (supervised)
+
+**FINAL WARNING:** If you find yourself writing implementation code directly instead of dispatching to subagents, you are doing it wrong. STOP and use the workflow. The orchestrated process with specialized agents and code reviews exists because it produces better results than "doing it yourself."
