@@ -1,6 +1,6 @@
 # CC Unleashed Commands
 
-All commands use the `/cc-unleashed:` namespace. The plugin provides 12 workflow commands for TDD, debugging, planning, consensus queries, and git workflows.
+All commands use the `/cc-unleashed:` namespace. The plugin provides 14 workflow commands for TDD, debugging, planning, consensus queries, content creation, and git workflows.
 
 **Note:** For agent invocation, use `@agent-name` directly (e.g., `@python-pro`, `@terraform-specialist`). Agents are installed separately from the standalone agents repository.
 
@@ -60,6 +60,39 @@ All commands use the `/cc-unleashed:` namespace. The plugin provides 12 workflow
 ```
 
 **Output:** Shows recommendations from each model with confidence levels, then presents consensus (3/3), majority (2/3), or split decision.
+
+## Content Creation
+
+### /cc-unleashed:hugo-story [JIRA-KEY]
+**Description:** Create Hugo blog story from Jira ticket with multi-agent review
+**Action:** Loads `skills/hugo-story/` - orchestrates ghost-writer, copy-editor, and content-reviewer
+**Use when:** Creating blog content from a Jira ticket for the rlg-hugo site
+
+**Prerequisites:**
+- Jira MCP server connected (jira-pcc or jira-ti)
+- Git configured for rlg-hugo repository
+- gcloud CLI authenticated for Cloud Build monitoring
+
+**Workflow:**
+1. Fetch Jira ticket requirements
+2. @ghost-writer creates initial draft
+3. @copy-editor and @content-reviewer provide feedback
+4. Iterate until consensus (max 3 rounds)
+5. If no consensus after 3 rounds, save as draft and ask user
+6. On consensus, commit, push, and monitor Cloud Build
+7. Update Jira ticket to Done on successful deployment
+
+**Example:**
+```
+/cc-unleashed:hugo-story PROJ-123
+```
+
+**Output:** Creates `hugo/content/news/[slug].md`, deploys via Cloud Build to Cloudflare Pages.
+
+**Agents involved:**
+- `@ghost-writer` - Creates engaging blog content
+- `@copy-editor` - Reviews grammar, spelling, style
+- `@content-reviewer` - Reviews structure, engagement, SEO
 
 ## Plan Management
 
@@ -197,7 +230,7 @@ Use @tdd-enforcer or invoke the TDD skill to enforce RED-GREEN-REFACTOR cycle.
 
 ## Available Agents
 
-The cc-unleashed ecosystem includes 59 specialized agents installed separately. Invoke with `@agent-name`:
+The cc-unleashed ecosystem includes 62 specialized agents installed separately. Invoke with `@agent-name`:
 
 **Development:** `@python-pro`, `@typescript-pro`, `@react-specialist`, `@nextjs-specialist`, `@fastapi-pro`, `@backend-architect`, `@frontend-developer`, `@fullstack-developer`, `@api-architect`, `@microservices-architect`, `@dotnet-core-expert`, `@csharp-developer`, `@postgres-pro`, `@ui-designer`, `@slack-integration-specialist`, `@material-ui-specialist`, `@graphql-specialist`, `@data-visualization-specialist`
 
@@ -212,5 +245,7 @@ The cc-unleashed ecosystem includes 59 specialized agents installed separately. 
 **AI/ML:** `@langgraph-specialist`, `@vector-search-specialist`
 
 **Business:** `@financial-data-analyst`
+
+**Creative:** `@ghost-writer`, `@copy-editor`, `@content-reviewer`
 
 For full details, see the [agents catalog](https://github.com/rlgeex/rlg-cc-subagents).

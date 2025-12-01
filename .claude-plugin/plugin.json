@@ -1,7 +1,7 @@
 {
   "name": "cc-unleashed",
-  "version": "2.5.0",
-  "description": "Claude Code plugin with workflow automation, multi-AI consensus queries, Jira integration, and chunked execution - works with 59 specialized agents",
+  "version": "2.6.0",
+  "description": "Claude Code plugin with workflow automation, Hugo story generation, multi-AI consensus queries, Jira integration, and chunked execution - works with 62 specialized agents",
   "author": {
     "name": "RLGeeX",
     "url": "https://github.com/RLGeeX"
