@@ -1,52 +1,49 @@
 ---
 description: Query multiple AI models (GPT, Gemini, Grok) for consensus on a decision question
+allowed-tools: Bash, AskUserQuestion
 ---
 
 # Consensus Query
 
-Load the consensus skill to query multiple AI models via OpenRouter and compare their recommendations.
+Query multiple AI models via OpenRouter to get diverse perspectives on a decision question.
 
-## What This Does
+## IMPORTANT: How to Execute This Command
 
-Sends your question to 3 different AI models simultaneously:
-- GPT-4 (OpenAI)
-- Gemini Pro (Google)
-- Grok (xAI)
+You MUST run the consensus bash script directly. Do NOT dispatch a Task agent or make API calls manually.
 
-Then presents you with either:
-- **Consensus** (3/3 agree) - Clear recommendation
-- **Majority** (2/3 agree) - Recommendation with noted dissent
-- **Split** (all differ) - Multiple perspectives to consider
+### Step 1: Get the Question
+
+If the user provided a question with the command, use it. Otherwise, ask:
+- What specific technical decision do you need consensus on?
+
+### Step 2: Run the Script
+
+Execute this command with the user's question:
+
+```bash
+/home/jfogarty/git/rlgeex/rlg-cc/rlg-cc-unleashed/skills/consensus/scripts/consensus.sh "USER'S QUESTION HERE"
+```
+
+### Step 3: Present Results
+
+After the script runs, summarize:
+- **3/3 agree**: "Unanimous consensus for [X]"
+- **2/3 agree**: "Majority (2-1) for [X], dissent: [Y]"
+- **All differ**: "No consensus - GPT: [X], Gemini: [Y], Grok: [Z]"
 
 ## Prerequisites
 
-You must have `OPENROUTER_API_KEY` set in your environment:
-```bash
-export OPENROUTER_API_KEY="sk-or-your-key-here"
-```
+- `OPENROUTER_API_KEY` environment variable must be set
+- Configure models in `~/.claude/config/consensus.json`
 
-Get a key at https://openrouter.ai
+## Good Questions
 
-## Usage
+- "Should I use Redis or Memcached for session caching?"
+- "PostgreSQL vs MySQL for time-series analytics?"
+- "Monorepo or separate repos for 3 microservices?"
 
-After invoking `/cc-unleashed:consensus`, provide your decision question. Good questions are:
-- Specific and technical
-- Have clear alternatives to compare
-- Not open-ended brainstorming
+## Not Good For
 
-**Good examples:**
-- "Should I use Redis or Memcached for session caching in a Node.js app?"
-- "PostgreSQL vs MySQL for a time-series analytics workload?"
-- "Is it better to use a monorepo or separate repos for 3 microservices?"
-
-**Better handled by brainstorming:**
-- "How should I architect my application?" (too broad)
-- "What features should I add?" (creative/exploratory)
-
-## Cost
-
-Each query costs approximately $0.03-0.06 (3 API calls). Use for meaningful decisions.
-
----
-
-Use the `consensus` skill to handle this request.
+- Broad design questions (use `/cc-unleashed:brainstorm`)
+- Code generation
+- Subjective preferences
