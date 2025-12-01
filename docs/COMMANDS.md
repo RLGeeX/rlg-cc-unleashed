@@ -69,7 +69,7 @@ All commands use the `/cc-unleashed:` namespace. The plugin provides 14 workflow
 **Use when:** Creating blog content from a Jira ticket for the rlg-hugo site
 
 **Prerequisites:**
-- Jira MCP server connected (jira-pcc or jira-ti)
+- Any Jira MCP server connected (jira-pcc, jira-ti, jira-rlg, etc.)
 - Git configured for rlg-hugo repository
 - gcloud CLI authenticated for Cloud Build monitoring
 

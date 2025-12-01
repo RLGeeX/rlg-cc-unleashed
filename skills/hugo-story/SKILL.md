@@ -9,7 +9,7 @@ Autonomous workflow for creating Hugo blog stories from Jira tickets with multi-
 
 ## Prerequisites
 
-1. **Jira MCP Server**: Connected (jira-pcc or jira-ti)
+1. **Jira MCP Server**: Any connected Jira MCP (e.g., jira-pcc, jira-ti, jira-rlg, etc.)
 2. **Git**: Configured for rlg-hugo repository
 3. **gcloud CLI**: Authenticated for Cloud Build monitoring
 
@@ -29,11 +29,15 @@ Jira Ticket → Ghost Writer → Copy Editor + Content Reviewer
 
 **Step 1.1: Detect Jira MCP Server**
 
-Check which Jira MCP server is available:
+Check which Jira MCP server is available by looking for tools with `mcp__jira` prefix:
 
-```bash
-# The skill should dynamically detect available Jira MCP tools
-# Look for either jira-pcc or jira-ti prefixes in available tools
+```
+# Look for any available Jira MCP tools in the current session
+# Examples: mcp__jira-pcc__getJiraIssue, mcp__jira-rlg__getJiraIssue, etc.
+# The prefix pattern is: mcp__jira-{instance}__getJiraIssue
+
+# Use whichever Jira MCP server is connected - the tool name reveals the instance
+# e.g., mcp__jira-rlg__getJiraIssue means use jira-rlg server
 ```
 
 **Step 1.2: Fetch Jira Ticket**
