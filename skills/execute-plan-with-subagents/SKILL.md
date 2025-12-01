@@ -372,7 +372,17 @@ base_sha=$(git rev-parse HEAD~1)
 head_sha=$(git rev-parse HEAD)
 ```
 
-**D. Dispatch Code Reviewer Subagent**
+**D. MANDATORY: Code Review (NO EXCEPTIONS)**
+
+**THIS STEP CANNOT BE SKIPPED. Code review is REQUIRED for every task.**
+
+```
+STOP AND VERIFY:
+Before proceeding, confirm you have dispatched the implementation subagent
+and received its report. If not, go back to Step A.
+
+YOU MUST NOW DISPATCH CODE REVIEWER. There is no path forward without review.
+```
 
 ```
 Select code reviewer agent dynamically:
@@ -380,6 +390,11 @@ Select code reviewer agent dynamically:
   2. Find agents with "review" in name or description
   3. Prefer: code-reviewer, architect-reviewer, qa-expert
   4. Fallback: general-purpose if no reviewer found
+
+IMPORTANT: If you cannot find a reviewer agent, you MUST:
+  - STOP execution
+  - Report: "No code reviewer agent available"
+  - Do NOT proceed without review
 
 Use Task tool with selected reviewer agent:
 
@@ -440,9 +455,14 @@ After all tasks (2-3) in chunk complete:
 ```
 1. Run chunk completion checklist (from chunk file)
 2. Verify all tests passing
-3. Update plan-meta.json:
+3. VERIFY REVIEW DATA EXISTS (MANDATORY):
+   - reviewCompleted must be true
+   - reviewedBy must have agent name
+   - reviewAssessment must be "Ready"
+   - If ANY of these missing → DO NOT mark chunk complete
+4. Update plan-meta.json:
    - Increment currentChunk
-   - Add executionHistory entry:
+   - Add executionHistory entry WITH REVIEW FIELDS:
      {
        "chunk": N,
        "mode": "automated",
@@ -452,22 +472,72 @@ After all tasks (2-3) in chunk complete:
        "subagentInvocations": 7,  // 2 per task (impl + review) + 3 fixes
        "testsAdded": 6,
        "testsPassing": true,
-       "issues": ["minor: could improve error messages"]
+       "issues": ["minor: could improve error messages"],
+
+       "reviewCompleted": true,
+       "reviewedBy": "code-reviewer",
+       "reviewAssessment": "Ready",
+       "reviewTimestamp": "2025-11-12T15:07:30Z",
+       "criticalIssuesFound": 0,
+       "criticalIssuesResolved": 0
      }
-4. Report chunk completion to orchestrator
+5. Report chunk completion to orchestrator
 ```
+
+**CRITICAL: Review Fields are REQUIRED**
+
+The following fields MUST be present in executionHistory for a chunk to be considered complete:
+- `reviewCompleted`: Must be `true`
+- `reviewedBy`: Must contain the reviewer agent name (e.g., "code-reviewer")
+- `reviewAssessment`: Must be "Ready" (or "Needs fixes" if issues were resolved)
+- `reviewTimestamp`: When review completed
+
+**If review was not performed, you MUST:**
+1. NOT update plan-meta.json
+2. NOT mark chunk complete
+3. Report to orchestrator: `{"status": "review_missing", "error": "Code review was not performed"}`
+4. The orchestrator will handle the failure
 
 ### Step 4: Return Control
 
 ```
-Return to execute-plan orchestrator with:
-- Chunk N complete: [summary]
-- Tests added: 6
-- All tests passing: true
-- Duration: 8 minutes
-- Minor issues: [list]
-- Next: chunk-006-session-mgmt (complex - recommend supervised)
+Return to execute-plan orchestrator with REVIEW DATA:
+
+{
+  "status": "complete",
+  "chunk": N,
+  "summary": "[what was built]",
+  "testsAdded": 6,
+  "testsPassing": true,
+  "duration": 8,
+  "minorIssues": ["list"],
+
+  "reviewData": {
+    "reviewCompleted": true,
+    "reviewedBy": "code-reviewer",
+    "reviewAssessment": "Ready",
+    "reviewTimestamp": "2025-11-12T15:07:30Z",
+    "criticalIssuesFound": 0,
+    "criticalIssuesResolved": 0
+  },
+
+  "nextChunk": {
+    "number": N+1,
+    "name": "chunk-006-session-mgmt",
+    "complexity": "complex",
+    "recommendation": "supervised"
+  }
+}
 ```
+
+**IMPORTANT: The orchestrator will verify reviewData exists.**
+
+If reviewData is missing or incomplete, the orchestrator will:
+1. NOT mark chunk complete
+2. Fail the Review Verification Gate
+3. Ask user how to proceed
+
+**Never return without reviewData unless returning an error status.**
 
 ---
 
@@ -850,7 +920,9 @@ Return to orchestrator:
 - **Use general-purpose subagent for implementation tasks** - use the specialized agent from the chunk file
 - **Abandon the plan-execute workflow** to "do it yourself" - the workflow exists for quality control
 - **Guess an agent** if chunk is missing Agent field - STOP and ask user
-- Skip code review (always review after task/chunk)
+- **Skip code review** - review is MANDATORY, there is NO exception
+- **Return without reviewData** - orchestrator will reject incomplete results
+- **Mark chunk complete without review** - review gate will fail
 - Proceed with critical issues unfixed
 - Dispatch parallel chunks with file conflicts (check first!)
 - Continue with failing tests
@@ -861,13 +933,16 @@ Return to orchestrator:
 - **Read the Agent field from each task** and use that specific agent
 - **Use specialized agents**: python-pro for Python, security-engineer for security, test-automator for tests
 - **Stop if Agent field missing** - ask user to fix the chunk file
+- **Dispatch code reviewer after EVERY task** - no exceptions
+- **Include reviewData in return value** - orchestrator requires it
+- **Track review fields**: reviewCompleted, reviewedBy, reviewAssessment, reviewTimestamp
 - Fresh subagent per task/chunk (no reuse)
 - Full task context in prompt (self-contained)
 - TDD approach (test first)
 - Check parallelizable metadata from plan-meta.json
 - Analyze file paths before parallel execution
 - Ask user to confirm parallel mode
-- Update plan-meta.json after chunk(s)
+- Update plan-meta.json after chunk(s) WITH review fields
 - Report to orchestrator when complete/blocked
 
 ---

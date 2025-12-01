@@ -99,11 +99,80 @@ If user selects "Yes":
 
 ### Step 3: Execute All Chunks Loop
 
+**CRITICAL: Review Chain Verification**
+
+Before and after each chunk, verify the review chain is intact:
+
+```python
+def verify_review_chain(plan_meta, current_chunk):
+    """
+    Verify all previous chunks have proper review data.
+    This ensures no chunk was completed without code review.
+    """
+    errors = []
+
+    for entry in plan_meta.executionHistory:
+        chunk_num = entry.get("chunk")
+        if chunk_num < current_chunk:
+            # Check required review fields
+            if not entry.get("reviewCompleted"):
+                errors.append(f"Chunk {chunk_num} missing reviewCompleted flag")
+            if not entry.get("reviewedBy"):
+                errors.append(f"Chunk {chunk_num} missing reviewedBy field")
+            if entry.get("reviewAssessment") == "Major concerns":
+                errors.append(f"Chunk {chunk_num} has unresolved 'Major concerns'")
+
+    return errors
+```
+
+**IF REVIEW CHAIN BROKEN:**
+```
+STOP autonomous execution immediately.
+
+Present to user:
+"❌ Review Chain Verification Failed
+
+Previous chunk(s) are missing code review data:
+[List errors]
+
+Autonomous execution cannot continue with broken review chain.
+This indicates code review was skipped, which violates quality gates."
+
+Use AskUserQuestion:
+{
+  "questions": [{
+    "question": "Review chain is broken. How to proceed?",
+    "header": "Review Chain",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "Run missing reviews",
+        "description": "Go back and run code review for chunks that were skipped."
+      },
+      {
+        "label": "Abort autonomous execution",
+        "description": "Stop and investigate why reviews were skipped."
+      }
+    ]
+  }]
+}
+
+There is NO option to continue without fixing the review chain.
+```
+
+---
+
 ```
 start_time = current_time()
 chunks_executed = []
 total_subagent_calls = 0
 total_tests_added = 0
+
+# FIRST: Verify review chain before starting
+review_chain_errors = verify_review_chain(plan_meta, currentChunk)
+if review_chain_errors:
+    present_review_chain_failure(review_chain_errors)
+    return  # Cannot continue
 
 while currentChunk <= totalChunks:
     # Show progress
@@ -126,11 +195,47 @@ while currentChunk <= totalChunks:
 
     # Check result
     if result.status == "complete":
+        # MANDATORY: Verify review was performed for this chunk
+        if not result.reviewData or not result.reviewData.get("reviewCompleted"):
+            print(f"\n❌ REVIEW VERIFICATION FAILED for chunk {currentChunk}")
+            print(f"   Code review was NOT performed or not recorded.")
+            print(f"   Cannot mark chunk as complete without review.")
+
+            # STOP autonomous execution
+            use AskUserQuestion:
+            {
+              "questions": [{
+                "question": "Chunk completed without code review. How to proceed?",
+                "header": "Missing Review",
+                "multiSelect": false,
+                "options": [
+                  {
+                    "label": "Run code review now",
+                    "description": "Dispatch code reviewer for this chunk before continuing."
+                  },
+                  {
+                    "label": "Abort autonomous execution",
+                    "description": "Stop and investigate why review was skipped."
+                  }
+                ]
+              }]
+            }
+
+            # Handle user choice
+            if user_choice == "Run code review now":
+                dispatch_code_reviewer(currentChunk)
+                # Re-check result
+            else:
+                break  # Exit loop
+
+        # Review verified - proceed
         chunks_executed.append({
             "chunk": currentChunk,
             "name": result.chunk_name,
             "duration": result.duration,
-            "tests_added": result.tests_added
+            "tests_added": result.tests_added,
+            "reviewedBy": result.reviewData.get("reviewedBy"),
+            "reviewAssessment": result.reviewData.get("reviewAssessment")
         })
         total_subagent_calls += result.subagent_invocations
         total_tests_added += result.tests_added
@@ -139,11 +244,21 @@ while currentChunk <= totalChunks:
         meta = read_plan_meta()
         currentChunk = meta.currentChunk
 
-        # Brief progress update
+        # Brief progress update WITH REVIEW STATUS
         print(f"\n✅ Chunk {currentChunk-1} complete")
         print(f"   Duration: {result.duration} min")
         print(f"   Tests: {result.tests_added} added, all passing")
+        print(f"   Review: {result.reviewData.get('reviewedBy')} → {result.reviewData.get('reviewAssessment')}")
         print(f"   Remaining: {totalChunks - currentChunk + 1} chunks\n")
+
+    elif result.status == "review_missing" or result.status == "review_gate_failed":
+        # CRITICAL: Review was skipped - cannot continue
+        print(f"\n❌ REVIEW GATE FAILED at chunk {currentChunk}")
+        print(f"   Code review is mandatory but was not completed.")
+        print(f"   Error: {result.error}")
+        print(f"\n   Stopping autonomous execution.")
+        print(f"   You must run code review before continuing.")
+        break
 
     elif result.status == "blocked":
         # Stop execution, report blockage
@@ -408,16 +523,21 @@ Finishing branch...
 
 **Never:**
 - Execute without user confirmation at start
+- **Continue if review was skipped** - review is mandatory for every chunk
+- **Proceed with broken review chain** - all previous chunks must have review data
 - Continue with failing tests
 - Skip error reporting
 - Lose progress on interruption
+- **Accept chunk completion without reviewData** - orchestrator must return review info
 
 **Always:**
 - Ask user to confirm before starting
-- Show progress updates between chunks
-- Stop on critical errors
-- Provide clear summary at end
-- Update plan-meta.json after each chunk (via orchestrator)
+- **Verify review chain before starting** - check all previous chunks have review data
+- **Verify reviewData after each chunk** - confirm review was performed
+- Show progress updates between chunks (including review status)
+- Stop on critical errors OR missing reviews
+- Provide clear summary at end (including review stats)
+- Update plan-meta.json after each chunk (via orchestrator) WITH review fields
 
 ---
 

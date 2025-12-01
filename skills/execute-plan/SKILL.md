@@ -101,6 +101,122 @@ If Jira MCP connection fails or transition errors:
 
 ---
 
+## MANDATORY: Pre-Execution Checklist
+
+**THIS CHECKLIST MUST PASS BEFORE ANY EXECUTION - NO EXCEPTIONS**
+
+Before executing ANY chunk, verify ALL of the following:
+
+### Checklist Items
+
+```
+□ 1. PLAN VALIDITY
+     - plan-meta.json exists and is valid JSON
+     - status is "ready" or "in-progress" (NOT "pending")
+     - planReview.assessment is "Ready" (plan was reviewed before execution)
+
+□ 2. CHUNK VALIDITY
+     - Chunk file exists: chunk-NNN-name.md
+     - All tasks in chunk have **Agent:** field
+     - All Agent fields reference valid agents
+
+□ 3. PREVIOUS CHUNK REVIEW (if currentChunk > 1)
+     - Previous chunk exists in executionHistory
+     - Previous chunk has reviewCompleted: true
+     - Previous chunk reviewAssessment is "Ready" (not "Major concerns")
+
+□ 4. DEPENDENCIES SATISFIED
+     - All chunks listed in Dependencies field are complete
+     - No blocking errors from previous chunks
+```
+
+### Verification Process
+
+```python
+def pre_execution_checklist(plan_meta, chunk_number):
+    errors = []
+
+    # 1. Plan Validity
+    if plan_meta.status == "pending":
+        errors.append("BLOCKER: Plan status is 'pending' - was plan reviewed? Run write-plan validation first.")
+
+    if not plan_meta.planReview or plan_meta.planReview.assessment != "Ready":
+        errors.append("BLOCKER: Plan was not reviewed by architect-reviewer. Cannot execute unreviewed plan.")
+
+    # 2. Chunk Validity
+    chunk_file = f"chunk-{chunk_number:03d}-*.md"
+    if not chunk_file_exists(chunk_file):
+        errors.append(f"BLOCKER: Chunk file not found: {chunk_file}")
+
+    tasks = parse_chunk_tasks(chunk_file)
+    for task in tasks:
+        if not task.has_agent_field():
+            errors.append(f"BLOCKER: Task '{task.name}' missing Agent field. Fix chunk file first.")
+
+    # 3. Previous Chunk Review (critical!)
+    if chunk_number > 1:
+        prev_entry = get_execution_history_entry(chunk_number - 1)
+        if not prev_entry:
+            errors.append(f"BLOCKER: No execution history for chunk {chunk_number - 1}. Was it executed?")
+        elif not prev_entry.get("reviewCompleted"):
+            errors.append(f"BLOCKER: Chunk {chunk_number - 1} was NOT reviewed. Code review is mandatory.")
+        elif prev_entry.get("reviewAssessment") == "Major concerns":
+            errors.append(f"BLOCKER: Chunk {chunk_number - 1} review had 'Major concerns'. Must resolve before continuing.")
+
+    # 4. Dependencies
+    chunk_deps = get_chunk_dependencies(chunk_file)
+    for dep in chunk_deps:
+        if not is_chunk_complete(dep):
+            errors.append(f"BLOCKER: Dependency chunk {dep} is not complete.")
+
+    return errors
+```
+
+### IF ANY CHECK FAILS
+
+```
+STOP IMMEDIATELY. Do not proceed with execution.
+
+Present to user:
+"❌ Pre-Execution Checklist Failed
+
+The following issues must be resolved before execution:
+
+[List all errors]
+
+Options:"
+
+Use AskUserQuestion:
+{
+  "questions": [{
+    "question": "How would you like to resolve these blockers?",
+    "header": "Blockers",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "Fix and retry",
+        "description": "I'll fix the issues, then run /cc-unleashed:plan-next again."
+      },
+      {
+        "label": "Skip check (DANGEROUS)",
+        "description": "Proceed anyway. WARNING: This bypasses quality gates and may cause issues."
+      },
+      {
+        "label": "Abort execution",
+        "description": "Stop execution and investigate the issues manually."
+      }
+    ]
+  }]
+}
+
+If user selects "Skip check (DANGEROUS)":
+  - Log warning: "User bypassed pre-execution checklist"
+  - Add to executionHistory: "checklistBypassed": true
+  - Proceed with execution BUT flag the chunk
+```
+
+---
+
 ## The Orchestration Flow
 
 ### Step 0: Workspace Safety Check
@@ -371,9 +487,99 @@ This gives speed for simple tasks,
 control for complex ones.
 ```
 
-### Step 4: Track, Transition Jira & Report
+### Step 4: MANDATORY Review Verification Gate
 
-After chunk complete (or blocked):
+**BEFORE marking chunk complete, you MUST verify code review happened.**
+
+```
+REVIEW VERIFICATION CHECKLIST:
+□ Code reviewer subagent was dispatched (check Task tool calls)
+□ Review report was received (has assessment field)
+□ Review assessment is "Ready" (not "Major concerns")
+□ All critical issues were addressed (if any existed)
+```
+
+**Verification Process:**
+
+```python
+def verify_review_completed(chunk_execution_result):
+    """
+    MANDATORY: Verify code review was performed before marking chunk complete.
+    This gate CANNOT be skipped.
+    """
+    errors = []
+
+    # Check review was dispatched
+    if not chunk_execution_result.review_dispatched:
+        errors.append("CRITICAL: Code review was NOT dispatched. Cannot mark chunk complete.")
+
+    # Check review report received
+    if not chunk_execution_result.review_report:
+        errors.append("CRITICAL: No review report received. Code review is mandatory.")
+
+    # Check review assessment
+    if chunk_execution_result.review_assessment == "Major concerns":
+        errors.append("CRITICAL: Review found 'Major concerns'. Must resolve before proceeding.")
+
+    # Check critical issues resolved
+    if chunk_execution_result.unresolved_critical_issues:
+        errors.append(f"CRITICAL: {len(chunk_execution_result.unresolved_critical_issues)} critical issues unresolved.")
+
+    return errors
+
+# Before updating plan-meta.json
+review_errors = verify_review_completed(result)
+if review_errors:
+    # DO NOT PROCEED - review gate failed
+    present_review_gate_failure(review_errors)
+    return {"status": "review_gate_failed", "errors": review_errors}
+```
+
+**IF REVIEW GATE FAILS:**
+
+```
+STOP. Do not mark chunk complete. Do not update plan-meta.json.
+
+Present to user:
+"❌ Review Verification Gate Failed
+
+Code review is MANDATORY but was not completed properly:
+
+[List review errors]
+
+This chunk CANNOT be marked complete without proper code review."
+
+Use AskUserQuestion:
+{
+  "questions": [{
+    "question": "Code review gate failed. How to proceed?",
+    "header": "Review Gate",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "Run code review now",
+        "description": "Dispatch code reviewer to review the work before proceeding."
+      },
+      {
+        "label": "Fix issues and re-review",
+        "description": "Address the critical issues, then run code review again."
+      },
+      {
+        "label": "Abort chunk",
+        "description": "Stop execution. Chunk will remain incomplete."
+      }
+    ]
+  }]
+}
+
+There is NO option to skip the review gate. Review is mandatory.
+```
+
+---
+
+### Step 5: Track, Transition Jira & Report
+
+After chunk complete (or blocked) AND review gate passed:
 
 **If Chunk Complete - Transition Jira to "Done":**
 ```
@@ -428,10 +634,26 @@ If jiraTracking.enabled && chunk blocked:
       "subagentInvocations": 6,
       "testsAdded": 6,
       "testsPassing": true,
-      "issues": ["minor: could improve error messages"]
+      "issues": ["minor: could improve error messages"],
+
+      "reviewCompleted": true,
+      "reviewedBy": "code-reviewer",
+      "reviewAssessment": "Ready",
+      "reviewTimestamp": "2025-11-12T15:07:30Z",
+      "criticalIssuesFound": 0,
+      "criticalIssuesResolved": 0
     }
   ]
 }
+```
+
+**REQUIRED executionHistory Fields for Review Tracking:**
+- `reviewCompleted` (boolean): MUST be true for chunk to be considered complete
+- `reviewedBy` (string): Agent that performed the review
+- `reviewAssessment` (string): "Ready" | "Needs fixes" | "Major concerns"
+- `reviewTimestamp` (string): When review was completed
+- `criticalIssuesFound` (number): Count of critical issues identified
+- `criticalIssuesResolved` (number): Count resolved (must equal found)
 ```
 
 **Report to User:**

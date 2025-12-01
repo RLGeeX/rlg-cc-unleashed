@@ -39,6 +39,13 @@ Each feature gets its own directory with:
   "contextTokens": 9600,
   "description": "Brief description of what this feature implements",
 
+  "planReview": {
+    "reviewedBy": "architect-reviewer",
+    "reviewedAt": "2025-11-12T14:45:00Z",
+    "assessment": "Ready",
+    "revisionCount": 0
+  },
+
   "phases": [
     {
       "name": "Setup & Dependencies",
@@ -381,6 +388,126 @@ general-purpose (built-in Claude Code agent)
 - Reference relevant skills with @ syntax
 - DRY, YAGNI, TDD, frequent commits
 - Clear dependencies between chunks
+
+---
+
+## MANDATORY: Plan Validation Before Completion
+
+**THIS PHASE IS NOT OPTIONAL - DO NOT SKIP**
+
+Before marking the plan as ready, you MUST complete ALL validation steps:
+
+### Step 1: Structural Validation Checklist
+
+Run through this checklist. ALL items must pass:
+
+```
+□ All chunk files exist in .claude/plans/[feature-name]/
+□ Every task in every chunk has an **Agent:** field
+□ All Agent fields reference valid agents (check manifest.json)
+□ Chunk sizes are in range (2-3 tasks, 300-500 tokens each)
+□ Dependencies are logical (no circular dependencies)
+□ Complexity ratings are present (simple/medium/complex)
+□ plan-meta.json has all required fields
+□ Phases array groups chunks logically
+```
+
+**IF ANY ITEM FAILS:**
+- STOP immediately
+- Fix the issue before proceeding
+- Re-run the checklist
+
+### Step 2: Plan Review by Architect
+
+**Dispatch @architect-reviewer to review the plan:**
+
+```
+Use Task tool:
+  subagent_type: "architect-reviewer"
+  description: "Review implementation plan for [feature-name]"
+
+  prompt: |
+    Review this implementation plan for quality and completeness.
+
+    ## Plan Location
+    .claude/plans/[feature-name]/
+
+    ## Review Criteria
+    1. **Chunk Structure:** Are chunks properly sized (2-3 tasks, 300-500 tokens)?
+    2. **Agent Selection:** Are the right agents assigned to each task?
+    3. **Dependencies:** Are chunk dependencies logical and complete?
+    4. **TDD Coverage:** Does each task follow test-first approach?
+    5. **Completeness:** Are there any gaps in the implementation plan?
+    6. **Risk Assessment:** Any high-risk areas that need extra attention?
+
+    ## Report Format
+    **Assessment:** Ready | Needs Revision | Major Issues
+
+    **Strengths:**
+    - [What's well-designed]
+
+    **Issues:**
+    - Critical: [Must fix before execution]
+    - Important: [Should fix]
+    - Minor: [Nice to have]
+
+    **Recommendations:**
+    - [Specific improvements]
+```
+
+### Step 3: Handle Review Results
+
+```
+IF assessment == "Ready":
+  → Proceed to Step 4 (User Confirmation)
+
+IF assessment == "Needs Revision":
+  → Fix the issues identified
+  → Re-run architect review
+  → Maximum 2 revision cycles
+
+IF assessment == "Major Issues":
+  → STOP and report to user
+  → User must decide how to proceed
+  → Do NOT mark plan as ready
+```
+
+### Step 4: User Confirmation (REQUIRED)
+
+Present the plan summary and review results to the user:
+
+```
+Use AskUserQuestion:
+{
+  "questions": [{
+    "question": "Plan has been reviewed. Ready to finalize?",
+    "header": "Finalize",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "Yes - Plan is ready",
+        "description": "Architect review passed. Save plan and proceed to execution options."
+      },
+      {
+        "label": "Review plan first",
+        "description": "Show me the plan details before finalizing."
+      },
+      {
+        "label": "Revise plan",
+        "description": "I want to make changes before finalizing."
+      }
+    ]
+  }]
+}
+```
+
+**Only after user confirms "Yes - Plan is ready":**
+- Update plan-meta.json with `"status": "ready"`
+- Add `"reviewedBy": "architect-reviewer"`
+- Add `"reviewedAt": "[timestamp]"`
+- Proceed to Execution Handoff
+
+---
 
 ## Execution Handoff
 
