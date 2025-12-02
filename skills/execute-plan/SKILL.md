@@ -69,7 +69,10 @@ Present to user:
 
 ### Step 3: Dispatch to Executor
 
-**Jira Integration:** If jiraTracking.enabled, transition issue to "In Progress" before dispatch.
+**Jira Integration (BEFORE dispatch):** If jiraTracking.enabled:
+1. Look up subtaskKey for current chunk in plan-meta.json
+2. Transition issue to "In Progress" (see Jira Integration section)
+3. If transition fails, ask user before proceeding
 
 | Mode | Action |
 |------|--------|
@@ -123,14 +126,27 @@ When currentChunk > totalChunks:
 
 ---
 
-## Jira Integration
+## Jira Integration (MANDATORY when enabled)
 
 If `jiraTracking.enabled` in plan-meta.json:
 
+### Before Dispatching Chunk (Step 3)
+
+**MUST transition issue to "In Progress":**
+1. Get subtaskKey from jiraTracking.stories[].chunks[] matching current chunk
+2. Call Jira MCP: getTransitionsForJiraIssue to get available transitions
+3. Call Jira MCP: transitionJiraIssue with "In Progress" transition ID
+4. If MCP error: Ask user (Restart MCP / Skip Jira / Retry)
+
+### After Chunk Complete (Step 5)
+
+**MUST transition issue to "Done":**
+1. Call Jira MCP: transitionJiraIssue with "Done" transition ID
+
 | Event | Action |
 |-------|--------|
-| Chunk start | Transition to "In Progress" |
-| Chunk complete | Transition to "Done" |
+| Chunk start | Transition to "In Progress" (REQUIRED) |
+| Chunk complete | Transition to "Done" (REQUIRED) |
 | Chunk blocked | Add comment with blocker description |
 | MCP error | Ask user: Restart MCP / Skip Jira / Retry / Pause |
 
