@@ -116,6 +116,7 @@ Prompt:
      - Feature name and description
      - Total chunks
      - Phases array with chunk groupings
+     - executionConfig.chunkComplexity for story points per chunk
 
   2. Create Jira hierarchy:
      - Epic (feature-level):
@@ -127,12 +128,14 @@ Prompt:
      - Stories (one per phase):
        * Title: Phase name from plan-meta.json
        * Description: Brief overview of phase
+       * Story Points: Sum of story points from chunks in this phase
        * Link to Epic
        * Label: [label] if provided
 
      - Sub-tasks (one per chunk):
        * Title: \"Chunk N: [chunk-name]\"
        * Description: Link to chunk file, tasks summary
+       * Story Points: From chunkComplexity.storyPoints (default: simple=1, medium=2, complex=3)
        * Link to parent Story
        * Label: [label] if provided
 

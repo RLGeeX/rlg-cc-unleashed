@@ -50,10 +50,10 @@ Detailed examples, templates, and implementation details for creating micro-chun
   "executionConfig": {
     "defaultMode": "auto-detect",
     "chunkComplexity": [
-      {"chunk": 1, "complexity": "simple", "reason": "boilerplate setup"},
-      {"chunk": 2, "complexity": "simple", "reason": "config files"},
-      {"chunk": 8, "complexity": "medium", "reason": "API client logic"},
-      {"chunk": 15, "complexity": "complex", "reason": "rate limiting algorithm"}
+      {"chunk": 1, "complexity": "simple", "storyPoints": 1, "reason": "boilerplate setup"},
+      {"chunk": 2, "complexity": "simple", "storyPoints": 1, "reason": "config files"},
+      {"chunk": 8, "complexity": "medium", "storyPoints": 2, "reason": "API client logic"},
+      {"chunk": 15, "complexity": "complex", "storyPoints": 3, "reason": "rate limiting algorithm"}
     ],
     "reviewCheckpoints": [5, 10, 15, 20, 24],
     "parallelizable": [[1,2,3], [6,7], [10,11,12]],
@@ -62,10 +62,14 @@ Detailed examples, templates, and implementation details for creating micro-chun
 }
 ```
 
-**Complexity Ratings:**
-- **simple:** Boilerplate, config files, well-defined patterns → recommend automated execution
-- **medium:** Business logic with clear tests, standard CRUD → recommend automated with review
-- **complex:** Novel algorithms, tricky integration, architectural decisions → recommend supervised execution
+**Complexity Ratings & Story Points:**
+| Complexity | Story Points | Description |
+|------------|--------------|-------------|
+| simple | 1 | Boilerplate, config files, well-defined patterns |
+| medium | 2 | Business logic with clear tests, standard CRUD |
+| complex | 3 | Novel algorithms, tricky integration, architectural decisions |
+
+Adjust story points based on task scope - a simple chunk with many files may warrant 2 points.
 
 ---
 
@@ -77,6 +81,7 @@ Detailed examples, templates, and implementation details for creating micro-chun
 **Status:** pending
 **Dependencies:** chunk-001-project-init, chunk-002-dependencies (or "none")
 **Complexity:** simple | medium | complex
+**Story Points:** 1 | 2 | 3
 **Estimated Time:** 5-15 minutes
 **Tasks:** 2-3
 **Phase:** Setup & Dependencies

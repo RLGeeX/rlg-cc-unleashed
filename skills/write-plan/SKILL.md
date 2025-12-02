@@ -44,6 +44,7 @@ Each feature gets its own directory:
 - Each chunk completable in 5-15 minutes
 - Track dependencies between chunks
 - Identify complexity per chunk (simple/medium/complex)
+- Assign story points per chunk (simple=1, medium=2, complex=3, adjust as needed)
 
 ---
 
@@ -52,12 +53,12 @@ Each feature gets its own directory:
 1. **Design with @story-writer** - Convert requirements to Epic → Stories breakdown
 2. **Create directory** - `.claude/plans/[feature-name]/`
 3. **Micro-chunk each phase** - 2-3 tasks, 300-500 tokens each
-4. **Analyze complexity** - Rate each chunk (simple/medium/complex)
+4. **Analyze complexity & estimate** - Rate each chunk, assign story points (see reference.md)
 5. **Select agents for tasks** - Dynamic discovery from manifest.json (see reference.md)
 6. **Identify checkpoints** - Review points every 5-7 chunks
 7. **Find parallelizable chunks** - Groups that can run concurrently
-8. **Write plan-meta.json** - Include phases array and executionConfig
-9. **Write chunk files** - With agent fields and phase names
+8. **Write plan-meta.json** - Include phases array, executionConfig with storyPoints
+9. **Write chunk files** - With agent fields, story points, and phase names
 10. **MANDATORY: Validation** - Run checklist + architect review
 
 ---
@@ -164,6 +165,7 @@ After saving the plan:
 |------|-------------|
 | Chunk size | 2-3 tasks, 300-500 tokens |
 | Agent field | REQUIRED for every task |
+| Story points | REQUIRED for every chunk (1/2/3) |
 | Dependencies | Clear between chunks |
 | Complexity | simple/medium/complex rating |
 | Validation | Structural + architect review |
