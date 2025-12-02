@@ -42,7 +42,14 @@ Test Jira MCP connection before proceeding:
 ```
 Try: Call jira-pcc MCP tool (e.g., getAccessibleAtlassianResources)
 
-If connection fails:
+Known MCP Error Patterns (trigger error handling flow):
+- "accessibleResources.filter is not a function" → MCP server needs restart
+- "Authentication failed" / 401 Unauthorized → MCP server needs restart or re-auth
+- "Unauthorized" in error message → MCP server needs restart or re-auth
+- "Failed to fetch tenant info" / Status: 404 → Invalid cloudId or MCP needs restart
+- Connection timeout or no response → MCP server unavailable
+
+If ANY of these errors occur (connection fails):
   Use AskUserQuestion tool:
 
   Question: "Jira MCP server is unavailable. How would you like to proceed?"

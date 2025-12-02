@@ -124,8 +124,31 @@ Use AskUserQuestion: Plan ready / Review first / Revise
 
 After saving the plan:
 
-**Jira Integration (Optional):**
-- `/cc-unleashed:jira-plan [feature-name]` - Create Jira hierarchy
+### Jira Integration (MUST ASK)
+
+**Use AskUserQuestion to offer Jira integration:**
+
+```json
+{
+  "questions": [{
+    "question": "Would you like to create Jira issues for tracking this plan?",
+    "header": "Jira",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "Yes - Create Jira hierarchy",
+        "description": "Run jira-plan skill to create Epic → Stories → Sub-tasks with proper hierarchy"
+      },
+      {
+        "label": "No - Skip for now",
+        "description": "Plan is ready without Jira. You can run /cc-unleashed:jira-plan later if needed"
+      }
+    ]
+  }]
+}
+```
+
+**If user selects "Yes":** Invoke the `jira-plan` skill with the feature name.
 
 **Plan Execution:**
 - `/cc-unleashed:plan-next` - Execute next chunk (manual)
