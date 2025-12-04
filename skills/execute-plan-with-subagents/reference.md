@@ -5,11 +5,12 @@ Detailed examples, templates, and implementation details for the execute-plan-wi
 ## Table of Contents
 
 1. [Parallel Execution Details](#parallel-execution-details)
-2. [Subagent Prompt Templates](#subagent-prompt-templates)
-3. [Example Execution Flows](#example-execution-flows)
-4. [Error Handling Patterns](#error-handling-patterns)
-5. [Cost Considerations](#cost-considerations)
-6. [AskUserQuestion Templates](#askuserquestion-templates)
+2. [Jira Integration Details](#jira-integration-details)
+3. [Subagent Prompt Templates](#subagent-prompt-templates)
+4. [Example Execution Flows](#example-execution-flows)
+5. [Error Handling Patterns](#error-handling-patterns)
+6. [Cost Considerations](#cost-considerations)
+7. [AskUserQuestion Templates](#askuserquestion-templates)
 
 ---
 
@@ -162,6 +163,96 @@ if any_subagent.failed():
         "error": error,
         "recommendation": "Complete failed chunk in supervised mode"
     }
+```
+
+---
+
+## Jira Integration Details
+
+### When Jira Tracking is Enabled
+
+If `jiraTracking.enabled` in plan-meta.json, the executor MUST:
+
+1. **Step 1B: Extract Jira Issue Key**
+   ```python
+   jira_key = plan_meta["jiraTracking"]["chunkMapping"]
+       .find(m => m.chunk == current_chunk)
+       ?.jiraIssueKey
+
+   if not jira_key:
+       log_warning("No Jira issue mapped to chunk {current_chunk}")
+       # Continue without Jira - don't block execution
+   ```
+
+2. **Step 2A: Transition to In Progress (BEFORE first task)**
+   ```python
+   if jira_key:
+       transitions = mcp__jira__getTransitionsForJiraIssue(jira_key)
+       in_progress_id = transitions.find(t => t.name == "In Progress")?.id
+
+       if in_progress_id:
+           mcp__jira__transitionJiraIssue(jira_key, in_progress_id)
+           execution_state["jiraTransitionedToInProgress"] = True
+       else:
+           # Issue might already be in progress
+           log_info("No 'In Progress' transition available for {jira_key}")
+   ```
+
+3. **Step 3: Transition to Done (AFTER review passes)**
+   ```python
+   if jira_key and review_assessment == "Ready":
+       transitions = mcp__jira__getTransitionsForJiraIssue(jira_key)
+       done_id = transitions.find(t => t.name == "Done")?.id
+
+       if done_id:
+           mcp__jira__transitionJiraIssue(jira_key, done_id)
+           execution_state["jiraTransitionedToDone"] = True
+   ```
+
+### Jira Error Handling
+
+```python
+def handle_jira_error(error, operation):
+    """Handle Jira MCP errors gracefully."""
+
+    if "MCP" in str(error) or "connection" in str(error).lower():
+        # MCP connectivity issue
+        return ask_user_question({
+            "question": f"Jira {operation} failed: {error}. How to proceed?",
+            "options": [
+                {"label": "Retry", "description": "Try the Jira operation again"},
+                {"label": "Skip Jira", "description": "Continue without Jira tracking"},
+                {"label": "Pause", "description": "Stop execution to investigate"}
+            ]
+        })
+
+    if "not found" in str(error).lower():
+        # Issue doesn't exist - log and continue
+        log_warning(f"Jira issue not found: {error}")
+        return "continue"
+
+    if "transition" in str(error).lower():
+        # Invalid transition - issue might be in wrong state
+        log_warning(f"Transition failed: {error}")
+        return "continue"  # Don't block on transition errors
+```
+
+### Parallel Execution with Jira
+
+When executing chunks in parallel with Jira enabled:
+
+```python
+# Before parallel dispatch
+for chunk in parallel_group:
+    jira_key = get_jira_key_for_chunk(chunk)
+    if jira_key:
+        transition_to_in_progress(jira_key)
+
+# After all chunks complete and review passes
+for chunk in parallel_group:
+    jira_key = get_jira_key_for_chunk(chunk)
+    if jira_key:
+        transition_to_done(jira_key)
 ```
 
 ---
@@ -592,6 +683,32 @@ if test_results.failed():
       {
         "label": "Pause and investigate",
         "description": "Stop execution to manually debug the issue."
+      }
+    ]
+  }]
+}
+```
+
+### Jira MCP Error
+
+```json
+{
+  "questions": [{
+    "question": "Jira transition failed. How would you like to proceed?",
+    "header": "Jira Error",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "Retry transition",
+        "description": "Try the Jira transition again (max 3 attempts)."
+      },
+      {
+        "label": "Skip Jira updates",
+        "description": "Continue execution without Jira tracking for this chunk."
+      },
+      {
+        "label": "Pause execution",
+        "description": "Stop to investigate the Jira connection issue."
       }
     ]
   }]

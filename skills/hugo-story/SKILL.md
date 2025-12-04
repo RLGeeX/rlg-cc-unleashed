@@ -9,10 +9,10 @@ Autonomous workflow for creating Hugo blog stories from Jira tickets with multi-
 
 ## Prerequisites
 
-1. **Working Directory**: Start Claude in the Hugo project root directory
-2. **Jira MCP Server**: Any connected Jira MCP (e.g., jira-pcc, jira-ti, jira-rlg, etc.)
-3. **Git**: Configured for Hugo repository
-4. **gcloud CLI**: Authenticated for Cloud Build monitoring
+- **Working Directory**: Hugo project root
+- **Jira MCP Server**: Any connected (jira-pcc, jira-ti, jira-rlg, etc.)
+- **Git**: Configured for Hugo repository
+- **gcloud CLI**: Authenticated for Cloud Build monitoring
 
 ## Workflow Overview
 
@@ -24,347 +24,113 @@ Jira Ticket → Ghost Writer → Copy Editor + Content Reviewer
                               Git Commit/Push → Cloud Build → Done
 ```
 
-## Process
+---
+
+## The Process
 
 ### Phase 1: Jira Intake
 
-**Step 1.1: Detect Jira MCP Server**
-
-Check which Jira MCP server is available by looking for tools with `mcp__jira` prefix:
-
-```
-# Look for any available Jira MCP tools in the current session
-# Examples: mcp__jira-pcc__getJiraIssue, mcp__jira-rlg__getJiraIssue, etc.
-# The prefix pattern is: mcp__jira-{instance}__getJiraIssue
-
-# Use whichever Jira MCP server is connected - the tool name reveals the instance
-# e.g., mcp__jira-rlg__getJiraIssue means use jira-rlg server
-```
-
-**Step 1.2: Fetch Jira Ticket**
-
-Use the detected MCP server to fetch the ticket:
-- Call `getJiraIssue` with the provided ticket key
-- Extract: summary, description, labels, acceptance criteria
-
-**Step 1.3: Validate Ticket Content**
-
-Ensure ticket has sufficient detail for story writing:
-- Summary provides clear topic
-- Description has enough context
-- If unclear, use AskUserQuestion to gather more details
-
-```
-AskUserQuestion:
-{
-  "question": "The Jira ticket needs more context. What additional details should be included?",
-  "header": "Story Details",
-  "multiSelect": false,
-  "options": [
-    {"label": "Target audience", "description": "Who should read this article?"},
-    {"label": "Key points", "description": "What must be covered?"},
-    {"label": "Tone", "description": "Technical, casual, or executive?"},
-    {"label": "All of above", "description": "Provide comprehensive details"}
-  ]
-}
-```
+1. **Detect Jira MCP**: Find available `mcp__jira*` tools
+2. **Fetch ticket**: Call `getJiraIssue` with ticket key
+3. **Validate content**: Ensure sufficient detail for story writing
+   - If unclear, use AskUserQuestion to gather more details
 
 ### Phase 2: Story Creation
 
-**Step 2.1: Generate Slug**
+1. **Generate slug**: Create URL-friendly slug from title
+2. **Dispatch @ghost-writer**: Create initial draft with Hugo frontmatter
+3. **Write draft file**: Save to `hugo/content/news/[slug].md`
 
-Create URL-friendly slug from title:
-```bash
-# Example: "The Rise of AI" → "the-rise-of-ai"
-slug=$(echo "$title" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//')
-```
-
-**Step 2.2: Dispatch Ghost Writer**
-
-Use Task tool to dispatch @ghost-writer:
-
-```
-Task:
-{
-  "subagent_type": "ghost-writer",
-  "description": "Write Hugo blog story",
-  "prompt": "Create a blog article for the rlg-hugo site based on this Jira ticket:
-
-TICKET: [JIRA-KEY]
-TITLE: [summary]
-REQUIREMENTS: [description]
-LABELS: [labels]
-
-Use the Hugo story template with proper frontmatter.
-
-Output location: hugo/content/news/[slug].md
-
-TEMPLATE:
----
-title: \"[title]\"
-date: [today's date YYYY-MM-DD]
-description: \"[150-160 char description]\"
-featured_image: \"/images/news/placeholder.svg\"
-excerpt: \"[80-100 char excerpt]\"
-author: \"Chris Fogarty\"
-categories: [\"[primary category]\"]
-tags: [\"tag1\", \"tag2\", \"tag3\"]
----
-
-[Content following standard structure: Introduction, 3-5 main sections, Conclusion]"
-}
-```
-
-**Step 2.3: Write Draft File**
-
-After ghost-writer returns, write the content to:
-`hugo/content/news/[slug].md`
+See `reference.md` for ghost-writer prompt template.
 
 ### Phase 3: Review Loop
 
 **Maximum 3 iterations** to prevent infinite loops.
 
-**Step 3.1: Copy Editor Review**
+1. **Dispatch @copy-editor**: Review grammar, spelling, style, readability
+2. **Dispatch @content-reviewer**: Review structure, engagement, SEO, Hugo compliance
+   - Can run in parallel with copy-editor
 
-Dispatch @copy-editor:
+3. **Process feedback**:
+   - If EITHER has CHANGES NEEDED → dispatch @ghost-writer for revision → repeat
+   - If BOTH return APPROVED → proceed to Phase 4
 
-```
-Task:
-{
-  "subagent_type": "copy-editor",
-  "description": "Review story for grammar and style",
-  "prompt": "Review this Hugo blog story for grammar, spelling, style, and readability.
+4. **If max iterations reached** without consensus:
+   - Save to `hugo/content/drafts/[slug].md`
+   - Ask user: Publish as-is / Continue manually / Discard
 
-FILE: hugo/content/news/[slug].md
-
-Provide structured feedback:
-1. CRITICAL issues (must fix)
-2. IMPORTANT issues (should fix)
-3. MINOR suggestions (nice to have)
-
-End with VERDICT:
-- APPROVED: Ready for publication
-- CHANGES NEEDED: List specific issues"
-}
-```
-
-**Step 3.2: Content Reviewer Review**
-
-Dispatch @content-reviewer (can run in parallel with copy-editor):
-
-```
-Task:
-{
-  "subagent_type": "content-reviewer",
-  "description": "Review story for structure and engagement",
-  "prompt": "Review this Hugo blog story for structure, engagement, SEO, and Hugo compliance.
-
-FILE: hugo/content/news/[slug].md
-
-Check:
-1. Structure and logical flow
-2. Engagement (hook, examples, takeaways)
-3. Hugo frontmatter validity
-4. SEO elements (title, description, tags)
-
-End with VERDICT:
-- APPROVED: Ready for publication
-- CHANGES NEEDED: List specific issues"
-}
-```
-
-**Step 3.3: Process Feedback**
-
-If EITHER reviewer has CHANGES NEEDED:
-1. Combine all feedback
-2. Dispatch @ghost-writer with revision request
-3. Increment iteration counter
-4. Return to Step 3.1
-
-If BOTH reviewers return APPROVED:
-- Proceed to Phase 4
-
-**Step 3.4: Iteration Limit Reached**
-
-If iteration >= 3 and no consensus:
-
-1. Save current version to drafts:
-   `hugo/content/drafts/[slug].md`
-
-2. Present options to user:
-
-```
-AskUserQuestion:
-{
-  "question": "After 3 revision rounds, reviewers still have concerns. How would you like to proceed?",
-  "header": "No Consensus",
-  "multiSelect": false,
-  "options": [
-    {"label": "Publish as-is", "description": "Accept current version and deploy"},
-    {"label": "Continue manually", "description": "Save draft for manual editing"},
-    {"label": "Discard", "description": "Delete draft and cancel"}
-  ]
-}
-```
+See `reference.md` for reviewer prompt templates.
 
 ### Phase 4: Internal Consensus Check
 
-Before deployment, confirm all agents agree:
+Before deployment, get final approval from all agents:
 
-**Step 4.1: Final Approval Request**
-
-Ask each agent one final time:
-
-```
-For each agent (ghost-writer, copy-editor, content-reviewer):
-Task:
-{
-  "subagent_type": "[agent]",
-  "description": "Final approval check",
-  "prompt": "Final review of hugo/content/news/[slug].md
-
-This is the FINAL check before publication.
-
-Respond with EXACTLY one of:
-- APPROVED: Ready to publish
-- CHANGES NEEDED: [specific remaining issue]"
-}
-```
-
-**Step 4.2: Consensus Evaluation**
-
-- 3/3 APPROVED → Proceed to Phase 5
-- Any CHANGES NEEDED → Return to Phase 3 (within limit)
+1. **Final approval request**: Ask each agent one last time (APPROVED or CHANGES NEEDED)
+2. **Consensus evaluation**:
+   - 3/3 APPROVED → proceed to Phase 5
+   - Any CHANGES NEEDED → return to Phase 3 (within limit)
 
 ### Phase 5: Deployment
 
-**Step 5.1: Git Operations**
+1. **Git operations**:
+   - `git add hugo/content/news/[slug].md`
+   - `git commit` with conventional format
+   - `git push origin main`
 
-```bash
-# Already in Hugo project root
-
-# Add the story file
-git add hugo/content/news/[slug].md
-
-# Commit with conventional format
-git commit -m "feat(blog): add [title]
-
-Created from Jira ticket [JIRA-KEY]
-
-[Generated by Hugo Story Automation]"
-
-# Push to trigger Cloud Build
-git push origin main
-```
-
-**Step 5.2: Confirm Push Success**
-
-Verify the push succeeded before monitoring pipeline.
+2. **Verify push success** before monitoring pipeline
 
 ### Phase 6: Pipeline Monitoring
 
-**Step 6.1: Find Build**
+1. **Find build**: Query Cloud Build for latest rlg-hugo build
+2. **Monitor progress**: Poll every 30 seconds until complete
+3. **Update Jira**:
+   - On SUCCESS: Transition ticket to "Done", add comment with URL
+   - On FAILURE: Alert user with build logs, keep ticket unchanged
 
-```bash
-# Wait a moment for Cloud Build trigger
-sleep 5
-
-# Get the latest build for rlg-hugo
-gcloud builds list \
-  --project=rlg-gcp-sandbox \
-  --filter="source.repoSource.repoName='rlg-hugo'" \
-  --limit=1 \
-  --format="value(id,status,createTime)"
-```
-
-**Step 6.2: Monitor Build Progress**
-
-Poll every 30 seconds until complete:
-
-```bash
-BUILD_ID="[from previous step]"
-
-while true; do
-  STATUS=$(gcloud builds describe $BUILD_ID \
-    --project=rlg-gcp-sandbox \
-    --format="value(status)")
-
-  case $STATUS in
-    SUCCESS)
-      echo "Build completed successfully!"
-      break
-      ;;
-    FAILURE|TIMEOUT|CANCELLED)
-      echo "Build failed with status: $STATUS"
-      # Fetch logs for debugging
-      gcloud builds log $BUILD_ID --project=rlg-gcp-sandbox
-      break
-      ;;
-    *)
-      echo "Build status: $STATUS - waiting..."
-      sleep 30
-      ;;
-  esac
-done
-```
-
-**Step 6.3: Update Jira Ticket**
-
-On SUCCESS:
-- Call Jira MCP to transition ticket to "Done" (if workflow supports)
-- Add comment with deployed URL
-
-On FAILURE:
-- Alert user with build logs
-- Keep ticket in current state
+See `reference.md` for gcloud commands.
 
 ### Phase 7: Completion Report
 
-Provide summary to user:
+Provide summary: article details, Jira status, build result, review summary, next steps.
 
-```markdown
-## Hugo Story Published
-
-**Article**: [title]
-**File**: hugo/content/news/[slug].md
-**Jira**: [JIRA-KEY] → Done
-**Build**: [build-id] - SUCCESS
-**URL**: https://rlg-hugo.pages.dev/news/[slug]/
-
-### Review Summary
-- Iterations: [count]
-- Ghost Writer: APPROVED
-- Copy Editor: APPROVED
-- Content Reviewer: APPROVED
-
-### Next Steps
-- Verify article at production URL
-- Share on social media
-- Close Jira ticket if not auto-transitioned
-```
+---
 
 ## Error Handling
 
-### Jira MCP Not Available
-- Inform user no Jira MCP server detected
-- Offer to proceed with manual topic input
+| Error | Action |
+|-------|--------|
+| Jira MCP not available | Offer manual topic input |
+| Ticket not found | Ask user to verify ticket key |
+| Git push fails | Show error, offer retry/pull/save options |
+| Cloud Build fails | Fetch logs, offer fix/retry/revert |
+| Agent dispatch fails | Retry once, then alert user |
+| Max iterations (3) | Save to drafts, ask user how to proceed |
 
-### Git Push Fails
-- Show error message
-- Check for uncommitted changes or conflicts
-- Offer to retry or save locally
+See `reference.md` for detailed error handling patterns and AskUserQuestion templates.
 
-### Cloud Build Fails
-- Fetch and display build logs
-- Common issues: Hugo version, theme missing, frontmatter error
-- Offer to fix and retry
+---
 
-### Agent Dispatch Fails
-- Retry once with same parameters
-- If still fails, alert user and offer manual mode
+## Red Flags
 
-## Files
+**NEVER:**
+- Skip the review loop
+- Push without consensus (unless user explicitly approves)
+- Exceed 3 iterations without user input
+- Leave Jira ticket in wrong state after completion
 
-- `SKILL.md` - This file (main orchestration)
-- `templates/story-template.md` - Hugo story template
-- `scripts/monitor-cloudbuild.sh` - Build monitoring utility
+**ALWAYS:**
+- Run both copy-editor AND content-reviewer
+- Get explicit approval before publishing
+- Update Jira ticket status on completion
+- Provide completion report with all details
+
+---
+
+## References
+
+See `reference.md` for:
+- Task tool prompt templates (ghost-writer, copy-editor, content-reviewer)
+- AskUserQuestion JSON templates
+- Bash scripts (slug generation, git operations, Cloud Build monitoring)
+- Output templates (completion report, draft saved)
+- Error handling patterns

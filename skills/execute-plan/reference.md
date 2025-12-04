@@ -545,6 +545,8 @@ Now in worktree. Proceeding with automated execution..."
     {
       "chunk": 1,
       "jiraIssueKey": "PROJ-101",
+      "jiraTransitionedToInProgress": true,
+      "jiraTransitionedToDone": true,
       "mode": "automated",
       "startedAt": "2025-11-12T15:00:00Z",
       "completedAt": "2025-11-12T15:08:00Z",
@@ -574,3 +576,13 @@ Now in worktree. Proceeding with automated execution..."
 | reviewTimestamp | string | When review was completed |
 | criticalIssuesFound | number | Count of critical issues identified |
 | criticalIssuesResolved | number | Count resolved (must equal found) |
+
+### Jira Tracking Fields (when jiraTracking.enabled)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| jiraIssueKey | string | Issue key for this chunk (e.g., "PROJ-123") |
+| jiraTransitionedToInProgress | boolean | True if "In Progress" transition succeeded |
+| jiraTransitionedToDone | boolean | True if "Done" transition succeeded |
+
+**Note:** Jira fields are only present when `jiraTracking.enabled` is true in plan-meta.json.

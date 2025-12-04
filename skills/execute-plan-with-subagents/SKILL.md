@@ -44,7 +44,19 @@ Automated execution of micro-chunked plans using fresh subagents per task or chu
 6. Select code reviewer (prefer code-reviewer, architect-reviewer, qa-expert)
 7. Create TodoWrite with tasks from chunk
 
-### Step 1B: Check for Parallel Execution (if applicable)
+### Step 1B: Check Jira Integration (MANDATORY if enabled)
+
+**If `jiraTracking.enabled` in plan-meta.json:**
+
+1. Extract Jira subtask key for current chunk from `jiraTracking.chunkMapping`
+2. Verify issue exists and current status (should be "To Do" or similar)
+3. Store `jiraIssueKey` for transitions in Steps 2-3
+
+**If Jira MCP fails:** Use AskUserQuestion: Retry / Skip Jira / Abort
+
+**If no Jira tracking:** Skip to Step 1C
+
+### Step 1C: Check for Parallel Execution (if applicable)
 
 Check if chunk is in a parallelizable group from plan-meta.json:
 - Analyze file paths for conflicts across group
@@ -55,7 +67,16 @@ See `reference.md` for detailed parallel execution flow.
 
 ### Step 2: Execute Each Task (Sequential)
 
-**A. Dispatch Implementation Subagent**
+**A. Transition Jira to "In Progress" (MANDATORY if enabled)**
+
+If Jira tracking enabled and this is the first task in chunk:
+```
+mcp__jira-pcc__transitionJiraIssue(jiraIssueKey, "In Progress")
+```
+
+**If transition fails:** Ask user: Retry / Skip Jira / Abort
+
+**B. Dispatch Implementation Subagent**
 
 Read agent ID from task's **Agent** field, then use Task tool:
 
@@ -80,14 +101,14 @@ prompt: |
   7. Report back
 ```
 
-**B. Get Git SHAs for Review**
+**C. Get Git SHAs for Review**
 
 ```bash
 base_sha=$(git rev-parse HEAD~1)
 head_sha=$(git rev-parse HEAD)
 ```
 
-**C. MANDATORY: Code Review (NO EXCEPTIONS)**
+**D. MANDATORY: Code Review (NO EXCEPTIONS)**
 
 **THIS STEP CANNOT BE SKIPPED.**
 
@@ -99,7 +120,7 @@ YOU MUST NOW DISPATCH CODE REVIEWER. There is no path forward without review.
 
 Dispatch code reviewer with git range and implementation summary.
 
-**D. Handle Review Feedback**
+**E. Handle Review Feedback**
 
 - If "Needs fixes" or critical issues: dispatch fix subagent, re-review
 - Max 2 fix attempts before escalating to human
@@ -116,57 +137,24 @@ After all tasks complete:
    - reviewedBy must have agent name
    - reviewAssessment must be "Ready"
    - **If ANY missing → DO NOT mark chunk complete**
-4. Update plan-meta.json with executionHistory entry (see schema below)
-5. Report chunk completion to orchestrator
+4. **Transition Jira to "Done" (MANDATORY if enabled)**
+   ```
+   mcp__jira-pcc__transitionJiraIssue(jiraIssueKey, "Done")
+   ```
+   **If transition fails:** Ask user: Retry / Skip Jira / Continue anyway
+5. Update plan-meta.json with executionHistory entry (see schema below)
+6. Report chunk completion to orchestrator
 
 ### Step 4: Return Control
 
-Return to orchestrator with **REQUIRED reviewData**:
-
-```json
-{
-  "status": "complete",
-  "chunk": N,
-  "summary": "[what was built]",
-  "testsAdded": 6,
-  "testsPassing": true,
-  "duration": 8,
-  "reviewData": {
-    "reviewCompleted": true,
-    "reviewedBy": "code-reviewer",
-    "reviewAssessment": "Ready",
-    "reviewTimestamp": "2025-11-12T15:07:30Z",
-    "criticalIssuesFound": 0,
-    "criticalIssuesResolved": 0
-  }
-}
-```
+Return to orchestrator with **REQUIRED fields**:
+- `status`, `chunk`, `summary`, `testsAdded`, `testsPassing`, `duration`
+- `reviewData`: reviewCompleted, reviewedBy, reviewAssessment, reviewTimestamp
+- `jiraIssueKey`, `jiraTransitionedToInProgress`, `jiraTransitionedToDone` (if enabled)
 
 **If reviewData is missing, orchestrator will fail the Review Verification Gate.**
 
----
-
-## executionHistory Schema
-
-```json
-{
-  "chunk": N,
-  "mode": "automated",
-  "startedAt": "2025-11-12T15:00:00Z",
-  "completedAt": "2025-11-12T15:08:00Z",
-  "duration": 8,
-  "subagentInvocations": 7,
-  "testsAdded": 6,
-  "testsPassing": true,
-  "issues": ["minor: could improve error messages"],
-  "reviewCompleted": true,
-  "reviewedBy": "code-reviewer",
-  "reviewAssessment": "Ready",
-  "reviewTimestamp": "2025-11-12T15:07:30Z",
-  "criticalIssuesFound": 0,
-  "criticalIssuesResolved": 0
-}
-```
+See `reference.md` for full return value and executionHistory schemas.
 
 ---
 
@@ -179,28 +167,9 @@ Return to orchestrator with **REQUIRED reviewData**:
 | Tests failing | Stop, return "tests_failing" status |
 | Missing Agent field | Stop immediately, ask user to fix chunk |
 | Review not performed | Return "review_missing" status (DO NOT mark complete) |
-
----
-
-## Key Features
-
-| Feature | Description |
-|---------|-------------|
-| Fresh Context | Each subagent gets only current task (~300-500 tokens) |
-| Quality Gates | Code review after every task, can't proceed with failing tests |
-| Progress Tracking | executionHistory in plan-meta.json with duration, tests, issues |
-| Parallel Execution | Multiple chunks simultaneously when independent |
-
----
-
-## Integration
-
-| Relationship | Description |
-|--------------|-------------|
-| Called by | execute-plan (orchestrator) |
-| Uses | Task tool with specialist agents, test-driven-development skill |
-| Updates | plan-meta.json (executionHistory), TodoWrite |
-| Pairs with | execute-plan, write-plan |
+| Jira MCP unavailable | Ask user: Retry / Skip Jira / Abort |
+| Jira transition fails | Ask user: Retry / Skip this transition / Pause |
+| Jira issue not found | Log warning, continue (don't block on Jira) |
 
 ---
 
@@ -214,6 +183,8 @@ Return to orchestrator with **REQUIRED reviewData**:
 - Proceed with critical issues unfixed
 - Dispatch parallel chunks with file conflicts
 - Continue with failing tests
+- Skip Jira transitions when jiraTracking is enabled
+- Proceed to next chunk without transitioning previous to Done
 
 **ALWAYS:**
 - Read Agent field from each task and use that specific agent
@@ -222,6 +193,9 @@ Return to orchestrator with **REQUIRED reviewData**:
 - Track review fields in executionHistory
 - Fresh subagent per task/chunk
 - TDD approach (test first)
+- Transition Jira to "In Progress" BEFORE implementation (if enabled)
+- Transition Jira to "Done" AFTER review passes (if enabled)
+- Include jiraIssueKey in executionHistory (if enabled)
 
 ---
 

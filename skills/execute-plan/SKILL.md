@@ -48,10 +48,11 @@ If automated mode likely:
 ### Step 1: Load & Analyze
 
 1. **Read plan-meta.json**: currentChunk, totalChunks, executionConfig, jiraTracking
-2. **Check for parallel group**: Is currentChunk in executionConfig.parallelizable?
-3. **Load chunk(s)**: Parse tasks, check metadata
-4. **Check dependencies**: Verify prerequisites complete
-5. **Get complexity**: From chunk file or infer (simple/medium/complex)
+2. **Check Jira integration**: If `jiraTracking.enabled`, extract issue key for current chunk
+3. **Check for parallel group**: Is currentChunk in executionConfig.parallelizable?
+4. **Load chunk(s)**: Parse tasks, check metadata
+5. **Check dependencies**: Verify prerequisites complete
+6. **Get complexity**: From chunk file or infer (simple/medium/complex)
 
 ### Step 2: Recommend & Confirm
 
@@ -59,6 +60,7 @@ Present to user:
 - Chunk info (name, tasks, tokens)
 - Complexity rating with reason
 - Worktree status
+- **Jira status**: If enabled, show issue key and current status
 - If parallel candidate: time savings estimate
 
 **Use AskUserQuestion** with options:
@@ -69,10 +71,18 @@ Present to user:
 
 ### Step 3: Dispatch to Executor
 
-**Jira Integration (BEFORE dispatch):** If jiraTracking.enabled:
-1. Look up subtaskKey for current chunk in plan-meta.json
-2. Transition issue to "In Progress" (see Jira Integration section)
-3. If transition fails, ask user before proceeding
+**A. Jira Transition to "In Progress" (MANDATORY if enabled)**
+
+If `jiraTracking.enabled`:
+1. Look up `jiraIssueKey` for current chunk in `jiraTracking.chunkMapping`
+2. **MUST transition issue to "In Progress" BEFORE dispatching executor**
+3. If transition fails: Ask user (Retry / Skip Jira / Abort)
+
+```
+mcp__jira__transitionJiraIssue(jiraIssueKey, "In Progress")
+```
+
+**B. Dispatch Based on Mode**
 
 | Mode | Action |
 |------|--------|
@@ -96,27 +106,22 @@ Present to user:
 
 ### Step 5: Track & Report
 
-**Update plan-meta.json:**
-```json
-{
-  "currentChunk": N+1,
-  "executionHistory": [{
-    "chunk": N,
-    "mode": "automated",
-    "duration": 8,
-    "testsAdded": 6,
-    "testsPassing": true,
-    "reviewCompleted": true,
-    "reviewedBy": "code-reviewer",
-    "reviewAssessment": "Ready",
-    "reviewTimestamp": "2025-11-12T15:07:30Z"
-  }]
-}
+**A. Jira Transition to "Done" (MANDATORY if enabled)**
+
+If `jiraTracking.enabled` and review passed:
+```
+mcp__jira__transitionJiraIssue(jiraIssueKey, "Done")
 ```
 
-**Jira:** If enabled, transition issue to "Done".
+If transition fails: Ask user (Retry / Skip / Continue anyway)
 
-**Report to user:** Summary, stats, progress, next chunk recommendation.
+**B. Update plan-meta.json:**
+- Increment `currentChunk` to N+1
+- Add `executionHistory` entry with: chunk, mode, duration, tests, review fields, Jira fields (if enabled)
+
+See `reference.md` for full executionHistory schema.
+
+**C. Report to user:** Summary, stats, progress, Jira status, next chunk recommendation.
 
 ### Step 6: Plan Complete
 
@@ -128,37 +133,18 @@ When currentChunk > totalChunks:
 
 ## Jira Integration (MANDATORY when enabled)
 
-If `jiraTracking.enabled` in plan-meta.json:
+If `jiraTracking.enabled` in plan-meta.json, Jira transitions are **woven into the main flow**:
 
-### Before Dispatching Chunk (Step 3)
+| Step | Jira Action | Timing |
+|------|-------------|--------|
+| Step 1 | Extract `jiraIssueKey` from `chunkMapping` | During load |
+| Step 2 | Display issue key and status | When presenting chunk |
+| Step 3A | **Transition to "In Progress"** | BEFORE dispatch |
+| Step 5A | **Transition to "Done"** | AFTER review passes |
 
-**MUST transition issue to "In Progress":**
-1. Get subtaskKey from jiraTracking.stories[].chunks[] matching current chunk
-2. Call Jira MCP: getTransitionsForJiraIssue to get available transitions
-3. Call Jira MCP: transitionJiraIssue with "In Progress" transition ID
-4. If MCP error: Ask user (Restart MCP / Skip Jira / Retry)
+**Error handling:** Jira errors should NOT block execution unless user chooses to abort. Ask user: Restart MCP / Skip Jira / Retry / Pause.
 
-### After Chunk Complete (Step 5)
-
-**MUST transition issue to "Done":**
-1. Call Jira MCP: transitionJiraIssue with "Done" transition ID
-
-| Event | Action |
-|-------|--------|
-| Chunk start | Transition to "In Progress" (REQUIRED) |
-| Chunk complete | Transition to "Done" (REQUIRED) |
-| Chunk blocked | Add comment with blocker description |
-| MCP error | Ask user: Restart MCP / Skip Jira / Retry / Pause |
-
----
-
-## Complexity Detection
-
-| Complexity | Indicators | Recommended Mode |
-|------------|------------|------------------|
-| Simple | initialize, configure, setup, boilerplate | Automated |
-| Medium | API, handler, CRUD, business logic | Automated with review |
-| Complex | algorithm, concurrency, architectural | Supervised |
+See `reference.md` for implementation details and error handling patterns.
 
 ---
 
@@ -200,12 +186,17 @@ If `jiraTracking.enabled` in plan-meta.json:
 - Execute without user confirmation
 - Proceed with unmet dependencies
 - Continue with failing tests
+- Skip Jira transitions when jiraTracking is enabled
+- Proceed to next chunk without transitioning previous to Done
 
 **ALWAYS:**
 - Dispatch to execute-plan-with-subagents for automated mode
 - Verify code review before marking complete
 - Get user confirmation for mode
 - Update plan-meta.json after each chunk
+- Transition Jira to "In Progress" BEFORE dispatch (if enabled)
+- Transition Jira to "Done" AFTER review passes (if enabled)
+- Include Jira fields in executionHistory (if enabled)
 
 ---
 
