@@ -1,20 +1,20 @@
 # CC Unleashed
 
-Streamlined Claude Code plugin with workflow automation, chunked planning, Jira integration, and integration with 59 specialized agents.
+Streamlined Claude Code plugin with workflow automation, chunked planning, Jira integration, and integration with 62 specialized agents.
 
-**Version:** 2.3.0
+**Version:** 1.1.0
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 
 ## Overview
 
-CC Unleashed provides workflow automation and planning tools that integrate seamlessly with 59 specialized agents:
+CC Unleashed provides workflow automation and planning tools that integrate seamlessly with 62 specialized agents:
 
 - **Workflow automation**: TDD, debugging, code review, git worktrees, brainstorming
 - **Chunked planning**: Break down large features into manageable chunks with autonomous execution
 - **Jira integration**: Automatic issue creation and status tracking throughout plan execution
-- **Agent integration**: Works with separately-installed agents (59 specialists with full MCP tool access)
-- **Clean separation**: 11 workflow commands, agents invoked with `@agent-name`
+- **Agent integration**: Works with separately-installed agents (62 specialists with full MCP tool access)
+- **Clean separation**: 14 slash commands, agents invoked with `@agent-name`
 - **Comprehensive coverage**: Infrastructure, Development, Quality, Product Management, K8s, AI/ML
 
 ## Quick Start
@@ -72,21 +72,23 @@ After installation, restart Claude Code or reload plugins, then verify:
 
 The cc-unleashed plugin provides:
 
-**20 Workflow Skills**
+**24 Workflow Skills**
 - TDD, debugging, code review, git workflows, brainstorming
-- Chunked planning system (write-plan, execute-plan, plan-manager)
-- Kubernetes workflows (GitOps, Helm scaffolding, manifest generation)
+- Chunked planning system (write-plan, execute-plan, plan-manager, autonomous-execute)
+- Kubernetes workflows (GitOps, Helm scaffolding, manifest generation, security policies)
+- Jira integration (jira-plan), Hugo story generation, multi-AI consensus
 
-**11 Slash Commands**
+**14 Slash Commands**
 - Workflow triggers: `/cc-unleashed:tdd`, `/cc-unleashed:debug`, `/cc-unleashed:review`, `/cc-unleashed:brainstorm`, `/cc-unleashed:worktree`
 - Plan management: `/cc-unleashed:plan-new`, `/cc-unleashed:plan-status`, `/cc-unleashed:plan-execute`, `/cc-unleashed:plan-next`, `/cc-unleashed:plan-resume`, `/cc-unleashed:plan-list`
+- Content creation: `/cc-unleashed:hugo-story`, `/cc-unleashed:consensus`
 
 ### Specialized Agents (Installed Separately)
 
-The cc-unleashed ecosystem includes 59 specialized agents installed via the separate [rlg-cc-subagents](https://github.com/rlgeex/rlg-cc-subagents) repository. Invoke with `@agent-name`:
+The cc-unleashed ecosystem includes 62 specialized agents installed via the separate [rlg-cc-subagents](https://github.com/rlgeex/rlg-cc-subagents) repository. Invoke with `@agent-name`:
 
 #### Infrastructure (13 agents)
-`@terraform-specialist`, `@cloud-architect`, `@deployment-engineer`, `@sre-engineer`, `@incident-responder`, `@database-administrator`, `@security-engineer`, `@python-devops-engineer`, `@gcp-serverless-specialist`, `@aws-amplify-gen2-specialist`, `@aws-lambda-specialist`, `@dynamodb-specialist`, `@enterprise-sso-specialist`
+`@terraform-specialist`, `@cloud-architect`, `@devops-engineer`, `@deployment-engineer`, `@sre-engineer`, `@incident-responder`, `@database-administrator`, `@security-engineer`, `@gcp-serverless-specialist`, `@aws-amplify-gen2-specialist`, `@aws-lambda-specialist`, `@dynamodb-specialist`, `@enterprise-sso-specialist`
 
 #### Development (18 agents)
 `@python-pro`, `@typescript-pro`, `@react-specialist`, `@nextjs-specialist`, `@fastapi-pro`, `@backend-architect`, `@frontend-developer`, `@fullstack-developer`, `@api-architect`, `@microservices-architect`, `@dotnet-core-expert`, `@csharp-developer`, `@postgres-pro`, `@ui-designer`, `@slack-integration-specialist`, `@material-ui-specialist`, `@graphql-specialist`, `@data-visualization-specialist`
@@ -99,6 +101,9 @@ The cc-unleashed ecosystem includes 59 specialized agents installed via the sepa
 
 #### Product Management (7 agents)
 `@product-manager`, `@scrum-master`, `@business-analyst`, `@technical-writer`, `@documentation-engineer`, `@jira-specialist`, `@story-writer`
+
+#### Creative (3 agents)
+`@ghost-writer`, `@copy-editor`, `@content-reviewer`
 
 #### AI/ML (2 agents)
 `@langgraph-specialist`, `@vector-search-specialist`
@@ -183,7 +188,7 @@ Manual flow:
 
 ## Commands Reference
 
-All commands use the `/cc-unleashed:` prefix. The plugin provides 11 workflow commands:
+All commands use the `/cc-unleashed:` prefix. The plugin provides 14 slash commands:
 
 ### Workflow Triggers
 
