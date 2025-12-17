@@ -2,7 +2,7 @@
 
 Streamlined Claude Code plugin with workflow automation, chunked planning, Jira integration, and integration with 62 specialized agents.
 
-**Version:** 1.2.2
+**Version:** 1.2.3
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 

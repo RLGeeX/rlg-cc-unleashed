@@ -140,9 +140,9 @@ Use AskUserQuestion: Plan ready / Review first / Revise
 
 ## Execution Handoff
 
-After saving the plan:
+**MANDATORY SEQUENCE** - Do these in order, do NOT skip:
 
-### Jira Integration (MUST ASK)
+### Step 1: Jira Integration (REQUIRED - DO NOT SKIP)
 
 **Use AskUserQuestion to offer Jira integration:**
 
@@ -168,7 +168,9 @@ After saving the plan:
 
 **If user selects "Yes":** Invoke the `jira-plan` skill with the feature name.
 
-**Plan Execution:**
+### Step 2: Show Execution Options (ONLY after Jira question)
+
+**Present execution commands:**
 - `/cc-unleashed:plan-next` - Execute next chunk (manual)
 - `/cc-unleashed:plan-execute` - Execute all (autonomous)
 - `/cc-unleashed:plan-status` - Check progress
@@ -198,6 +200,7 @@ After saving the plan:
 - Write chunks without Agent fields
 - Create chunks > 500 tokens
 - Skip user confirmation
+- Skip the Jira integration question (MUST ask after plan ready)
 
 **ALWAYS:**
 - Use descriptive chunk names
@@ -205,6 +208,7 @@ After saving the plan:
 - Provide complete code (not "add validation")
 - Specify exact commands with expected output
 - DRY, YAGNI, TDD, frequent commits
+- Ask about Jira integration BEFORE showing execution options
 
 ---
 
