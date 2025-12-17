@@ -50,6 +50,38 @@ Start by understanding the current project context, then ask questions one at a 
 - **REQUIRED:** Use AskUserQuestion tool to present options
 - Lead with your recommended option and explain why in the option description
 
+**Architectural Decision Gate (NEW):**
+
+After presenting approaches, determine if this is an **architectural decision**:
+- Technology selection (database, framework, cloud service, library)
+- Architecture patterns (monolith vs microservices, sync vs async)
+- Integration approaches (API design, messaging patterns)
+- Security models (auth approach, encryption)
+- Infrastructure decisions (cloud provider, deployment strategy)
+
+If YES, use AskUserQuestion:
+```json
+{
+  "question": "This is an architectural decision with multiple viable approaches. Would you like rigorous evidence-based evaluation using FPF (First Principles Framework)?",
+  "header": "FPF Eval",
+  "multiSelect": false,
+  "options": [
+    {"label": "Yes - Run FPF cycle (Recommended)", "description": "Hypothesis generation, evidence gathering, WLNK audit, DRR (15-30 min)"},
+    {"label": "No - Continue discussion", "description": "Proceed with collaborative exploration only"}
+  ]
+}
+```
+
+**If user selects "Yes - Run FPF cycle":**
+1. Invoke the `fpf-reasoning` skill
+2. Pass the decision question and the 2-3 approaches as seed hypotheses
+3. After FPF completes, resume brainstorming with the validated decision
+4. Reference the DRR path in the design document
+
+**If user selects "No":**
+- Continue with standard brainstorming process
+- Note in design doc: "Decision made via collaborative discussion (no FPF)"
+
 **Presenting the design:**
 - Once you believe you understand what you're building, present the design
 - Break it into sections of 200-300 words

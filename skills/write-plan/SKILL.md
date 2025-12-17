@@ -50,6 +50,23 @@ Each feature gets its own directory:
 
 ## Writing Process
 
+0. **Check for FPF decisions** - Look for relevant Design Rationale Records
+   - Check `.claude/fpf/decisions/` for DRRs related to this feature
+   - If found: Reference in plan-meta.json under `architecturalDecisions` array
+   - If major architectural decisions are undocumented and approaches unclear:
+     ```json
+     {
+       "question": "This plan involves architectural decisions that aren't documented. Run FPF reasoning first?",
+       "header": "FPF Check",
+       "multiSelect": false,
+       "options": [
+         {"label": "Yes - Run FPF first", "description": "Use fpf-reasoning skill to validate architectural choices before planning"},
+         {"label": "No - Proceed with planning", "description": "Architecture is clear or already decided"}
+       ]
+     }
+     ```
+   - If user selects "Yes": Invoke `fpf-reasoning` skill, then resume write-plan
+
 1. **Design with @story-writer** - Convert requirements to Epic → Stories breakdown
 2. **Create directory** - `.claude/plans/[feature-name]/`
 3. **Micro-chunk each phase** - 2-3 tasks, 300-500 tokens each

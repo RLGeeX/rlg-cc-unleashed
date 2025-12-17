@@ -25,6 +25,15 @@ Detailed examples, templates, and implementation details for creating micro-chun
   "contextTokens": 9600,
   "description": "Brief description of what this feature implements",
 
+  "architecturalDecisions": [
+    {
+      "drrPath": ".claude/fpf/decisions/DRR-001-database-selection.md",
+      "topic": "Database selection for order service",
+      "decision": "PostgreSQL with JSONB",
+      "decidedAt": "2025-12-15T10:00:00Z"
+    }
+  ],
+
   "planReview": {
     "reviewedBy": "architect-reviewer",
     "reviewedAt": "2025-11-12T14:45:00Z",

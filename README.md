@@ -2,7 +2,7 @@
 
 Streamlined Claude Code plugin with workflow automation, chunked planning, Jira integration, and integration with 62 specialized agents.
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 
@@ -72,11 +72,12 @@ After installation, restart Claude Code or reload plugins, then verify:
 
 The cc-unleashed plugin provides:
 
-**24 Workflow Skills**
+**25 Workflow Skills**
 - TDD, debugging, code review, git workflows, brainstorming
 - Chunked planning system (write-plan, execute-plan, plan-manager, autonomous-execute)
 - Kubernetes workflows (GitOps, Helm scaffolding, manifest generation, security policies)
 - Jira integration (jira-plan), Hugo story generation, multi-AI consensus
+- FPF reasoning (structured evidence-based architectural decisions via Quint Code)
 
 **14 Slash Commands**
 - Workflow triggers: `/cc-unleashed:tdd`, `/cc-unleashed:debug`, `/cc-unleashed:review`, `/cc-unleashed:brainstorm`, `/cc-unleashed:worktree`
