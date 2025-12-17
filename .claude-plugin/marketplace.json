@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "RLG's curated Claude Code plugin with intelligent context management, multi-AI consensus queries, Jira integration, and micro-chunked planning",
-    "version": "1.2.0"
+    "version": "1.2.1"
   },
   "plugins": [
     {
       "name": "cc-unleashed",
       "source": "./",
       "description": "Advanced Claude Code plugin with multi-AI consensus queries (GPT/Gemini/Grok via OpenRouter), micro-chunked planning, Jira hierarchy, smart orchestration, and automated subagent execution",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "author": {
         "name": "RLGeeX",
         "url": "https://github.com/RLGeeX"

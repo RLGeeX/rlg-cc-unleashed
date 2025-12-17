@@ -2,7 +2,7 @@
 
 Streamlined Claude Code plugin with workflow automation, chunked planning, Jira integration, and integration with 62 specialized agents.
 
-**Version:** 1.2.0
+**Version:** 1.2.1
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 
@@ -14,7 +14,7 @@ CC Unleashed provides workflow automation and planning tools that integrate seam
 - **Chunked planning**: Break down large features into manageable chunks with autonomous execution
 - **Jira integration**: Automatic issue creation and status tracking throughout plan execution
 - **Agent integration**: Works with separately-installed agents (62 specialists with full MCP tool access)
-- **Clean separation**: 14 slash commands, agents invoked with `@agent-name`
+- **Clean separation**: 15 slash commands, agents invoked with `@agent-name`
 - **Comprehensive coverage**: Infrastructure, Development, Quality, Product Management, K8s, AI/ML
 
 ## Quick Start
@@ -72,17 +72,19 @@ After installation, restart Claude Code or reload plugins, then verify:
 
 The cc-unleashed plugin provides:
 
-**25 Workflow Skills**
+**26 Workflow Skills**
 - TDD, debugging, code review, git workflows, brainstorming
 - Chunked planning system (write-plan, execute-plan, plan-manager, autonomous-execute)
 - Kubernetes workflows (GitOps, Helm scaffolding, manifest generation, security policies)
 - Jira integration (jira-plan), Hugo story generation, multi-AI consensus
 - FPF reasoning (structured evidence-based architectural decisions via Quint Code)
+- D3 - Discover-Decide-Design (rigorous planning with consensus + FPF validation)
 
-**14 Slash Commands**
+**15 Slash Commands**
 - Workflow triggers: `/cc-unleashed:tdd`, `/cc-unleashed:debug`, `/cc-unleashed:review`, `/cc-unleashed:brainstorm`, `/cc-unleashed:worktree`
 - Plan management: `/cc-unleashed:plan-new`, `/cc-unleashed:plan-status`, `/cc-unleashed:plan-execute`, `/cc-unleashed:plan-next`, `/cc-unleashed:plan-resume`, `/cc-unleashed:plan-list`
 - Content creation: `/cc-unleashed:hugo-story`, `/cc-unleashed:consensus`
+- Rigorous planning: `/cc-unleashed:d3` (discover-decide-design)
 
 ### Specialized Agents (Installed Separately)
 
