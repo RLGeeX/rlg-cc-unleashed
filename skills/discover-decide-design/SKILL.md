@@ -59,61 +59,46 @@ Orchestrate rigorous planning for complex problems that require multiple validat
 
 ### Phase 2: Decide
 
-**Goal:** Validate each decision point through consensus and/or FPF.
+**Goal:** Validate each decision point through consensus and/or FPF autonomously.
 
-**Process:**
+**IMPORTANT:** Do NOT ask user which decisions to validate. Automatically categorize and validate ALL decisions based on type.
 
-For each decision point, determine validation approach:
+**Decision Routing Table:**
 
-| Decision Type | Validation | Tool |
-|---------------|------------|------|
-| Technology choice | Quick multi-AI check | Consensus |
-| Architecture pattern | Evidence-based evaluation | FPF |
-| Business/strategy | Depends on impact | Either |
-| Foundational (6+ months impact) | Full evidence trail | FPF |
+| Decision Type | Validation | Tool | Auto-Apply |
+|---------------|------------|------|------------|
+| Technology choice | Quick multi-AI check | Consensus | YES |
+| Implementation detail | Quick multi-AI check | Consensus | YES |
+| Architecture pattern | Evidence-based evaluation | FPF | YES |
+| Foundational (6+ months impact) | Full evidence trail | FPF | YES |
+| Business/strategy | Depends on impact | Both | YES* |
 
-**Step 2a: Batch Consensus**
+*Business decisions: Run consensus first. If contested (2-1 split or disagreement), escalate to FPF.
 
-Present decisions to user for consensus validation:
+**Step 2a: Run Consensus on Technology/Implementation Decisions**
 
-```json
-{
-  "question": "Which decisions should we validate through consensus (quick multi-AI check)?",
-  "header": "Consensus",
-  "multiSelect": true,
-  "options": [
-    {"label": "Decision 1: Database choice", "description": "Neo4j vs Neptune vs ArangoDB"},
-    {"label": "Decision 2: Agent framework", "description": "LangGraph vs CrewAI vs AutoGen"},
-    {"label": "Decision 3: Deployment model", "description": "SaaS vs hybrid vs on-prem"},
-    {"label": "Skip consensus", "description": "Proceed without external validation"}
-  ]
-}
-```
-
-For each selected, run:
+For EACH technology or implementation decision, automatically run:
 ```bash
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/consensus/scripts/consensus.sh "DECISION QUESTION"
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/consensus/scripts/consensus.sh "[Project context]. [Decision question]. Options: [A], [B], [C]. Which is best and why?"
 ```
 
-**Step 2b: FPF for Foundational Decisions**
+Run multiple consensus queries in parallel when decisions are independent.
 
-After consensus, identify decisions that need deeper validation:
+**Step 2b: Run FPF on Foundational/Architecture Decisions**
 
-```json
-{
-  "question": "Any decisions need rigorous evidence-based evaluation (FPF)?",
-  "header": "FPF",
-  "multiSelect": true,
-  "options": [
-    {"label": "Decision N: [contested or foundational]", "description": "Consensus showed disagreement or high impact"},
-    {"label": "No FPF needed", "description": "Consensus results are sufficient"}
-  ]
-}
-```
+For EACH foundational or architecture decision, automatically invoke `fpf-reasoning` skill:
+- Initialize FPF with `/q0-init`
+- Generate hypothesis with `/q1-hypothesize`
+- Test assumptions with `/q3-test`
+- Reach decision with `/q5-decide`
 
-For each selected, invoke `fpf-reasoning` skill.
+**Step 2c: Escalate Contested Consensus Results**
 
-**Output:** Validated decisions with rationale
+If any consensus result shows disagreement (2-1 or split opinions):
+- Escalate to FPF for deeper evaluation
+- Document why the decision was contested
+
+**Output:** Validated decisions with rationale (no user interaction required)
 
 ```markdown
 ## Validated Decisions
@@ -214,25 +199,32 @@ DISCOVER:
 - Research competitors (RedGraph, Pillar, etc.)
 - Identify market gaps
 - Map technical requirements
-- Decision points: DB, framework, deployment, MVP scope, target market
+- Decision points identified:
+  | # | Decision | Type | Validation |
+  |---|----------|------|------------|
+  | 1 | Database | Technology | Consensus |
+  | 2 | Framework | Foundational | FPF |
+  | 3 | Deployment | Architecture | Consensus → FPF if contested |
+  | 4 | MVP scope | Business | Consensus |
+  | 5 | Target market | Business | Consensus |
 
-DECIDE:
-- Consensus on DB choice → Neo4j (3/3 agree)
-- Consensus on framework → LangGraph (2/1, contested)
+DECIDE (autonomous):
+- [Parallel] Consensus on DB choice → Neo4j (3/3 agree)
+- [Parallel] Consensus on deployment → Hybrid (2/1, contested) → escalate to FPF
+- [Parallel] Consensus on MVP → Discovery-first (3/3 agree)
+- [Parallel] Consensus on target market → Mid-market (3/3 agree)
 - FPF on framework (foundational) → LangGraph validated with evidence
-- Consensus on deployment → Hybrid (3/3 agree)
-- Consensus on MVP → Discovery-first (3/3 agree)
+- FPF on deployment (contested) → Hybrid validated
 
 DESIGN:
 - Compile into design doc
-- Reference DRR for framework decision
+- Reference DRRs for framework and deployment decisions
 - Present architecture
 - Document risks
 - Save to .claude/plans/
 
 HANDOFF:
-- User chooses: Create implementation plan
-- Invoke write-plan skill
+- Ask user: Create implementation plan, Create Jira tickets, or Done
 ```
 
 ---
@@ -240,10 +232,10 @@ HANDOFF:
 ## Key Principles
 
 1. **Track decisions explicitly** - Don't let decisions slip by unvalidated
-2. **Batch consensus queries** - More efficient than one-by-one
+2. **Run consensus in parallel** - Multiple queries at once when independent
 3. **Escalate to FPF selectively** - Only for foundational/contested decisions
 4. **Reference everything** - Design doc links to DRRs and consensus results
-5. **User decides** - Present options, let user choose what to validate
+5. **Autonomous operation** - Categorize and validate without asking user
 
 ---
 
@@ -254,9 +246,11 @@ HANDOFF:
 - Run FPF on every decision (overkill)
 - Forget to track decision points during Discovery
 - Produce design without referencing validated decisions
+- Ask user which decisions to validate (be autonomous)
 
 **ALWAYS:**
-- Present decision points to user before validation
-- Let user choose which decisions to validate
+- Categorize decisions by type (technology, architecture, business)
+- Auto-route to consensus or FPF based on type
+- Escalate contested consensus to FPF
 - Save design document with decision references
 - Offer clear next steps after design
