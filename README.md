@@ -31,13 +31,9 @@ After installation, verify with:
 /cc-unleashed:plan-list
 ```
 
-### Agent Installation (Optional)
+### Agents (Optional)
 
-For the 62 specialized agents, install the companion repository:
-
-```
-/install github:RLGeeX/rlg-cc-subagents
-```
+For the 62 specialized agents, see [rlg-cc-subagents](https://github.com/RLGeeX/rlg-cc-subagents).
 
 ## Quick Start
 
@@ -168,7 +164,7 @@ Edit `manifest.json` to customize:
 - Verify with `/cc-unleashed:plan-list`
 
 **Agent Not Available:**
-- Install agents: `/install github:RLGeeX/rlg-cc-subagents`
+- See [rlg-cc-subagents](https://github.com/RLGeeX/rlg-cc-subagents) for installation
 - Check agent name with `@` autocomplete
 
 **Plan Not Found:**
