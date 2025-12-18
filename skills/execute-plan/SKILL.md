@@ -106,7 +106,21 @@ mcp__jira__transitionJiraIssue(jiraIssueKey, "In Progress")
 
 ### Step 5: Track & Report
 
-**A. Jira Transition to "Done" (MANDATORY if enabled)**
+**A. Push Code (REQUIRED in autonomous mode)**
+
+After review passes, push the code:
+```bash
+git push origin <branch>
+```
+
+**Push Policy:** In autonomous/automated mode, the user has implicitly approved pushing by choosing that mode. The base system rule "don't push without asking" does NOT apply during autonomous execution - that rule is for ad-hoc work, not planned execution.
+
+**When to push:**
+- Automated mode: Always push after review passes
+- Supervised mode: Ask user before pushing
+- If CI/CD is configured: Push triggers deployment
+
+**B. Jira Transition to "Done" (MANDATORY if enabled)**
 
 If `jiraTracking.enabled` and review passed:
 ```
@@ -115,13 +129,13 @@ mcp__jira__transitionJiraIssue(jiraIssueKey, "Done")
 
 If transition fails: Ask user (Retry / Skip / Continue anyway)
 
-**B. Update plan-meta.json:**
+**C. Update plan-meta.json:**
 - Increment `currentChunk` to N+1
 - Add `executionHistory` entry with: chunk, mode, duration, tests, review fields, Jira fields (if enabled)
 
 See `reference.md` for full executionHistory schema.
 
-**C. Report to user:** Summary, stats, progress, Jira status, next chunk recommendation.
+**D. Report to user:** Summary, stats, progress, Jira status, next chunk recommendation.
 
 ### Step 6: Plan Complete
 
@@ -135,12 +149,13 @@ When currentChunk > totalChunks:
 
 If `jiraTracking.enabled` in plan-meta.json, Jira transitions are **woven into the main flow**:
 
-| Step | Jira Action | Timing |
-|------|-------------|--------|
+| Step | Action | Timing |
+|------|--------|--------|
 | Step 1 | Extract `jiraIssueKey` from `chunkMapping` | During load |
 | Step 2 | Display issue key and status | When presenting chunk |
 | Step 3A | **Transition to "In Progress"** | BEFORE dispatch |
-| Step 5A | **Transition to "Done"** | AFTER review passes |
+| Step 5A | **Push code** (autonomous mode) | AFTER review passes |
+| Step 5B | **Transition to "Done"** | AFTER push |
 
 **Error handling:** Jira errors should NOT block execution unless user chooses to abort. Ask user: Restart MCP / Skip Jira / Retry / Pause.
 
@@ -192,6 +207,7 @@ See `reference.md` for implementation details and error handling patterns.
 **ALWAYS:**
 - Dispatch to execute-plan-with-subagents for automated mode
 - Verify code review before marking complete
+- Push code after review passes (autonomous mode)
 - Get user confirmation for mode
 - Update plan-meta.json after each chunk
 - Transition Jira to "In Progress" BEFORE dispatch (if enabled)
