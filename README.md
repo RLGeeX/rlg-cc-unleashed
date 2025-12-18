@@ -19,14 +19,19 @@ CC Unleashed provides workflow automation and planning tools that integrate seam
 
 ## Installation
 
-Install via Claude Code marketplace:
-
+**Step 1:** Add the marketplace:
 ```
-/install github:RLGeeX/rlg-cc-unleashed
+/plugin marketplace add RLGeeX/rlg-cc-unleashed
 ```
 
-After installation, verify with:
+**Step 2:** Install the plugin:
+```
+/plugin install cc-unleashed@RLGeeX
+```
 
+Or use the interactive menu: `/plugin` → Browse Plugins → cc-unleashed
+
+**Verify installation:**
 ```
 /cc-unleashed:plan-list
 ```
