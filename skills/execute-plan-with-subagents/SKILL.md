@@ -44,19 +44,19 @@ Automated execution of micro-chunked plans using fresh subagents per task or chu
 6. Select code reviewer (prefer code-reviewer, architect-reviewer, qa-expert)
 7. Create TodoWrite with tasks from chunk
 
-### Step 1B: Check Jira Integration (MANDATORY if enabled)
+### Step 2: Check Jira Integration (if enabled)
 
 **If `jiraTracking.enabled` in plan-meta.json:**
 
 1. Extract Jira subtask key for current chunk from `jiraTracking.chunkMapping`
 2. Verify issue exists and current status (should be "To Do" or similar)
-3. Store `jiraIssueKey` for transitions in Steps 2-3
+3. Store `jiraIssueKey` for transitions in Steps 4-5
 
 **If Jira MCP fails:** Use AskUserQuestion: Retry / Skip Jira / Abort
 
-**If no Jira tracking:** Skip to Step 1C
+**If no Jira tracking:** Skip to Step 3.
 
-### Step 1C: Check for Parallel Execution (if applicable)
+### Step 3: Check for Parallel Execution (if applicable)
 
 Check if chunk is in a parallelizable group from plan-meta.json:
 - Analyze file paths for conflicts across group
@@ -65,18 +65,20 @@ Check if chunk is in a parallelizable group from plan-meta.json:
 
 See `reference.md` for detailed parallel execution flow.
 
-### Step 2: Execute Each Task (Sequential)
+### Step 4: Execute Each Task (Sequential)
 
-**A. Transition Jira to "In Progress" (MANDATORY if enabled)**
+For each task in the chunk, execute this loop:
+
+**1. Transition Jira to "In Progress" (if enabled, first task only)**
 
 If Jira tracking enabled and this is the first task in chunk:
 ```
 mcp__jira-pcc__transitionJiraIssue(jiraIssueKey, "In Progress")
 ```
 
-**If transition fails:** Ask user: Retry / Skip Jira / Abort
+If transition fails: Ask user: Retry / Skip Jira / Abort
 
-**B. Dispatch Implementation Subagent**
+**2. Dispatch Implementation Subagent**
 
 Read agent ID from task's **Agent** field, then use Task tool:
 
@@ -101,14 +103,14 @@ prompt: |
   7. Report back
 ```
 
-**C. Get Git SHAs for Review**
+**3. Get Git SHAs for Review**
 
 ```bash
 base_sha=$(git rev-parse HEAD~1)
 head_sha=$(git rev-parse HEAD)
 ```
 
-**D. MANDATORY: Code Review (NO EXCEPTIONS)**
+**4. MANDATORY: Code Review (NO EXCEPTIONS)**
 
 **THIS STEP CANNOT BE SKIPPED.**
 
@@ -120,13 +122,13 @@ YOU MUST NOW DISPATCH CODE REVIEWER. There is no path forward without review.
 
 Dispatch code reviewer with git range and implementation summary.
 
-**E. Handle Review Feedback**
+**5. Handle Review Feedback**
 
 - If "Needs fixes" or critical issues: dispatch fix subagent, re-review
 - Max 2 fix attempts before escalating to human
 - Only proceed when assessment = "Ready"
 
-### Step 3: Complete Chunk
+### Step 5: Complete Chunk
 
 After all tasks complete:
 
@@ -145,7 +147,7 @@ After all tasks complete:
 5. Update plan-meta.json with executionHistory entry (see schema below)
 6. Report chunk completion to orchestrator
 
-### Step 4: Return Control
+### Step 6: Return Control
 
 Return to orchestrator with **REQUIRED fields**:
 - `status`, `chunk`, `summary`, `testsAdded`, `testsPassing`, `duration`

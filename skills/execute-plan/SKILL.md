@@ -69,20 +69,27 @@ Present to user:
 - Supervised
 - Hybrid
 
-### Step 3: Dispatch to Executor
-
-**A. Jira Transition to "In Progress" (MANDATORY if enabled)**
+### Step 3: Jira Transition to "In Progress" (if enabled)
 
 If `jiraTracking.enabled`:
 1. Look up `jiraIssueKey` for current chunk in `jiraTracking.chunkMapping`
-2. **MUST transition issue to "In Progress" BEFORE dispatching executor**
-3. If transition fails: Ask user (Retry / Skip Jira / Abort)
+2. **Check if this is the first chunk of a phase** (from `phases` array in plan-meta.json)
+   - If yes: Also transition the **parent story** to "In Progress"
+   - Parent story key is in `jiraTracking.stories` (e.g., `stories.week1`, `stories.week2`)
+3. **MUST transition chunk issue to "In Progress" BEFORE dispatching executor**
+4. If transition fails: Ask user (Retry / Skip Jira / Abort)
 
 ```
+# If first chunk of phase, transition parent story first:
+mcp__jira__transitionJiraIssue(parentStoryKey, "In Progress")
+
+# Always transition chunk issue:
 mcp__jira__transitionJiraIssue(jiraIssueKey, "In Progress")
 ```
 
-**B. Dispatch Based on Mode**
+**If no Jira tracking:** Skip to Step 4.
+
+### Step 4: Dispatch to Executor
 
 | Mode | Action |
 |------|--------|
@@ -91,7 +98,7 @@ mcp__jira__transitionJiraIssue(jiraIssueKey, "In Progress")
 | Supervised | Execute human-in-loop: present each task, run verifications |
 | Hybrid | Subagent for simple tasks, supervised for complex |
 
-### Step 4: Review Verification Gate (MANDATORY)
+### Step 5: Review Verification Gate (MANDATORY)
 
 **Before marking chunk complete, verify:**
 
@@ -104,9 +111,7 @@ mcp__jira__transitionJiraIssue(jiraIssueKey, "In Progress")
 
 **There is NO option to skip the review gate.**
 
-### Step 5: Track & Report
-
-**A. Push Code (REQUIRED in autonomous mode)**
+### Step 6: Push Code (autonomous mode)
 
 After review passes, push the code:
 ```bash
@@ -120,24 +125,39 @@ git push origin <branch>
 - Supervised mode: Ask user before pushing
 - If CI/CD is configured: Push triggers deployment
 
-**B. Jira Transition to "Done" (MANDATORY if enabled)**
+### Step 7: Jira Transition to "Done" (if enabled)
 
 If `jiraTracking.enabled` and review passed:
+1. Transition chunk issue to "Done"
+2. **Check if this is the last chunk of a phase** (from `phases` array in plan-meta.json)
+   - If yes: Also transition the **parent story** to "Done"
+   - Parent story key is in `jiraTracking.stories` (e.g., `stories.week1`, `stories.week2`)
+
 ```
+# Always transition chunk issue:
 mcp__jira__transitionJiraIssue(jiraIssueKey, "Done")
+
+# If last chunk of phase, also transition parent story:
+mcp__jira__transitionJiraIssue(parentStoryKey, "Done")
 ```
 
 If transition fails: Ask user (Retry / Skip / Continue anyway)
 
-**C. Update plan-meta.json:**
+**If no Jira tracking:** Skip to Step 8.
+
+### Step 8: Update Metadata
+
+Update plan-meta.json:
 - Increment `currentChunk` to N+1
 - Add `executionHistory` entry with: chunk, mode, duration, tests, review fields, Jira fields (if enabled)
 
 See `reference.md` for full executionHistory schema.
 
-**D. Report to user:** Summary, stats, progress, Jira status, next chunk recommendation.
+### Step 9: Report to User
 
-### Step 6: Plan Complete
+Present summary: stats, progress, Jira status, next chunk recommendation.
+
+### Step 10: Plan Complete
 
 When currentChunk > totalChunks:
 - Report completion summary
@@ -152,10 +172,19 @@ If `jiraTracking.enabled` in plan-meta.json, Jira transitions are **woven into t
 | Step | Action | Timing |
 |------|--------|--------|
 | Step 1 | Extract `jiraIssueKey` from `chunkMapping` | During load |
+| Step 1 | Check if chunk is first/last in phase | During load |
 | Step 2 | Display issue key and status | When presenting chunk |
-| Step 3A | **Transition to "In Progress"** | BEFORE dispatch |
-| Step 5A | **Push code** (autonomous mode) | AFTER review passes |
-| Step 5B | **Transition to "Done"** | AFTER push |
+| Step 3 | **Transition chunk to "In Progress"** | BEFORE dispatch |
+| Step 3 | **Transition parent story to "In Progress"** (if first chunk of phase) | BEFORE dispatch |
+| Step 6 | **Push code** (autonomous mode) | AFTER review passes |
+| Step 7 | **Transition chunk to "Done"** | AFTER push |
+| Step 7 | **Transition parent story to "Done"** (if last chunk of phase) | AFTER push |
+
+**Parent Story Transitions:**
+- First chunk of phase → parent story to "In Progress"
+- Last chunk of phase → parent story to "Done"
+- Parent story keys are in `jiraTracking.stories` (e.g., `week1`, `week2`)
+- Phase boundaries are in `phases` array in plan-meta.json
 
 **Error handling:** Jira errors should NOT block execution unless user chooses to abort. Ask user: Restart MCP / Skip Jira / Retry / Pause.
 
@@ -210,8 +239,11 @@ See `reference.md` for implementation details and error handling patterns.
 - Push code after review passes (autonomous mode)
 - Get user confirmation for mode
 - Update plan-meta.json after each chunk
-- Transition Jira to "In Progress" BEFORE dispatch (if enabled)
-- Transition Jira to "Done" AFTER review passes (if enabled)
+- Transition chunk to "In Progress" BEFORE dispatch (if Jira enabled)
+- Transition chunk to "Done" AFTER review passes (if Jira enabled)
+- Transition parent story to "In Progress" when starting first chunk of phase
+- Transition parent story to "Done" when completing last chunk of phase
+- Check phases array to determine first/last chunk boundaries
 - Include Jira fields in executionHistory (if enabled)
 
 ---

@@ -173,7 +173,7 @@ if any_subagent.failed():
 
 If `jiraTracking.enabled` in plan-meta.json, the executor MUST:
 
-1. **Step 1B: Extract Jira Issue Key**
+1. **Step 2: Extract Jira Issue Key**
    ```python
    jira_key = plan_meta["jiraTracking"]["chunkMapping"]
        .find(m => m.chunk == current_chunk)
@@ -184,7 +184,7 @@ If `jiraTracking.enabled` in plan-meta.json, the executor MUST:
        # Continue without Jira - don't block execution
    ```
 
-2. **Step 2A: Transition to In Progress (BEFORE first task)**
+2. **Step 4: Transition to In Progress (BEFORE first task)**
    ```python
    if jira_key:
        transitions = mcp__jira__getTransitionsForJiraIssue(jira_key)
@@ -198,7 +198,7 @@ If `jiraTracking.enabled` in plan-meta.json, the executor MUST:
            log_info("No 'In Progress' transition available for {jira_key}")
    ```
 
-3. **Step 3: Transition to Done (AFTER review passes)**
+3. **Step 5: Transition to Done (AFTER review passes)**
    ```python
    if jira_key and review_assessment == "Ready":
        transitions = mcp__jira__getTransitionsForJiraIssue(jira_key)
