@@ -1,6 +1,6 @@
 # CC Unleashed Commands
 
-All commands use the `/cc-unleashed:` namespace. The plugin provides 14 workflow commands for TDD, debugging, planning, consensus queries, content creation, and git workflows.
+All commands use the `/cc-unleashed:` namespace. The plugin provides 16 workflow commands for TDD, debugging, planning, consensus queries, council deliberation, content creation, and git workflows.
 
 **Note:** For agent invocation, use `@agent-name` directly (e.g., `@python-pro`, `@terraform-specialist`). Agents are installed separately from the standalone agents repository.
 
@@ -60,6 +60,50 @@ All commands use the `/cc-unleashed:` namespace. The plugin provides 14 workflow
 ```
 
 **Output:** Shows recommendations from each model with confidence levels, then presents consensus (3/3), majority (2/3), or split decision.
+
+### /cc-unleashed:council
+**Description:** Convene an LLM Council for deliberative multi-model reasoning
+**Action:** Loads `skills/council/` - 3-stage process with peer review and chairman synthesis
+**Use when:** Complex decisions requiring deeper deliberation than simple consensus polling
+
+**Prerequisites:**
+- `OPENROUTER_API_KEY` environment variable set
+- Python 3.8+ with `httpx` installed
+- Optional: `~/.claude/config/council.json` to customize council composition
+
+**3-Stage Process:**
+1. **Query:** Each council member responds independently
+2. **Peer Review:** Members review anonymized responses (Response A, B, C)
+3. **Synthesis:** Chairman combines insights into final recommendation
+
+**Default Council:**
+- Council: GPT-4o, Gemini 2.5 Flash, Grok 4
+- Chairman: Claude Sonnet 4
+
+**Good questions:**
+- "Should we use GraphQL or REST for our new API?"
+- "How should we structure authentication across microservices?"
+- "Monorepo vs polyrepo for 5 related services?"
+
+**Cost:** ~$0.15-0.30 per query (3 models × 2 stages + chairman)
+
+**Example:**
+```
+/cc-unleashed:council
+> What's the best approach for implementing real-time updates in a React app?
+```
+
+**Output:** Individual perspectives, peer review highlights, and chairman's synthesized recommendation.
+
+### /cc-unleashed:d3
+**Description:** Start rigorous planning with discover-decide-design workflow
+**Action:** Loads `skills/discover-decide-design/` - three-phase rigorous planning
+**Use when:** Complex planning with multiple architectural decisions requiring validation
+
+**Phases:**
+1. **Discover:** Explore problem space, identify decision points
+2. **Decide:** Validate decisions via consensus + FPF for foundational choices
+3. **Design:** Compile validated output with decision references
 
 ## Content Creation
 
@@ -230,7 +274,7 @@ Use @tdd-enforcer or invoke the TDD skill to enforce RED-GREEN-REFACTOR cycle.
 
 ## Available Agents
 
-The cc-unleashed ecosystem includes 62 specialized agents installed separately. Invoke with `@agent-name`:
+The cc-unleashed ecosystem includes 61 specialized agents installed separately. Invoke with `@agent-name`:
 
 **Development:** `@python-pro`, `@typescript-pro`, `@react-specialist`, `@nextjs-specialist`, `@fastapi-pro`, `@backend-architect`, `@frontend-developer`, `@fullstack-developer`, `@api-architect`, `@microservices-architect`, `@dotnet-core-expert`, `@csharp-developer`, `@postgres-pro`, `@ui-designer`, `@slack-integration-specialist`, `@material-ui-specialist`, `@graphql-specialist`, `@data-visualization-specialist`
 

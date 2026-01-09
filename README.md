@@ -2,7 +2,7 @@
 
 Streamlined Claude Code plugin with workflow automation, chunked planning, Jira integration, and integration with 61 specialized agents.
 
-**Version:** 1.3.0
+**Version:** 1.4.0
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 
@@ -13,7 +13,8 @@ CC Unleashed provides workflow automation and planning tools that integrate seam
 - **Workflow automation**: TDD, debugging, code review, git worktrees, brainstorming
 - **Chunked planning**: Break down large features into manageable chunks with autonomous execution
 - **Jira integration**: Automatic issue creation and status tracking throughout plan execution
-- **Multi-AI consensus**: Query GPT, Gemini, and Grok for decision validation
+- **Multi-AI consensus**: Query GPT, Gemini, and Grok for quick decision validation
+- **LLM Council**: 3-stage deliberative reasoning with peer review and chairman synthesis
 - **FPF reasoning**: Evidence-based architectural decisions via Quint Code integration
 - **D3 workflow**: Discover-Decide-Design for rigorous multi-decision planning
 
@@ -38,7 +39,7 @@ Or use the interactive menu: `/plugin` → Browse Plugins → cc-unleashed
 
 ### Agents (Optional)
 
-For the 62 specialized agents, see [rlg-cc-subagents](https://github.com/RLGeeX/rlg-cc-subagents).
+For the 61 specialized agents, see [rlg-cc-subagents](https://github.com/RLGeeX/rlg-cc-subagents).
 
 ## Quick Start
 
@@ -66,26 +67,27 @@ For the 62 specialized agents, see [rlg-cc-subagents](https://github.com/RLGeeX/
 
 ## Plugin Components
 
-### Skills (26 total)
+### Skills (27 total)
 
 | Category | Skills |
 |----------|--------|
 | Workflow (14) | TDD, debugging, code review, brainstorming, git worktrees, verification, parallel agents, etc. |
 | Planning (7) | write-plan, execute-plan, plan-manager, autonomous-execute, jira-plan, fpf-reasoning, discover-decide-design |
 | Kubernetes (4) | gitops-workflow, helm-chart-scaffolding, k8s-manifest-generator, k8s-security-policies |
+| Decision Support (1) | council (3-stage deliberative reasoning with peer review) |
 | Content (1) | hugo-story |
 
-### Commands (15 total)
+### Commands (16 total)
 
 | Category | Commands |
 |----------|----------|
 | Workflow | `/tdd`, `/debug`, `/review`, `/brainstorm`, `/worktree` |
 | Planning | `/plan-new`, `/plan-status`, `/plan-execute`, `/plan-next`, `/plan-resume`, `/plan-list` |
-| Integration | `/jira-plan`, `/consensus`, `/hugo-story`, `/d3` |
+| Integration | `/jira-plan`, `/consensus`, `/council`, `/hugo-story`, `/d3` |
 
 All commands use the `/cc-unleashed:` prefix.
 
-### Specialized Agents (62 total, installed separately)
+### Specialized Agents (61 total, installed separately)
 
 | Category | Count | Examples |
 |----------|-------|----------|
