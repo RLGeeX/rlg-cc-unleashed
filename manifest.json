@@ -8,8 +8,11 @@
     "type": "git",
     "url": "https://github.com/rlgeex/rlg-cc-unleashed"
   },
-  "agents": {
-    "note": "Agents are now installed separately via rlg-cc-subagents repository. Install to ~/.claude/agents/cc-unleashed/ for auto-delegation support. See README.md for installation instructions."
+  "companionPlugins": {
+    "cc-unleashed-agents": {
+      "repository": "https://github.com/RLGeeX/rlg-cc-subagents",
+      "description": "61 specialized subagents - install as separate plugin for auto-delegation"
+    }
   },
   "skills": {
     "workflows": {
