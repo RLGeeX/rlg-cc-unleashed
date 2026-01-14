@@ -43,7 +43,7 @@ Options:
 First, fetch available models from OpenRouter:
 
 ```bash
-python3 $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.py --discover --format table
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh --discover --format table
 ```
 
 This returns models from major providers (OpenAI, Anthropic, Google, xAI, Meta, Mistral) with context length and pricing.
@@ -57,7 +57,7 @@ Then use AskUserQuestion to let them pick from the available models:
 Execute the Python script with configuration:
 
 ```bash
-python3 $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.py \
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh \
   --question "USER'S QUESTION" \
   --council "model1,model2,model3" \
   --chairman "chairman-model"
@@ -65,7 +65,7 @@ python3 $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/coun
 
 **Default invocation:**
 ```bash
-python3 $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.py \
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh \
   --question "USER'S QUESTION"
 ```
 
@@ -89,14 +89,14 @@ The script outputs structured results. Present to user:
 ## Prerequisites
 
 - `OPENROUTER_API_KEY` environment variable
-- Python 3.8+ with `httpx` installed
+- `curl` and `jq` installed (standard on most systems)
 - Optional: `~/.claude/config/council.json` for default configuration
 
 ## Error Handling
 
 - **Missing API key**: Tell user to set `OPENROUTER_API_KEY`
 - **Model failures**: Script continues if 2+ council members succeed
-- **Python not available**: Check Python installation
+- **Missing curl/jq**: Tell user to install these tools
 
 ## Configuration File
 
@@ -123,10 +123,10 @@ To see all available models from major providers:
 
 ```bash
 # JSON format (for parsing)
-python3 $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.py --discover
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh --discover
 
 # Human-readable table
-python3 $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.py --discover --format table
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh --discover --format table
 ```
 
 **Major providers included:** OpenAI, Anthropic, Google, xAI, Meta, Mistral
