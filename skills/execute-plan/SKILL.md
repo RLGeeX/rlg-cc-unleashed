@@ -1,9 +1,25 @@
 ---
 name: execute-plan
-description: Smart orchestrator for chunked plans - auto-detects complexity, recommends execution mode (parallel/automated/supervised/hybrid), dispatches to executor, tracks progress with mandatory code review
+description: Smart orchestrator for chunked plans - auto-detects complexity, recommends execution mode (parallel/automated/supervised/hybrid), dispatches to executor, tracks progress with mandatory code review. Supports --persist flag for autonomous looping.
 ---
 
 # Execute Plan (Smart Orchestrator)
+
+## Usage
+
+```
+/cc-unleashed:execute-plan [plan-path] [options]
+
+Options:
+  --persist              Enable persistence mode (loops until complete or limits reached)
+  --max-iterations N     With --persist: max iterations (default: 10)
+  --timeout M            With --persist: max runtime in minutes (default: 60)
+```
+
+**Example with persistence:**
+```
+/cc-unleashed:execute-plan .claude/plans/my-feature --persist --max-iterations 20 --timeout 120
+```
 
 ## CRITICAL: You Are an Orchestrator, Not an Implementer
 
@@ -68,6 +84,41 @@ Present to user:
 - Sequential Automated
 - Supervised
 - Hybrid
+- **Persistent Automated** (if --persist flag or user requests)
+
+### Step 2.5: Persistence Mode Setup (if --persist)
+
+If `--persist` flag is provided or user selects "Persistent Automated":
+
+1. **Initialize persist-execute state file** at `~/.claude/persist-execute-state.json`:
+   ```json
+   {
+     "active": true,
+     "planPath": "<plan-path>",
+     "prompt": "Continue executing plan...",
+     "iteration": 0,
+     "maxIterations": <--max-iterations or 10>,
+     "timeoutSeconds": <--timeout * 60 or 3600>,
+     "startTime": <current unix timestamp>,
+     "completionPromise": "PERSIST_COMPLETE",
+     "mode": "automated"
+   }
+   ```
+
+2. **Warn user about persistence implications:**
+   - Will loop until all chunks complete OR limits reached
+   - Use `/cc-unleashed:persist-cancel` to stop early
+   - Recommend using git worktree for safety
+
+3. **Confirm safeguard settings** before proceeding
+
+4. **Stop hook will automatically:**
+   - Block exit attempts
+   - Re-feed execution prompt
+   - Track iterations
+   - Enforce timeout
+
+**When persistence completes:** Clean up state file and report summary.
 
 ### Step 3: Jira Transition to "In Progress" (if enabled)
 
@@ -211,9 +262,11 @@ See `reference.md` for implementation details and error handling patterns.
 
 ## Integration
 
-**Calls:** execute-plan-with-subagents, using-git-worktrees, finishing-a-development-branch
+**Calls:** execute-plan-with-subagents, using-git-worktrees, finishing-a-development-branch, persist-execute (when --persist)
 
 **Called by:** /cc-unleashed:plan-next, /cc-unleashed:plan-resume
+
+**With --persist:** Uses Stop hook at `hooks/persist-stop-hook.sh` for autonomous looping
 
 **Reads:** plan-meta.json, chunk-NNN-name.md
 
