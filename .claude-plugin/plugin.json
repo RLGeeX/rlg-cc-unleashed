@@ -1,6 +1,6 @@
 {
   "name": "cc-unleashed",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Claude Code plugin with workflow automation, Hugo story generation, multi-AI consensus queries, Jira integration, and chunked execution - works with 61 specialized agents",
   "author": {
     "name": "RLGeeX",

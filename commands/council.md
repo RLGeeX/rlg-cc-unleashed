@@ -9,7 +9,7 @@ Convene a council of AI models for deliberative reasoning. Uses 3-stage process:
 
 ## IMPORTANT: How to Execute This Command
 
-You orchestrate the council through the Python script and AskUserQuestion tool.
+You orchestrate the council through the shell script and AskUserQuestion tool.
 
 ### Step 1: Get the Question
 
@@ -31,7 +31,7 @@ Options:
 **If "Customize council" or "Customize chairman"**: First run discover to show available models:
 
 ```bash
-python3 $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.py --discover --format table
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh --discover --format table
 ```
 
 Then use AskUserQuestion to let user pick from the discovered models.
@@ -40,16 +40,23 @@ Then use AskUserQuestion to let user pick from the discovered models.
 
 **Default configuration:**
 ```bash
-python3 $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.py \
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh \
   --question "USER'S QUESTION HERE"
 ```
 
 **Custom council:**
 ```bash
-python3 $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.py \
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh \
   --question "USER'S QUESTION" \
   --council "model1,model2,model3" \
   --chairman "chairman-model"
+```
+
+**With member count:**
+```bash
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh \
+  --question "USER'S QUESTION" \
+  --members 5
 ```
 
 ### Step 4: Present Results
@@ -62,7 +69,7 @@ The script outputs structured results. Summarize for the user:
 ## Prerequisites
 
 - `OPENROUTER_API_KEY` environment variable must be set
-- Python 3.8+ with `httpx` installed (`pip install httpx`)
+- `curl` and `jq` installed (standard on most systems)
 - Optional: `~/.claude/config/council.json` for default configuration
 
 ## Good Questions for Council

@@ -54,7 +54,7 @@ Then use AskUserQuestion to let them pick from the available models:
 
 ### Step 3: Run Council Script
 
-Execute the Python script with configuration:
+Execute the shell script with configuration:
 
 ```bash
 $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh \
