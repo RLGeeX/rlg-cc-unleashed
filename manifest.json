@@ -1,7 +1,7 @@
 {
   "name": "rlg-cc-unleashed",
-  "version": "1.6.1",
-  "description": "Claude Code plugin with workflow automation, Hugo story generation, Jira integration, and chunked planning - works with 61 specialized agents",
+  "version": "1.7.0",
+  "description": "Claude Code plugin with workflow automation, spec-kit integration, Hugo story generation, Jira integration, and chunked planning - works with 61 specialized agents",
   "claudeCodeVersion": ">=2.0.31",
   "author": "RLGeeX",
   "repository": {
@@ -42,6 +42,8 @@
         "plan-manager",
         "autonomous-execute",
         "jira-plan",
+        "sk-jira",
+        "sk-execute",
         "consensus",
         "council",
         "hugo-story",

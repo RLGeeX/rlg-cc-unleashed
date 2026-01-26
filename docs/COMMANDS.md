@@ -1,6 +1,6 @@
 # CC Unleashed Commands
 
-All commands use the `/cc-unleashed:` namespace. The plugin provides 16 workflow commands for TDD, debugging, planning, consensus queries, council deliberation, content creation, and git workflows.
+All commands use the `/cc-unleashed:` namespace. The plugin provides 19 workflow commands for TDD, debugging, planning, spec-kit integration, consensus queries, council deliberation, content creation, and git workflows.
 
 **Note:** For agent invocation, use `@agent-name` directly (e.g., `@python-pro`, `@terraform-specialist`). Agents are installed separately from the standalone agents repository.
 
@@ -211,6 +211,50 @@ All commands use the `/cc-unleashed:` namespace. The plugin provides 16 workflow
 ```
 /cc-unleashed:plan-list
 ```
+
+## Spec-Kit Integration
+
+### /cc-unleashed:sk-jira [feature-path]
+**Description:** Create Jira Epic → Stories → Sub-tasks from spec-kit artifacts
+**Action:** Loads `skills/sk-jira/` - parses spec.md and tasks.md, creates Jira hierarchy
+**Use when:** You have a spec-kit feature spec and want to create corresponding Jira issues
+
+**Prerequisites:**
+- Spec-kit feature exists in `specs/###-feature-name/`
+- Contains `spec.md` with user stories (US1, US2, etc.)
+- Contains `tasks.md` with task IDs and story assignments
+- Jira MCP server available (jira-pcc, jira-rlg, jira-ti, etc.)
+
+**Example:**
+```
+/cc-unleashed:sk-jira specs/001-user-auth
+```
+
+**Output:** Creates Jira Epic with Stories (per user story) and Sub-tasks (per task). Saves `sk-state.json` with Jira key mappings.
+
+### /cc-unleashed:sk-execute [feature-path]
+**Description:** Execute spec-kit tasks autonomously with constitution validation, agent dispatch, and Jira sync
+**Action:** Loads `skills/sk-execute/` - validates constitution, dispatches agents, tracks in Jira
+**Use when:** You have Jira issues created via sk-jira and want to execute the tasks
+
+**Prerequisites:**
+- Run `/cc-unleashed:sk-jira` first to create Jira issues
+- `sk-state.json` exists with Jira mappings
+- `.specify/memory/constitution.md` exists (project principles)
+
+**Workflow:**
+1. Validates spec/plan against constitution (HARD STOP on violations)
+2. For each task: auto-detect agent, confirm with user, dispatch
+3. Transitions Jira issues: todo → in-progress → done
+4. Code review gate between phases
+5. Resume-friendly via sk-state.json
+
+**Example:**
+```
+/cc-unleashed:sk-execute specs/001-user-auth
+```
+
+**Output:** Executes all tasks with agent dispatch, Jira sync, and code review gates.
 
 ## Command Implementation
 

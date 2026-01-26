@@ -1,8 +1,8 @@
 # CC Unleashed
 
-Streamlined Claude Code plugin with workflow automation, chunked planning, Jira integration, and integration with 61 specialized agents.
+Streamlined Claude Code plugin with workflow automation, spec-kit integration, chunked planning, Jira integration, and integration with 61 specialized agents.
 
-**Version:** 1.6.1
+**Version:** 1.7.0
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 
@@ -67,23 +67,23 @@ For the 61 specialized agents, see [rlg-cc-subagents](https://github.com/RLGeeX/
 
 ## Plugin Components
 
-### Skills (27 total)
+### Skills (31 total)
 
 | Category | Skills |
 |----------|--------|
 | Workflow (14) | TDD, debugging, code review, brainstorming, git worktrees, verification, parallel agents, etc. |
-| Planning (7) | write-plan, execute-plan, plan-manager, autonomous-execute, jira-plan, fpf-reasoning, discover-decide-design |
+| Planning (9) | write-plan, execute-plan, plan-manager, autonomous-execute, jira-plan, sk-jira, sk-execute, fpf-reasoning, discover-decide-design |
 | Kubernetes (4) | gitops-workflow, helm-chart-scaffolding, k8s-manifest-generator, k8s-security-policies |
-| Decision Support (1) | council (3-stage deliberative reasoning with peer review) |
+| Decision Support (2) | council, consensus |
 | Content (1) | hugo-story |
 
-### Commands (16 total)
+### Commands (19 total)
 
 | Category | Commands |
 |----------|----------|
 | Workflow | `/tdd`, `/debug`, `/review`, `/brainstorm`, `/worktree` |
 | Planning | `/plan-new`, `/plan-status`, `/plan-execute`, `/plan-next`, `/plan-resume`, `/plan-list` |
-| Integration | `/jira-plan`, `/consensus`, `/council`, `/hugo-story`, `/d3` |
+| Integration | `/jira-plan`, `/sk-jira`, `/sk-execute`, `/consensus`, `/council`, `/hugo-story`, `/d3` |
 
 All commands use the `/cc-unleashed:` prefix.
 
