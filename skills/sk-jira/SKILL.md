@@ -1,6 +1,6 @@
 ---
 name: sk-jira
-description: Creates Jira Epic → Stories → Sub-tasks hierarchy from spec-kit artifacts (spec.md, tasks.md)
+description: Creates Jira Epic → Stories → Sub-tasks hierarchy from spec-kit artifacts (spec.md, tasks.md). Use when you have a spec-kit feature and want to create Jira tickets from its spec.md and tasks.md, or say "create Jira from spec-kit".
 ---
 
 # Spec-Kit Jira Integration

@@ -1,6 +1,6 @@
 ---
 name: execute-plan
-description: Smart orchestrator for chunked plans - auto-detects complexity, recommends execution mode (parallel/automated/supervised/hybrid), dispatches to executor, tracks progress with mandatory code review. Supports --persist flag for autonomous looping.
+description: Smart orchestrator for chunked plans - auto-detects complexity, recommends execution mode (parallel/automated/supervised/hybrid), dispatches to executor, tracks progress with mandatory code review. Supports --persist flag for autonomous looping. Use when ready to execute a chunked plan, or say "execute plan", "run the plan", or "start execution".
 ---
 
 # Execute Plan (Smart Orchestrator)

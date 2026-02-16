@@ -1,6 +1,6 @@
 ---
 name: council
-description: Convene an LLM Council for deliberative multi-model reasoning. Uses 3-stage process (Query, Peer Review, Chairman Synthesis) for deeper analysis than simple consensus polling.
+description: Convene an LLM Council for deliberative multi-model reasoning. Uses 3-stage process (Query, Peer Review, Chairman Synthesis) for deeper analysis than simple consensus polling. Use when a question needs rigorous multi-model deliberation with peer review, or say "convene council", "council review", or "LLM council".
 allowed-tools: Bash, Read, AskUserQuestion
 ---
 

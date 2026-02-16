@@ -1,6 +1,6 @@
 ---
 name: sk-execute
-description: Autonomously execute spec-kit tasks with constitution validation, agent dispatch, Jira sync, and code review gates
+description: Autonomously execute spec-kit tasks with constitution validation, agent dispatch, Jira sync, and code review gates. Use when ready to execute spec-kit tasks, or say "execute spec-kit", "run spec-kit tasks", or "start spec-kit execution".
 ---
 
 # Spec-Kit Task Executor

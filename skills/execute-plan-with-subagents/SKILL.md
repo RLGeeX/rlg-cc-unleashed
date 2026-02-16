@@ -1,6 +1,6 @@
 ---
 name: execute-plan-with-subagents
-description: Automated subagent execution for micro-chunked plans - dispatches fresh subagent per task within orchestrated workflow, code review after each task, progress tracking
+description: Automated subagent execution for micro-chunked plans - dispatches fresh subagent per task within orchestrated workflow, code review after each task, progress tracking. Use when executing plan chunks with subagents, or say "execute with subagents" or "run plan with agents".
 ---
 
 # Execute Plan With Subagents

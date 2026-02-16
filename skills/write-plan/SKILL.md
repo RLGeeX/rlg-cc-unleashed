@@ -1,6 +1,6 @@
 ---
 name: write-plan
-description: Creates micro-chunked implementation plans stored in .claude/plans/[feature-name]/ - breaks large features into 2-3 task chunks (300-500 tokens) optimized for subagent execution and human review
+description: Creates micro-chunked implementation plans stored in .claude/plans/[feature-name]/ - breaks large features into 2-3 task chunks (300-500 tokens) optimized for subagent execution and human review. Use when user says "write a plan", "create a plan", "plan this feature", or needs to break a large feature into executable chunks.
 ---
 
 # Writing Micro-Chunked Plans

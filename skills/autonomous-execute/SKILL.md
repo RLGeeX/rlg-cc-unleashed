@@ -1,6 +1,6 @@
 ---
 name: autonomous-execute
-description: Fully autonomous plan execution - executes all remaining chunks automatically with subagents, code review, and progress tracking
+description: Fully autonomous plan execution - executes all remaining chunks automatically with subagents, code review, and progress tracking. Use when you want to run an entire plan hands-off, or say "execute everything", "run all chunks", or "autonomous execute".
 ---
 
 # Autonomous Plan Execution

@@ -1,6 +1,6 @@
 ---
 name: persist-execute
-description: Execute a chunked plan with Ralph Wiggum-style persistence - blocks exit attempts and continues iteratively until completion or safeguard limits reached
+description: Execute a chunked plan with Ralph Wiggum-style persistence - blocks exit attempts and continues iteratively until completion or safeguard limits reached. Use when you want unstoppable plan execution that resists interruption, or say "persist execute", "don't stop until done", or "keep going no matter what".
 ---
 
 # Persist-Execute: Autonomous Plan Execution with Persistence

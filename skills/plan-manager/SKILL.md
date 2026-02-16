@@ -1,6 +1,6 @@
 ---
 name: plan-manager
-description: Manages chunked plan lifecycle - listing plans, checking status, resuming interrupted plans, cleaning up completed plans
+description: Manages chunked plan lifecycle - listing plans, checking status, resuming interrupted plans, cleaning up completed plans. Use when user says "list plans", "plan status", "resume plan", "clean up plans", or needs to manage existing plans.
 ---
 
 # Plan Manager

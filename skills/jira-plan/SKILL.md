@@ -1,6 +1,6 @@
 ---
 name: jira-plan
-description: Creates Jira Epic → Stories → Sub-tasks hierarchy for an existing plan by delegating to @jira-specialist agent
+description: Creates Jira Epic → Stories → Sub-tasks hierarchy for an existing plan by delegating to @jira-specialist agent. Use when you have a chunked plan and want to create Jira tickets for it, or say "create Jira issues for this plan".
 ---
 
 # Jira Plan Integration
