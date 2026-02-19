@@ -1,8 +1,8 @@
 # CC Unleashed
 
-Streamlined Claude Code plugin with workflow automation, spec-kit integration, chunked planning, Jira integration, and integration with 61 specialized agents.
+Streamlined Claude Code plugin with workflow automation, Memorizer memory integration, spec-kit integration, chunked planning, Jira integration, and integration with 61 specialized agents.
 
-**Version:** 1.7.1
+**Version:** 1.8.0
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 
@@ -67,11 +67,11 @@ For the 61 specialized agents, see [rlg-cc-subagents](https://github.com/RLGeeX/
 
 ## Plugin Components
 
-### Skills (31 total)
+### Skills (33 total)
 
 | Category | Skills |
 |----------|--------|
-| Workflow (14) | TDD, debugging, code review, brainstorming, git worktrees, verification, parallel agents, etc. |
+| Workflow (16) | TDD, debugging, code review, brainstorming, git worktrees, verification, parallel agents, memorize, memory-management, etc. |
 | Planning (9) | write-plan, execute-plan, plan-manager, autonomous-execute, jira-plan, sk-jira, sk-execute, fpf-reasoning, discover-decide-design |
 | Kubernetes (4) | gitops-workflow, helm-chart-scaffolding, k8s-manifest-generator, k8s-security-policies |
 | Decision Support (2) | council, consensus |
