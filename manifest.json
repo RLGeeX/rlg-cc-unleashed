@@ -1,6 +1,6 @@
 {
   "name": "rlg-cc-unleashed",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Claude Code plugin with workflow automation, memory integration (Memorizer MCP), spec-kit, Hugo story generation, Jira integration, and chunked planning - works with 61 specialized agents",
   "claudeCodeVersion": ">=2.0.31",
   "author": "RLGeeX",
