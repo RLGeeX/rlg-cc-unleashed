@@ -37,6 +37,7 @@ call_memorizer() {
 
     curl -s --max-time "$TIMEOUT" -X POST "$MEMORIZER_URL" \
         -H "Content-Type: application/json" \
+        -H "Accept: application/json, text/event-stream" \
         -d "$request" \
         2>/dev/null \
         | grep '^data:' | head -1 | sed 's/^data: //'
@@ -90,15 +91,8 @@ if [[ -n "$cwd" && "$cwd" == "${PRJ_ROOT}/"* ]]; then
 
         if [[ -n "$lookup_resp" ]]; then
             content=$(echo "$lookup_resp" | extract_content_text)
-            # Try array of projects, then direct object
-            project_id=$(echo "$content" | \
-                jq -r '
-                    if type == "array" then .[0].id
-                    elif .projects then .projects[0].id
-                    elif .id then .id
-                    else empty
-                    end // ""
-                ' 2>/dev/null || echo "")
+            # get_project_context returns plain text; extract UUID from "ID: <uuid>" line
+            project_id=$(echo "$content" | grep -oP 'ID:\s*\K[0-9a-f-]{36}' | head -1 || echo "")
 
             # Cache if found
             if [[ -n "$project_id" && "$project_id" != "null" ]]; then
