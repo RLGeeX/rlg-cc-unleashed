@@ -24,4 +24,4 @@ ignore: |
   .venv/
   node_modules/
   .terraform/
-  skills/*/assets/
+  plugins/*/skills/*/assets/

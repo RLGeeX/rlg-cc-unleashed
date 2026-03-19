@@ -1,0 +1,8 @@
+{
+  "name": "cc-unleashed",
+  "description": "Claude Code plugin with workflow automation, Memorizer memory integration, spec-kit integration, Hugo story generation, multi-AI consensus queries, Jira integration, and chunked execution - works with 61 specialized agents",
+  "author": {
+    "name": "RLGeeX",
+    "email": "jfogarty@rlgeex.com"
+  }
+}
