@@ -106,7 +106,7 @@ If something appears during tests but you don't know which test:
 Use the bisection script:
 
 ```bash
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/root-cause-tracing/find-polluter.sh '.git' 'src/**/*.test.ts'
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/root-cause-tracing/find-polluter.sh '.git' 'src/**/*.test.ts'
 ```
 
 Runs tests one-by-one, stops at first polluter. See script for usage.

@@ -16,13 +16,13 @@ Query multiple AI models (GPT-4, Gemini, Grok) via OpenRouter to get diverse per
 ### Script Path
 
 ```bash
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/consensus/scripts/consensus.sh
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/consensus/scripts/consensus.sh
 ```
 
 ### Execution
 
 ```bash
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/consensus/scripts/consensus.sh "YOUR QUESTION HERE"
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/consensus/scripts/consensus.sh "YOUR QUESTION HERE"
 ```
 
 ## Process
@@ -40,7 +40,7 @@ If vague, ask user to clarify before running.
 
 Execute with the Bash tool:
 ```bash
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/consensus/scripts/consensus.sh "Should I use X or Y for Z?"
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/consensus/scripts/consensus.sh "Should I use X or Y for Z?"
 ```
 
 ### 3. Summarize Results

@@ -79,7 +79,7 @@ Orchestrate rigorous planning for complex problems that require multiple validat
 
 For EACH technology or implementation decision, automatically run:
 ```bash
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/consensus/scripts/consensus.sh "[Project context]. [Decision question]. Options: [A], [B], [C]. Which is best and why?"
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/consensus/scripts/consensus.sh "[Project context]. [Decision question]. Options: [A], [B], [C]. Which is best and why?"
 ```
 
 Run multiple consensus queries in parallel when decisions are independent.

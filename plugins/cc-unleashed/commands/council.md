@@ -31,7 +31,7 @@ Options:
 **If "Customize council" or "Customize chairman"**: First run discover to show available models:
 
 ```bash
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh --discover --format table
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/council/scripts/council.sh --discover --format table
 ```
 
 Then use AskUserQuestion to let user pick from the discovered models.
@@ -40,13 +40,13 @@ Then use AskUserQuestion to let user pick from the discovered models.
 
 **Default configuration:**
 ```bash
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh \
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/council/scripts/council.sh \
   --question "USER'S QUESTION HERE"
 ```
 
 **Custom council:**
 ```bash
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh \
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/council/scripts/council.sh \
   --question "USER'S QUESTION" \
   --council "model1,model2,model3" \
   --chairman "chairman-model"
@@ -54,7 +54,7 @@ $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scri
 
 **With member count:**
 ```bash
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh \
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/council/scripts/council.sh \
   --question "USER'S QUESTION" \
   --members 5
 ```

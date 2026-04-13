@@ -49,7 +49,7 @@ If not installed, use AskUserQuestion:
 
 ```bash
 # Ensure .claude/fpf structure exists with symlink for Quint Code compatibility
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/fpf-reasoning/scripts/ensure_fpf_path.sh
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/fpf-reasoning/scripts/ensure_fpf_path.sh
 ```
 
 ---
@@ -102,7 +102,7 @@ L2 (Verified)       → Empirically tested
 
 ```bash
 # Run FIRST - creates .claude/fpf and symlink
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/fpf-reasoning/scripts/ensure_fpf_path.sh
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/fpf-reasoning/scripts/ensure_fpf_path.sh
 ```
 
 ### Step 2: Initialize FPF (if needed)

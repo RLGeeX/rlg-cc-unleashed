@@ -21,7 +21,7 @@ If the user provided a question with the command, use it. Otherwise, ask:
 Execute with the user's question:
 
 ```bash
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/consensus/scripts/consensus.sh "USER'S QUESTION HERE"
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/consensus/scripts/consensus.sh "USER'S QUESTION HERE"
 ```
 
 ### Step 3: Present Results

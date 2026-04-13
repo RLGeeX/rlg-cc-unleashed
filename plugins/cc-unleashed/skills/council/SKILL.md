@@ -43,7 +43,7 @@ Options:
 First, fetch available models from OpenRouter:
 
 ```bash
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh --discover --format table
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/council/scripts/council.sh --discover --format table
 ```
 
 This returns models from major providers (OpenAI, Anthropic, Google, xAI, Meta, Mistral) with context length and pricing.
@@ -57,7 +57,7 @@ Then use AskUserQuestion to let them pick from the available models:
 Execute the shell script with configuration:
 
 ```bash
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh \
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/council/scripts/council.sh \
   --question "USER'S QUESTION" \
   --council "model1,model2,model3" \
   --chairman "chairman-model"
@@ -65,7 +65,7 @@ $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scri
 
 **Default invocation:**
 ```bash
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh \
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/council/scripts/council.sh \
   --question "USER'S QUESTION"
 ```
 
@@ -123,10 +123,10 @@ To see all available models from major providers:
 
 ```bash
 # JSON format (for parsing)
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh --discover
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/council/scripts/council.sh --discover
 
 # Human-readable table
-$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/skills/council/scripts/council.sh --discover --format table
+$HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/council/scripts/council.sh --discover --format table
 ```
 
 **Major providers included:** OpenAI, Anthropic, Google, xAI, Meta, Mistral
