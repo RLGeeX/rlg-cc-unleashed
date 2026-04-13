@@ -27,15 +27,20 @@ DEFAULT_MAX_TOKENS=1000
 DEFAULT_TIMEOUT=90
 
 # Preferred models by provider (best first)
-declare -A PROVIDER_MODELS=(
-    [openai]="openai/gpt-4o"
-    [google]="google/gemini-2.5-flash"
-    [x-ai]="x-ai/grok-4"
-    [meta-llama]="meta-llama/llama-4-maverick"
-    [mistralai]="mistralai/mistral-large"
-    [anthropic]="anthropic/claude-sonnet-4"
-)
+# Uses a function instead of associative arrays for bash 3.2 compatibility (macOS)
 PROVIDER_ORDER=(openai google x-ai meta-llama mistralai anthropic)
+
+provider_model() {
+    case "$1" in
+        openai)      echo "openai/gpt-4o" ;;
+        google)      echo "google/gemini-2.5-flash" ;;
+        x-ai)        echo "x-ai/grok-4" ;;
+        meta-llama)  echo "meta-llama/llama-4-maverick" ;;
+        mistralai)   echo "mistralai/mistral-large" ;;
+        anthropic)   echo "anthropic/claude-sonnet-4" ;;
+        *)           echo "" ;;
+    esac
+}
 
 # ANSI colors
 BOLD='\033[1m'
@@ -109,8 +114,10 @@ select_council_members() {
         if [[ ${#selected[@]} -ge $count ]]; then
             break
         fi
-        if [[ -n "${PROVIDER_MODELS[$provider]:-}" ]]; then
-            selected+=("${PROVIDER_MODELS[$provider]}")
+        local provider_model_id
+        provider_model_id=$(provider_model "$provider")
+        if [[ -n "$provider_model_id" ]]; then
+            selected+=("$provider_model_id")
         fi
     done
 
@@ -382,7 +389,9 @@ discover_models() {
                  "\(.id)\t\(.context_length // 0)\t\(.pricing.prompt // 0)"')
 
             if [[ -n "$provider_models" ]]; then
-                echo -e "${BOLD}${provider^^}${NC}"
+                local provider_upper
+                provider_upper=$(echo "$provider" | tr '[:lower:]' '[:upper:]')
+                echo -e "${BOLD}${provider_upper}${NC}"
                 echo "----------------------------------------------------------------------"
                 while IFS=$'\t' read -r id ctx price; do
                     local ctx_k
