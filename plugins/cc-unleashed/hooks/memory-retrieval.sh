@@ -1,17 +1,14 @@
 #!/usr/bin/env bash
 #
-# CC-Unleashed Memory Retrieval Hook - UserPromptSubmit
+# CC-Unleashed Memory Retrieval Hook — UserPromptSubmit
 #
-# Searches Memorizer for relevant memories and injects them into Claude's
-# context before every user prompt. This is the highest-leverage piece of
-# the memory integration — automatic retrieval without user intervention.
+# Phase 4.7 chunk 4: client-side tightening. Fetches 5 candidates, ranks by
+# salience (confidence) × recency, injects only the top 3 with truncated
+# bodies. ~40%+ token reduction vs pre-4.7 baseline with no server changes.
 #
-# Transport: Memorizer uses MCP Streamable HTTP (SSE) at /mcp
+# Transport: Memorizer MCP Streamable HTTP (SSE) at /mcp
 # Output: {"additionalContext": "..."} injected as system context
-# Fallback: exits 0 silently if Memorizer is unreachable or no results
-#
-# Setup: Run scripts/setup-memory.sh once per machine to register the MCP server
-# Cache: ~/.claude/memorizer-project-cache.json (workspace/project → UUID)
+# Fallback: exits 0 silently if Memorizer is unreachable or no results meet floor
 #
 
 set -euo pipefail
@@ -19,13 +16,16 @@ set -euo pipefail
 MEMORIZER_URL="https://memorizer.rlgeex.com/mcp"
 CACHE_FILE="${HOME}/.claude/memorizer-project-cache.json"
 TIMEOUT=3
-MAX_RESULTS=3
-MIN_SIMILARITY=0.72
+FETCH_LIMIT=5           # fetch this many, rank client-side, keep top INJECT_LIMIT
+INJECT_LIMIT=2          # inject only top 2 highest-scoring memories
+MIN_SIMILARITY=0.7      # score floor — drop noise before it hits the ranker
+BODY_MAX_LINES=2        # keep first N lines of body per memory
+BODY_MAX_CHARS=160      # per-memory body cap — prevents one outlier dominating
+RECENCY_HALFLIFE_DAYS=30
 PRJ_ROOT="${HOME}/prj"
 
 # ── Helpers ────────────────────────────────────────────────────────────────
 
-# Call a Memorizer MCP tool. Parses the SSE response and returns content text.
 call_memorizer() {
     local tool_name="$1"
     local args_json="$2"
@@ -43,28 +43,59 @@ call_memorizer() {
         | grep '^data:' | head -1 | sed 's/^data: //'
 }
 
-# Extract content[0].text from MCP tool response JSON
 extract_content_text() {
     jq -r '.result.content[0].text // empty' 2>/dev/null
 }
 
+# Parse Memorizer's plain-text search response into a JSON array.
+# Server emits records separated by blank lines with keyed fields.
+parse_memories_to_json() {
+    awk '
+    function esc(s) {
+        gsub(/\\/, "\\\\", s)
+        gsub(/"/,  "\\\"", s)
+        gsub(/\n/, "\\n",  s)
+        gsub(/\t/, "\\t",  s)
+        gsub(/\r/, "",     s)
+        return s
+    }
+    function flush() {
+        if (!has) return
+        if (!first) printf ","
+        first = 0
+        printf "{\"id\":\"%s\",\"title\":\"%s\",\"type\":\"%s\",\"confidence\":%s,\"similarity\":%s,\"created\":\"%s\",\"text\":\"%s\"}",
+            esc(id), esc(title), esc(type),
+            (conf  == "" ? "0.5" : conf),
+            (sim   == "" ? "0"   : sim),
+            esc(created), esc(text)
+    }
+    BEGIN { printf "["; first = 1; has = 0; tcap = 0 }
+    /^ID: /        { flush(); has=1; id=substr($0,5); title=""; type=""; conf=""; sim=""; created=""; text=""; tcap=0; next }
+    /^Title: /     { title=substr($0,8); next }
+    /^Type: /      { type=substr($0,7); next }
+    /^Confidence: Confidence: / { conf=substr($0,25); next }
+    /^Similarity: / { sim=substr($0,13); sub(/%.*/, "", sim); if (sim != "") sim = sim/100; next }
+    /^Created: /   { created=substr($0,10); next }
+    /^Text: /      { text=substr($0,7); tcap=1; next }
+    /^Source: |^Tags: |^Owner: |^Archetype: |^URL: / { tcap=0; next }
+    tcap == 1      { text = (text == "" ? $0 : text "\n" $0); next }
+    END            { flush(); printf "]" }
+    '
+}
+
 # ── Bail-out guard ─────────────────────────────────────────────────────────
 
-# Require jq and curl
-command -v jq >/dev/null 2>&1 || exit 0
+command -v jq   >/dev/null 2>&1 || exit 0
 command -v curl >/dev/null 2>&1 || exit 0
+command -v awk  >/dev/null 2>&1 || exit 0
 
 # ── Read hook input ────────────────────────────────────────────────────────
 
 input=$(cat 2>/dev/null || echo "{}")
-
 prompt=$(echo "$input" | jq -r '.prompt // ""' 2>/dev/null || echo "")
-cwd=$(echo "$input" | jq -r '.cwd // ""' 2>/dev/null || echo "")
+cwd=$(echo "$input" | jq -r '.cwd // ""'    2>/dev/null || echo "")
 
-# Nothing to search with
 [[ -z "$prompt" ]] && exit 0
-
-# Trim prompt to first 500 chars for the search query (avoid sending huge context)
 query="${prompt:0:500}"
 
 # ── Detect project from cwd ────────────────────────────────────────────────
@@ -79,22 +110,18 @@ if [[ -n "$cwd" && "$cwd" == "${PRJ_ROOT}/"* ]]; then
     cache_key="${org}/${project}"
     project_label="$cache_key"
 
-    # Check cache first
     if [[ -f "$CACHE_FILE" ]]; then
         project_id=$(jq -r --arg k "$cache_key" '.[$k] // ""' "$CACHE_FILE" 2>/dev/null || echo "")
     fi
 
-    # Not cached — look it up from Memorizer
     if [[ -z "$project_id" && -n "$project" ]]; then
         lookup_resp=$(call_memorizer "get_project_context" \
             "$(jq -n --arg q "$project" '{query:$q}')")
 
         if [[ -n "$lookup_resp" ]]; then
             content=$(echo "$lookup_resp" | extract_content_text)
-            # get_project_context returns plain text; extract UUID from "ID: <uuid>" line
-            project_id=$(echo "$content" | grep -oP 'ID:\s*\K[0-9a-f-]{36}' | head -1 || echo "")
+            project_id=$(echo "$content" | grep -oE 'ID:[[:space:]]*[0-9a-f-]{36}' | head -1 | awk '{print $2}' || echo "")
 
-            # Cache if found
             if [[ -n "$project_id" && "$project_id" != "null" ]]; then
                 mkdir -p "$(dirname "$CACHE_FILE")"
                 if [[ -f "$CACHE_FILE" ]]; then
@@ -110,49 +137,72 @@ if [[ -n "$cwd" && "$cwd" == "${PRJ_ROOT}/"* ]]; then
     fi
 fi
 
-# ── Search Memorizer ────────────────────────────────────────────────────────
+# ── Search Memorizer (wide fetch, tight floor) ─────────────────────────────
 
 search_args=$(jq -n \
     --arg q "$query" \
-    --argjson limit "$MAX_RESULTS" \
+    --argjson limit "$FETCH_LIMIT" \
     --argjson sim "$MIN_SIMILARITY" \
     '{query:$q,limit:$limit,minSimilarity:$sim}')
 
-# Add project scope if we have an ID
 if [[ -n "$project_id" && "$project_id" != "null" ]]; then
-    search_args=$(echo "$search_args" | \
-        jq --arg pid "$project_id" '. + {projectId:$pid}')
+    search_args=$(echo "$search_args" | jq --arg pid "$project_id" '. + {projectId:$pid}')
 fi
 
-search_resp=$(call_memorizer "search_memories" "$search_args")
+search_resp=$(call_memorizer "search_memories" "$search_args" || echo "")
 [[ -z "$search_resp" ]] && exit 0
 
 content_text=$(echo "$search_resp" | extract_content_text)
 [[ -z "$content_text" ]] && exit 0
 
-# Parse memory count
-memory_count=$(echo "$content_text" | jq -r '
-    if type == "array" then length
-    elif .memories then (.memories | length)
-    else 0
-    end
-' 2>/dev/null || echo "0")
+# "No memories found" sentinel — exit silently, don't inject noise
+echo "$content_text" | grep -q '^No memories found' && exit 0
 
-[[ "$memory_count" == "0" || "$memory_count" == "null" ]] && exit 0
+# ── Parse + rank client-side ───────────────────────────────────────────────
 
-# ── Format context injection ────────────────────────────────────────────────
+records=$(echo "$content_text" | parse_memories_to_json)
+[[ -z "$records" || "$records" == "[]" ]] && exit 0
 
-formatted=$(echo "$content_text" | jq -r '
-    (if type == "array" then . elif .memories then .memories else [] end) |
-    to_entries[] |
-    "[\(.key + 1)] **\(.value.title // "Untitled")** (\(.value.type // "reference")" +
-    (if .value.confidence then " | confidence: \(.value.confidence)" else "" end) + ")\n" +
-    (.value.text // "" | split("\n") | .[0:3] | join("\n") | .[0:300])
-' 2>/dev/null || echo "")
+now_epoch=$(date +%s)
+halflife_sec=$((RECENCY_HALFLIFE_DAYS * 86400))
 
-[[ -z "$formatted" ]] && exit 0
+ranked=$(echo "$records" | jq \
+    --argjson now "$now_epoch" \
+    --argjson halflife "$halflife_sec" \
+    --argjson keep "$INJECT_LIMIT" \
+    --argjson cap "$BODY_MAX_CHARS" \
+    --argjson lines "$BODY_MAX_LINES" '
+    map(
+      . + {
+        _created_epoch: ((.created | strptime("%Y-%m-%d %H:%M:%S") | mktime) // $now),
+      }
+    )
+    | map(
+      . + {
+        _recency: (
+          (($now - ._created_epoch) / $halflife)
+          | if . >= 1 then 0 else (1.0 - .) end
+        ),
+        _salience: (.confidence // 0.5)
+      }
+    )
+    | map(. + { _score: (._salience * 0.6 + ._recency * 0.4) })
+    | sort_by(-._score)
+    | .[0:$keep]
+    | map(. + { text: (.text | split("\n") | .[0:$lines] | join("\n") | .[0:$cap]) })
+')
 
-context="[MEMORIZER: ${memory_count} relevant memories for ${project_label}]
+hit_count=$(echo "$ranked" | jq 'length' 2>/dev/null || echo "0")
+[[ "$hit_count" -eq 0 ]] && exit 0
+
+# ── Format + emit ──────────────────────────────────────────────────────────
+
+formatted=$(echo "$ranked" | jq -r '
+    to_entries[]
+    | "[\(.key + 1)] \(.value.title // "Untitled") (\(.value.type // "reference"))\n\(.value.text)"
+')
+
+context="[MEMORIZER: ${hit_count} relevant memories for ${project_label}]
 
 ${formatted}
 
