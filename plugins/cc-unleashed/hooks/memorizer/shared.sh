@@ -218,6 +218,76 @@ queue_memorizer_sync() {
   fi
 }
 
+# ── Memory Storage with Semantic Dedup (Phase 4.7) ──────────────────────────
+
+# Store a memory with semantic dedup. If a similar memory (cosine >= 0.85)
+# already exists in the project, update its body/title instead of inserting.
+# Args: $1 = memory JSON ({type,title,body,salience,why}), $2 = project_id
+# Returns: 0 on stored/updated, 1 on failure.
+store_with_dedup() {
+  local memory="$1"
+  local project_id="$2"
+  [[ -n "$memory" && -n "$project_id" ]] || return 1
+
+  local title body type salience why
+  title=$(echo "$memory" | jq -r '.title // empty' 2>/dev/null)
+  body=$(echo "$memory" | jq -r '.body // empty' 2>/dev/null)
+  type=$(echo "$memory" | jq -r '.type // empty' 2>/dev/null)
+  salience=$(echo "$memory" | jq -r '.salience // 0.5' 2>/dev/null)
+  why=$(echo "$memory" | jq -r '.why // empty' 2>/dev/null)
+
+  [[ -n "$title" && -n "$body" && -n "$type" ]] || return 1
+
+  # Dedup: semantic search for a similar existing title
+  local search_args hits hit_count
+  search_args=$(jq -n --arg q "$title" --arg pid "$project_id" \
+    '{query:$q, projectId:$pid, limit:3, minScore:0.85}')
+  hits=$(call_memorizer "search_memories" "$search_args" 2>/dev/null || echo "")
+  hit_count=0
+  if [[ -n "$hits" ]]; then
+    hit_count=$(echo "$hits" | jq '
+      if type == "array" then length
+      elif .memories then (.memories | length)
+      elif .results then (.results | length)
+      else 0 end
+    ' 2>/dev/null || echo "0")
+    [[ "$hit_count" =~ ^[0-9]+$ ]] || hit_count=0
+  fi
+
+  if [[ "$hit_count" -gt 0 ]]; then
+    local existing_id
+    existing_id=$(echo "$hits" | jq -r '
+      (if type == "array" then .
+       elif .memories then .memories
+       elif .results then .results
+       else [] end) | .[0].id // empty
+    ' 2>/dev/null)
+    if [[ -n "$existing_id" && "$existing_id" != "null" ]]; then
+      local edit_args
+      edit_args=$(jq -n --arg id "$existing_id" --arg text "$body" --arg title "$title" \
+        '{id:$id, text:$text, title:$title}')
+      call_memorizer "edit" "$edit_args" >/dev/null 2>&1 || return 1
+      return 0
+    fi
+  fi
+
+  # Insert new
+  local store_args
+  store_args=$(jq -n \
+    --arg type "$type" \
+    --arg text "$body" \
+    --arg title "$title" \
+    --arg why "$why" \
+    --argjson salience "$salience" \
+    --arg source "stop-hook-synthesis" \
+    --arg pid "$project_id" \
+    '{type:$type, text:$text, title:$title, source:$source,
+      projectId:$pid, confidence:$salience,
+      metadata:{why:$why, salience:$salience}}')
+  call_memorizer "store" "$store_args" >/dev/null 2>&1 || return 1
+  return 0
+}
+
 # ── File Description Extractor ───────────────────────────────────────────────
 # Simplified from OpenWolf extractDescription() — Tier 1 (known files) + Tier 2
 # (docstrings, headings, comments) for ~15 languages. Covers ~80% of real files.
