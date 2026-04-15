@@ -92,15 +92,24 @@ if [[ -n "${ANTHROPIC_API_KEY:-}" && -n "$SESSION_ID" ]]; then
     mem_count=$(echo "$memories" | jq 'length' 2>/dev/null || echo "0")
     [[ "$mem_count" =~ ^[0-9]+$ ]] || mem_count=0
     stored=0
+    failed=0
+
+    echo "[stop.sh] summarize.py returned ${mem_count} memories" >> "$mem_log"
 
     if [[ "$mem_count" -gt 0 ]]; then
       for i in $(seq 0 $((mem_count - 1))); do
         memory=$(echo "$memories" | jq ".[$i]" 2>/dev/null) || continue
+        title=$(echo "$memory" | jq -r '.title // "<no-title>"' 2>/dev/null)
         if store_with_dedup "$memory" "$synth_project_id"; then
           stored=$((stored + 1))
+          echo "[stop.sh] stored: ${title}" >> "$mem_log"
+        else
+          failed=$((failed + 1))
+          echo "[stop.sh] FAILED to store: ${title}" >> "$mem_log"
         fi
       done
       echo "🧠 Memorizer: synthesized ${stored}/${mem_count} memories from session" >&2
+      echo "[stop.sh] summary: ${stored} stored, ${failed} failed, ${mem_count} total" >> "$mem_log"
     fi
   fi
 fi

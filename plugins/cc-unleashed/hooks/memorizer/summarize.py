@@ -11,6 +11,7 @@ Exit code is always 0 — failures emit `[]` so Stop hooks never block.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import os
 import re
@@ -174,7 +175,7 @@ def call_anthropic(
 ) -> dict[str, Any] | None:
     payload = {
         "model": model,
-        "max_tokens": 2048,
+        "max_tokens": 4096,
         "system": [
             {
                 "type": "text",
@@ -219,9 +220,23 @@ def extract_text(response: dict[str, Any]) -> str:
     return ""
 
 
+def dump_raw(tag: str, raw: str) -> None:
+    """Append a labeled raw-response block to summarize-raw.log in CWD/.memorizer/."""
+    try:
+        raw_log = Path.cwd() / ".memorizer" / "summarize-raw.log"
+        raw_log.parent.mkdir(parents=True, exist_ok=True)
+        with raw_log.open("a", encoding="utf-8") as f:
+            f.write(f"---- {tag} {dt.datetime.utcnow().isoformat()}Z ----\n")
+            f.write(raw)
+            f.write("\n")
+    except Exception as err:  # best-effort only
+        log(f"dump_raw failed: {err}")
+
+
 def parse_memories(raw: str) -> list[dict[str, Any]]:
     raw = raw.strip()
     if not raw:
+        log("parse: empty response text")
         return []
     # Strip optional ```json fences
     if raw.startswith("```"):
@@ -231,13 +246,19 @@ def parse_memories(raw: str) -> list[dict[str, Any]]:
     start = raw.find("[")
     end = raw.rfind("]")
     if start == -1 or end == -1 or end < start:
+        log(f"parse: no JSON array in response ({len(raw)} chars)")
+        dump_raw("no-array", raw)
         return []
     candidate = raw[start : end + 1]
     try:
         data = json.loads(candidate)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as err:
+        log(f"parse: JSONDecodeError at pos {err.pos}: {err.msg}")
+        dump_raw("decode-error", raw)
         return []
     if not isinstance(data, list):
+        log(f"parse: top-level JSON is {type(data).__name__}, not list")
+        dump_raw("not-list", raw)
         return []
     valid: list[dict[str, Any]] = []
     for item in data:
@@ -291,16 +312,29 @@ def run(
     if not response:
         return []
     usage = response.get("usage") or {}
+    stop_reason = response.get("stop_reason")
+    in_tok = usage.get("input_tokens") or 0
+    out_tok = usage.get("output_tokens") or 0
+    cache_read = usage.get("cache_read_input_tokens") or 0
+    cache_create = usage.get("cache_creation_input_tokens") or 0
     log(
-        "usage: in={} out={} cache_read={} cache_create={}".format(
-            usage.get("input_tokens"),
-            usage.get("output_tokens"),
-            usage.get("cache_read_input_tokens"),
-            usage.get("cache_creation_input_tokens"),
+        "usage: in={} out={} cache_read={} cache_create={} stop_reason={}".format(
+            in_tok, out_tok, cache_read, cache_create, stop_reason
         )
     )
+    if stop_reason == "max_tokens":
+        log("WARN: hit max_tokens ceiling — response likely truncated")
+    if cache_create == 0 and cache_read == 0:
+        # Caching silently no-ops if the cacheable prefix is below the model's
+        # minimum (1024 tokens for all current Claude models). Note it once.
+        log(
+            "WARN: cache_control had no effect — system prompt likely < 1024 tokens "
+            "(Anthropic's caching minimum)"
+        )
     text = extract_text(response)
-    return parse_memories(text)
+    memories = parse_memories(text)
+    log(f"parsed {len(memories)} valid memories from response ({len(text)} chars)")
+    return memories
 
 
 def main() -> int:
