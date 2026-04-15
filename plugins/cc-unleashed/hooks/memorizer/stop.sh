@@ -8,15 +8,26 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/shared.sh"
 
-ensure_memorizer_dir
-MEM_DIR=$(get_memorizer_dir)
-
 # Read stdin (Stop hook receives session info as JSON)
 HOOK_INPUT=$(cat 2>/dev/null || echo "{}")
 SESSION_ID="${CLAUDE_SESSION_ID:-}"
 if [[ -z "$SESSION_ID" ]]; then
   SESSION_ID=$(echo "$HOOK_INPUT" | jq -r '.session_id // empty' 2>/dev/null || echo "")
 fi
+
+# Phase 4.7 diagnostic breadcrumb — records env state on every stop-hook
+# invocation, before any gate. Remove once synthesis is confirmed firing.
+{
+  date -u +"%FT%TZ"
+  echo "  cwd=$(pwd)"
+  echo "  claude_session_id=${CLAUDE_SESSION_ID:-UNSET}"
+  echo "  stdin_session_id=${SESSION_ID:-UNSET}"
+  echo "  anthropic_api_key=$([[ -n "${ANTHROPIC_API_KEY:-}" ]] && echo "SET(${#ANTHROPIC_API_KEY} chars)" || echo "UNSET")"
+  echo "  claude_project_dir=${CLAUDE_PROJECT_DIR:-UNSET}"
+} >> /tmp/cc-stop-trace.log 2>/dev/null || true
+
+ensure_memorizer_dir
+MEM_DIR=$(get_memorizer_dir)
 
 SESSION_FILE="${MEM_DIR}/_session.json"
 session=$(read_json "$SESSION_FILE")
