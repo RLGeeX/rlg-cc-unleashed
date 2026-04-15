@@ -16,11 +16,10 @@ set -euo pipefail
 MEMORIZER_URL="https://memorizer.rlgeex.com/mcp"
 CACHE_FILE="${HOME}/.claude/memorizer-project-cache.json"
 TIMEOUT=3
-FETCH_LIMIT=5           # fetch this many, rank client-side, keep top INJECT_LIMIT
-INJECT_LIMIT=2          # inject only top 2 highest-scoring memories
-MIN_SIMILARITY=0.7      # score floor — drop noise before it hits the ranker
-BODY_MAX_LINES=2        # keep first N lines of body per memory
-BODY_MAX_CHARS=160      # per-memory body cap — prevents one outlier dominating
+FETCH_LIMIT=8           # fetch this many, rank client-side, keep top INJECT_LIMIT
+INJECT_LIMIT=3          # inject top 3 highest-scoring memories
+MIN_SIMILARITY=0.65     # score floor — drop noise before it hits the ranker
+BODY_MAX_CHARS=500      # per-memory body cap — prevents one outlier dominating
 RECENCY_HALFLIFE_DAYS=30
 PRJ_ROOT="${HOME}/prj"
 
@@ -170,8 +169,7 @@ ranked=$(echo "$records" | jq \
     --argjson now "$now_epoch" \
     --argjson halflife "$halflife_sec" \
     --argjson keep "$INJECT_LIMIT" \
-    --argjson cap "$BODY_MAX_CHARS" \
-    --argjson lines "$BODY_MAX_LINES" '
+    --argjson cap "$BODY_MAX_CHARS" '
     map(
       . + {
         _created_epoch: ((.created | strptime("%Y-%m-%d %H:%M:%S") | mktime) // $now),
@@ -189,7 +187,7 @@ ranked=$(echo "$records" | jq \
     | map(. + { _score: (._salience * 0.6 + ._recency * 0.4) })
     | sort_by(-._score)
     | .[0:$keep]
-    | map(. + { text: (.text | split("\n") | .[0:$lines] | join("\n") | .[0:$cap]) })
+    | map(. + { text: (.text[0:$cap]) })
 ')
 
 hit_count=$(echo "$ranked" | jq 'length' 2>/dev/null || echo "0")
