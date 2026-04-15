@@ -3,6 +3,21 @@
 # Memorizer Hook: Stop
 # Flushes sync queue to Memorizer and emits session summary.
 #
+
+# ── Phase 4.7 diagnostic breadcrumb ──────────────────────────────────────────
+# First line of the script, before set -e, source, or anything that can fail.
+# Proves the hook was invoked and records env state. Remove after diagnosis.
+{
+  echo "----"
+  date -u +"%FT%TZ"
+  echo "  pid=$$ ppid=$PPID"
+  echo "  argv0=${BASH_SOURCE[0]:-?}"
+  echo "  cwd=$(pwd 2>/dev/null || echo "?")"
+  echo "  claude_session_id=${CLAUDE_SESSION_ID:-UNSET}"
+  echo "  claude_project_dir=${CLAUDE_PROJECT_DIR:-UNSET}"
+  echo "  anthropic_api_key=$([[ -n "${ANTHROPIC_API_KEY:-}" ]] && echo "SET(${#ANTHROPIC_API_KEY} chars)" || echo "UNSET")"
+} >> /tmp/cc-stop-trace.log 2>/dev/null || true
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -15,19 +30,12 @@ if [[ -z "$SESSION_ID" ]]; then
   SESSION_ID=$(echo "$HOOK_INPUT" | jq -r '.session_id // empty' 2>/dev/null || echo "")
 fi
 
-# Phase 4.7 diagnostic breadcrumb — records env state on every stop-hook
-# invocation, before any gate. Remove once synthesis is confirmed firing.
-{
-  date -u +"%FT%TZ"
-  echo "  cwd=$(pwd)"
-  echo "  claude_session_id=${CLAUDE_SESSION_ID:-UNSET}"
-  echo "  stdin_session_id=${SESSION_ID:-UNSET}"
-  echo "  anthropic_api_key=$([[ -n "${ANTHROPIC_API_KEY:-}" ]] && echo "SET(${#ANTHROPIC_API_KEY} chars)" || echo "UNSET")"
-  echo "  claude_project_dir=${CLAUDE_PROJECT_DIR:-UNSET}"
-} >> /tmp/cc-stop-trace.log 2>/dev/null || true
+echo "  stdin_session_id=${SESSION_ID:-UNSET}" >> /tmp/cc-stop-trace.log 2>/dev/null || true
+echo "  stdin_bytes=${#HOOK_INPUT}" >> /tmp/cc-stop-trace.log 2>/dev/null || true
 
 ensure_memorizer_dir
 MEM_DIR=$(get_memorizer_dir)
+echo "  reached_ensure_memorizer_dir=ok MEM_DIR=$MEM_DIR" >> /tmp/cc-stop-trace.log 2>/dev/null || true
 
 SESSION_FILE="${MEM_DIR}/_session.json"
 session=$(read_json "$SESSION_FILE")
