@@ -20,6 +20,10 @@ file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null) 
 is_memorizer_path "$file_path" && exit 0
 is_env_file "$file_path" && exit 0
 
+# Short-circuit when cwd doesn't resolve to a registered Memorizer project.
+# Without a project_id, any queued capture gets filed under Unfiled (noise).
+get_project_id >/dev/null 2>&1 || exit 0
+
 # Resolve absolute path
 [[ "$file_path" == /* ]] || file_path="${PROJECT_DIR}/${file_path}"
 
@@ -28,6 +32,20 @@ base=$(basename "$file_path")
 tool_name=$(echo "$input" | jq -r '.tool_name // "Write"' 2>/dev/null)
 old_string=$(echo "$input" | jq -r '.tool_input.old_string // empty' 2>/dev/null)
 new_string=$(echo "$input" | jq -r '.tool_input.new_string // empty' 2>/dev/null)
+
+# Classify whether file is a documentation/prose file. Used to gate the bugfix
+# heuristic, which fires false positives on doc content that happens to mention
+# "catch", "import", "await", etc.
+is_doc_file=0
+case "$base" in
+  CLAUDE.md|README.md|readme.md|CHANGELOG.md|LICENSE|LICENSE.md) is_doc_file=1 ;;
+esac
+case "${base##*.}" in
+  md|mdx|txt|rst|MD|MDX|TXT|RST) is_doc_file=1 ;;
+esac
+case "/${rel_path}" in
+  */docs/*|*/doc/*|*/.claude/*) is_doc_file=1 ;;
+esac
 
 # ── 1. Update anatomy.json ────────────────────────────────────────────────────
 
@@ -72,8 +90,9 @@ if [[ "$edit_count" -ge 3 ]]; then
 fi
 
 # ── 3. Auto-detect bug-fix patterns ──────────────────────────────────────────
+# Source-code only. Doc files trip the keyword heuristics on unrelated prose.
 
-if [[ -n "$old_string" && -n "$new_string" ]]; then
+if [[ -n "$old_string" && -n "$new_string" && "$is_doc_file" -eq 0 ]]; then
   category="" summary="" root_cause="" fix=""
 
   # Error handling added

@@ -27,12 +27,13 @@ write_count=$(echo "$session" | jq '.files_written | length' 2>/dev/null || echo
 # Skip if no activity
 [[ "$read_count" -gt 0 || "$write_count" -gt 0 ]] || exit 0
 
-# Flush sync queue
+# Flush sync queue. Skip entirely if cwd doesn't resolve to a registered
+# project — without a project_id, entries would land in the Unfiled workspace.
 QUEUE_FILE="${MEM_DIR}/sync-queue.json"
 if [[ -f "$QUEUE_FILE" ]]; then
   entry_count=$(jq '.entries | length' "$QUEUE_FILE" 2>/dev/null || echo "0")
-  if [[ "$entry_count" -gt 0 ]]; then
-    project_id=$(get_project_id 2>/dev/null || echo "")
+  project_id=$(get_project_id 2>/dev/null || echo "")
+  if [[ "$entry_count" -gt 0 && -n "$project_id" ]]; then
     remaining="[]"
 
     for i in $(seq 0 $((entry_count - 1))); do
@@ -45,9 +46,8 @@ if [[ -f "$QUEUE_FILE" ]]; then
         --arg text "$entry_data" \
         --arg title "$(echo "$entry" | jq -r 'if .type == "anatomy" then "Anatomy update" else "Bugfix: " + (.data.summary // "auto-detected") end')" \
         --arg source "memorizer-hooks" \
-        '{type:$type, text:$text, title:$title, source:$source, confidence:0.8}')
-
-      [[ -n "$project_id" ]] && args=$(echo "$args" | jq --arg pid "$project_id" '. + {projectId:$pid}')
+        --arg pid "$project_id" \
+        '{type:$type, text:$text, title:$title, source:$source, projectId:$pid, confidence:0.8}')
 
       if ! call_memorizer "store" "$args" >/dev/null 2>&1; then
         remaining=$(echo "$remaining" | jq --argjson e "$entry" '. += [$e]')
