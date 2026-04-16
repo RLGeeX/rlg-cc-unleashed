@@ -171,8 +171,11 @@ def strip_private(text: str) -> str:
 
 
 def call_anthropic(
-    transcript: str, model: str, api_key: str, timeout: float = 30.0
+    transcript: str, model: str, api_key: str, timeout: float = 60.0
 ) -> dict[str, Any] | None:
+    # Prefill assistant with '[' so Haiku starts a JSON array instead of drifting
+    # into prose. The API returns only what the model generates *after* the
+    # prefill, so the caller must prepend '[' before parsing.
     payload = {
         "model": model,
         "max_tokens": 4096,
@@ -183,7 +186,10 @@ def call_anthropic(
                 "cache_control": {"type": "ephemeral"},
             }
         ],
-        "messages": [{"role": "user", "content": transcript}],
+        "messages": [
+            {"role": "user", "content": transcript},
+            {"role": "assistant", "content": "["},
+        ],
     }
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
@@ -226,14 +232,55 @@ def dump_raw(tag: str, raw: str) -> None:
         raw_log = Path.cwd() / ".memorizer" / "summarize-raw.log"
         raw_log.parent.mkdir(parents=True, exist_ok=True)
         with raw_log.open("a", encoding="utf-8") as f:
-            f.write(f"---- {tag} {dt.datetime.utcnow().isoformat()}Z ----\n")
+            ts = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            f.write(f"---- {tag} {ts} ----\n")
             f.write(raw)
             f.write("\n")
     except Exception as err:  # best-effort only
         log(f"dump_raw failed: {err}")
 
 
+def _find_json_array(text: str) -> str | None:
+    """Locate a JSON-shaped array in free-form text.
+
+    Anchors on '[' followed by optional whitespace then '{' (array of objects)
+    or ']' (empty array) — avoids grabbing prose tags like '[tool:Read ...]'
+    or '[assistant]'. Returns the balanced [...] slice or None.
+    """
+    anchor = re.search(r"\[\s*(?:\{|\])", text)
+    if not anchor:
+        return None
+    i = anchor.start()
+    # Walk forward from the '[' tracking depth, respecting string quoting and
+    # JSON escapes. Returns the matching closing ']'.
+    depth = 0
+    in_str = False
+    esc = False
+    for j in range(i, len(text)):
+        c = text[j]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+            continue
+        if c == '"':
+            in_str = True
+        elif c == "[":
+            depth += 1
+        elif c == "]":
+            depth -= 1
+            if depth == 0:
+                return text[i : j + 1]
+    return None
+
+
 def parse_memories(raw: str) -> list[dict[str, Any]]:
+    # Response may be prefilled with '[' — the API returns only what the model
+    # generated after the prefill, so prepend '[' if the text looks like it
+    # continues an array (i.e., doesn't already start with one).
     raw = raw.strip()
     if not raw:
         log("parse: empty response text")
@@ -242,20 +289,31 @@ def parse_memories(raw: str) -> list[dict[str, Any]]:
     if raw.startswith("```"):
         raw = re.sub(r"^```[a-zA-Z]*\s*", "", raw)
         raw = re.sub(r"\s*```$", "", raw)
-    # Find first JSON array
-    start = raw.find("[")
-    end = raw.rfind("]")
-    if start == -1 or end == -1 or end < start:
-        log(f"parse: no JSON array in response ({len(raw)} chars)")
-        dump_raw("no-array", raw)
-        return []
-    candidate = raw[start : end + 1]
+        raw = raw.strip()
+    if not raw.startswith("["):
+        # Haiku prefill was '[' — add it back so parser sees a full array.
+        raw = "[" + raw
+
+    # 1. Try parsing the whole response first (the common, well-behaved case).
     try:
-        data = json.loads(candidate)
-    except json.JSONDecodeError as err:
-        log(f"parse: JSONDecodeError at pos {err.pos}: {err.msg}")
-        dump_raw("decode-error", raw)
-        return []
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        data = None
+
+    # 2. Fall back to anchored array extraction if the whole-parse failed.
+    if data is None:
+        candidate = _find_json_array(raw)
+        if candidate is None:
+            log(f"parse: no JSON array anchor in response ({len(raw)} chars)")
+            dump_raw("no-array", raw)
+            return []
+        try:
+            data = json.loads(candidate)
+        except json.JSONDecodeError as err:
+            log(f"parse: JSONDecodeError at pos {err.pos}: {err.msg}")
+            dump_raw("decode-error", raw)
+            return []
+
     if not isinstance(data, list):
         log(f"parse: top-level JSON is {type(data).__name__}, not list")
         dump_raw("not-list", raw)

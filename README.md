@@ -2,7 +2,7 @@
 
 Streamlined Claude Code plugin with workflow automation, Memorizer memory integration, spec-kit integration, chunked planning, Jira integration, and integration with 61 specialized agents.
 
-**Version:** 1.10.3
+**Version:** 1.10.4
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 
