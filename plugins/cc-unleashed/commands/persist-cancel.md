@@ -5,37 +5,39 @@ description: Cancel an active persist-execute session
 
 # Cancel Persist-Execute
 
-Immediately deactivates any active persist-execute session, allowing normal exit.
+Deactivates the persist-execute state for the current project so the next exit attempt is no longer blocked.
 
-## Action
+## How It Works
 
-1. Check for state file at `~/.claude/persist-execute-state.json`
-2. If exists and active:
-   - Set `active` to `false`
-   - Set `exitReason` to `"user_cancelled"`
-   - Report: "Persist-execute session cancelled. Normal exit now allowed."
-3. If not exists or not active:
-   - Report: "No active persist-execute session found."
+State is keyed by current working directory: `~/.claude/persist-execute-state/<sha256(cwd)[:16]>.json`. Cancelling only touches the file matching this project — other projects' active sessions are not affected.
 
-## Implementation
+## Usage
+
+Invoke the helper script. By default it cancels the state for the current cwd:
 
 ```bash
-STATE_FILE="$HOME/.claude/persist-execute-state.json"
-
-if [[ -f "$STATE_FILE" ]]; then
-    active=$(jq -r '.active // false' "$STATE_FILE")
-    if [[ "$active" == "true" ]]; then
-        jq '.active = false | .exitReason = "user_cancelled"' "$STATE_FILE" > "${STATE_FILE}.tmp"
-        mv "${STATE_FILE}.tmp" "$STATE_FILE"
-        echo "Persist-execute session cancelled."
-        echo "Iterations used: $(jq -r '.iteration' "$STATE_FILE")"
-        echo "Normal exit now allowed."
-    else
-        echo "No active persist-execute session."
-    fi
-else
-    echo "No persist-execute state file found."
-fi
+"${CLAUDE_PLUGIN_ROOT}/skills/persist-execute/scripts/cancel.sh"
 ```
 
-Run the above bash script to cancel.
+To cancel every active persist-execute across all projects:
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/skills/persist-execute/scripts/cancel.sh" --all
+```
+
+To cancel a specific project's state without `cd`'ing to it:
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/skills/persist-execute/scripts/cancel.sh" --cwd /path/to/project
+```
+
+## Output
+
+- "Cancelled persist-execute for: …" — state was active and is now deactivated.
+- "No persist-execute state for: …" — there was nothing to cancel here.
+- "Persist-execute already inactive for: …" — state file exists but already deactivated (e.g., max-iterations or timeout already fired).
+
+## Related
+
+- `${CLAUDE_PLUGIN_ROOT}/skills/persist-execute/scripts/status.sh` — list active sessions across all projects.
+- See `skills/persist-execute/SKILL.md` for the full lifecycle.

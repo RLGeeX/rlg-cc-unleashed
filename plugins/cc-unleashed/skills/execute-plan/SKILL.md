@@ -90,20 +90,17 @@ Present to user:
 
 If `--persist` flag is provided or user selects "Persistent Automated":
 
-1. **Initialize persist-execute state file** at `~/.claude/persist-execute-state.json`:
-   ```json
-   {
-     "active": true,
-     "planPath": "<plan-path>",
-     "prompt": "Continue executing plan...",
-     "iteration": 0,
-     "maxIterations": <--max-iterations or 10>,
-     "timeoutSeconds": <--timeout * 60 or 3600>,
-     "startTime": <current unix timestamp>,
-     "completionPromise": "PERSIST_COMPLETE",
-     "mode": "automated"
-   }
+1. **Initialize project-scoped persist-execute state via the helper script** (do not write JSON inline — the script handles cwd hashing, legacy-file migration, and schema correctness):
+   ```bash
+   "${CLAUDE_PLUGIN_ROOT}/skills/persist-execute/scripts/init.sh" \
+       --plan-path "<plan-path>" \
+       --prompt "Continue executing plan..." \
+       --max-iterations <--max-iterations or 10> \
+       --timeout-minutes <--timeout or 60> \
+       --completion-promise "PERSIST_COMPLETE" \
+       --mode automated
    ```
+   State lands at `~/.claude/persist-execute-state/<sha256(cwd)[:16]>.json`, scoped to the current project — sessions in unrelated projects are unaffected.
 
 2. **Warn user about persistence implications:**
    - Will loop until all chunks complete OR limits reached
@@ -113,12 +110,12 @@ If `--persist` flag is provided or user selects "Persistent Automated":
 3. **Confirm safeguard settings** before proceeding
 
 4. **Stop hook will automatically:**
-   - Block exit attempts
+   - Block exit attempts (only for this project's cwd)
    - Re-feed execution prompt
-   - Track iterations
-   - Enforce timeout
+   - Track iterations and refresh `lastHeartbeat`
+   - Enforce timeout, max-iterations, and 30-min heartbeat staleness
 
-**When persistence completes:** Clean up state file and report summary.
+**When persistence completes:** Inspect state via `scripts/status.sh` and report summary (exit reason, iterations used, elapsed time).
 
 ### Step 3: Jira Transition to "In Progress" (if enabled)
 
