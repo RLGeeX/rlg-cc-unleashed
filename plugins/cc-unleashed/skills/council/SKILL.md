@@ -33,10 +33,13 @@ Use AskUserQuestion to let user customize (or accept defaults):
 ```
 Question: "How would you like to configure the council?"
 Options:
-1. Use defaults (Recommended) - GPT-4o, Gemini 2.5 Flash, Grok 4, Claude Sonnet as chairman
-2. Customize council members - Select which models participate
-3. Customize chairman - Choose who synthesizes the final answer
+1. Use defaults (Recommended) - GPT-5, Gemini 3.5 Flash, Grok 4.3, Claude Sonnet 4.6 as chairman
+2. Deep council - 5 members (GPT-5, Gemini, Grok, Llama-4, Mistral) with Claude Opus 4.7 chairman
+3. Customize council members - Select which models participate
+4. Customize chairman - Choose who synthesizes the final answer
 ```
+
+**For the "Deep council" option, invoke with `-n 5 --chairman anthropic/claude-opus-4.7`** — the script auto-selects one model per non-Anthropic provider (5 distinct providers available), giving maximum cross-architecture diversity with Opus synthesizing. Or pin the roster via `council-5-opus.json.example`.
 
 **If user selects "Customize council members" or "Customize chairman":**
 
@@ -105,11 +108,11 @@ Optional `~/.claude/config/council.json`:
 ```json
 {
   "council": [
-    "openai/gpt-4o",
-    "google/gemini-2.5-flash",
-    "x-ai/grok-4-fast"
+    "openai/gpt-5",
+    "google/gemini-3.5-flash",
+    "x-ai/grok-4.3"
   ],
-  "chairman": "anthropic/claude-sonnet-4",
+  "chairman": "anthropic/claude-sonnet-4.6",
   "max_tokens": 1000,
   "timeout_seconds": 90
 }

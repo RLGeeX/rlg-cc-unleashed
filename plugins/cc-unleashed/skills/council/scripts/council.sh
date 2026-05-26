@@ -21,7 +21,7 @@ set -euo pipefail
 OPENROUTER_API="https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_MODELS_API="https://openrouter.ai/api/v1/models"
 
-DEFAULT_CHAIRMAN="anthropic/claude-sonnet-4"
+DEFAULT_CHAIRMAN="anthropic/claude-sonnet-4.6"
 DEFAULT_MEMBERS=3
 DEFAULT_MAX_TOKENS=1000
 DEFAULT_TIMEOUT=90
@@ -32,12 +32,12 @@ PROVIDER_ORDER=(openai google x-ai meta-llama mistralai anthropic)
 
 provider_model() {
     case "$1" in
-        openai)      echo "openai/gpt-4o" ;;
-        google)      echo "google/gemini-2.5-flash" ;;
-        x-ai)        echo "x-ai/grok-4" ;;
+        openai)      echo "openai/gpt-5" ;;
+        google)      echo "google/gemini-3.5-flash" ;;
+        x-ai)        echo "x-ai/grok-4.3" ;;
         meta-llama)  echo "meta-llama/llama-4-maverick" ;;
-        mistralai)   echo "mistralai/mistral-large" ;;
-        anthropic)   echo "anthropic/claude-sonnet-4" ;;
+        mistralai)   echo "mistralai/mistral-large-2512" ;;
+        anthropic)   echo "anthropic/claude-sonnet-4.6" ;;
         *)           echo "" ;;
     esac
 }
@@ -638,8 +638,10 @@ Options:
 Examples:
   $(basename "$0") --discover --format table
   $(basename "$0") -q "Should we use GraphQL or REST?" -n 5
-  $(basename "$0") -q "Monorepo vs polyrepo?" -c "openai/gpt-4o,google/gemini-2.5-flash"
-  $(basename "$0") -q "Best approach?" --chairman "anthropic/claude-opus-4" -n 4
+  $(basename "$0") -q "Monorepo vs polyrepo?" -c "openai/gpt-5,google/gemini-3.5-flash"
+  $(basename "$0") -q "Best approach?" --chairman "anthropic/claude-opus-4.7" -n 4
+  # 5-member council with Opus chairman (one model per non-Anthropic provider):
+  $(basename "$0") -q "Architectural decision?" -n 5 --chairman "anthropic/claude-opus-4.7"
 
 Environment:
   OPENROUTER_API_KEY       Required for council deliberation (not for --discover)

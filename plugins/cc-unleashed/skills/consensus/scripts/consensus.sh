@@ -7,7 +7,9 @@
 # Configuration (in order of priority):
 #   1. Environment variables: CONSENSUS_MODEL_1, CONSENSUS_MODEL_2, CONSENSUS_MODEL_3
 #   2. Config file: .claude/config/consensus.json
-#   3. Defaults: openai/gpt-4o, google/gemini-pro-1.5, x-ai/grok-2
+#   3. Defaults: openai/gpt-4o-mini, google/gemini-3.5-flash, x-ai/grok-4.3
+#      (gpt-4o-mini chosen over gpt-5-mini because GPT-5 reasoning tokens
+#       can exhaust the 500-token consensus budget and produce empty output)
 #
 # Required: OPENROUTER_API_KEY environment variable
 #
@@ -25,8 +27,8 @@ NC='\033[0m' # No Color
 
 # Default models
 DEFAULT_MODEL_1="openai/gpt-4o-mini"
-DEFAULT_MODEL_2="google/gemini-2.5-flash"
-DEFAULT_MODEL_3="x-ai/grok-4-fast"
+DEFAULT_MODEL_2="google/gemini-3.5-flash"
+DEFAULT_MODEL_3="x-ai/grok-4.3"
 
 # OpenRouter API endpoint
 OPENROUTER_API="https://openrouter.ai/api/v1/chat/completions"
@@ -147,7 +149,10 @@ call_model() {
 EOF
 )
 
-    # Make API call
+    # Make API call. Body goes to $output_file, HTTP code goes to a sibling
+    # file so extract_response can surface it without clobbering the API's
+    # own error body (which carries the actionable message, e.g. "model X is
+    # deprecated").
     local http_code
     http_code=$(curl -s -w "%{http_code}" -o "$output_file" \
         --max-time "$TIMEOUT_SECS" \
@@ -157,10 +162,15 @@ EOF
         -H "HTTP-Referer: https://github.com/rlgeex/rlg-cc-unleashed" \
         -H "X-Title: CC-Unleashed Consensus" \
         -d "$request_body" 2>/dev/null || echo "000")
+    echo "$http_code" > "${output_file}.http_code"
 
     # Check response
     if [[ "$http_code" != "200" ]]; then
-        echo "{\"error\": \"HTTP $http_code\", \"model\": \"$model\"}" > "$output_file"
+        # Only replace the body when it isn't valid JSON; otherwise keep
+        # the API's error payload intact for extract_response to parse.
+        if ! jq -e '.' "$output_file" >/dev/null 2>&1; then
+            echo "{\"error\": \"HTTP $http_code (non-JSON response)\", \"model\": \"$model\"}" > "$output_file"
+        fi
         return 1
     fi
 
@@ -172,16 +182,31 @@ EOF
 # ============================================================================
 
 extract_response() {
+    # NOTE: this function MUST always exit 0. Caller invokes it inside a
+    # command substitution under `set -e`; any non-zero return aborts the
+    # whole script silently before per-model errors can be printed. Errors
+    # are signaled via the "ERROR:" prefix on stdout, which the caller
+    # already pattern-matches.
     local file="$1"
     local model="$2"
 
+    local http_code=""
+    if [[ -f "${file}.http_code" ]]; then
+        http_code=$(cat "${file}.http_code" 2>/dev/null || echo "")
+    fi
+
+    local http_prefix=""
+    if [[ -n "$http_code" && "$http_code" != "200" ]]; then
+        http_prefix="HTTP $http_code - "
+    fi
+
     if [[ ! -f "$file" ]]; then
-        echo "ERROR: No response file"
-        return 1
+        echo "ERROR: ${http_prefix}No response file"
+        return 0
     fi
 
     # Check for error in response
-    if jq -e '.error' "$file" &>/dev/null; then
+    if jq -e '.error' "$file" >/dev/null 2>&1; then
         local error_msg
         # Handle both string errors and object errors with .message field
         error_msg=$(jq -r '
@@ -190,8 +215,8 @@ extract_response() {
           else "Unknown error"
           end
         ' "$file" 2>/dev/null || echo "Error parsing response")
-        echo "ERROR: $error_msg"
-        return 1
+        echo "ERROR: ${http_prefix}${error_msg}"
+        return 0
     fi
 
     # Extract content from OpenRouter response
@@ -199,11 +224,12 @@ extract_response() {
     content=$(jq -r '.choices[0].message.content // empty' "$file" 2>/dev/null)
 
     if [[ -z "$content" ]]; then
-        echo "ERROR: Empty response"
-        return 1
+        echo "ERROR: ${http_prefix}Empty response"
+        return 0
     fi
 
     echo "$content"
+    return 0
 }
 
 extract_recommendation() {
@@ -249,8 +275,8 @@ main() {
         echo "Environment variables:"
         echo "  OPENROUTER_API_KEY     - Required: Your OpenRouter API key"
         echo "  CONSENSUS_MODEL_1      - Optional: First model (default: openai/gpt-4o-mini)"
-        echo "  CONSENSUS_MODEL_2      - Optional: Second model (default: google/gemini-2.5-flash)"
-        echo "  CONSENSUS_MODEL_3      - Optional: Third model (default: x-ai/grok-4-fast)"
+        echo "  CONSENSUS_MODEL_2      - Optional: Second model (default: google/gemini-3.5-flash)"
+        echo "  CONSENSUS_MODEL_3      - Optional: Third model (default: x-ai/grok-4.3)"
         exit 1
     fi
 

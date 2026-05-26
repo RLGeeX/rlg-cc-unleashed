@@ -17,15 +17,15 @@ Available OpenRouter models and configuration details for the LLM Council.
 
 | Model | Role | Why |
 |-------|------|-----|
-| `openai/gpt-4o` | Council Member | Strong reasoning, widely trusted |
-| `google/gemini-2.5-flash` | Council Member | Fast, good at synthesis |
-| `x-ai/grok-4-fast` | Council Member | Different training, diverse perspective |
+| `openai/gpt-5` | Council Member | Strong reasoning, widely trusted |
+| `google/gemini-3.5-flash` | Council Member | Fast, near-Pro reasoning at Flash cost |
+| `x-ai/grok-4.3` | Council Member | Different training, diverse perspective |
 
 ### Default Chairman
 
 | Model | Why |
 |-------|-----|
-| `anthropic/claude-sonnet-4` | Excellent at synthesis, nuanced analysis |
+| `anthropic/claude-sonnet-4.6` | Excellent at synthesis, nuanced analysis |
 
 ---
 
@@ -37,19 +37,25 @@ Best for technical decisions where you want different viewpoints.
 
 ```json
 {
-  "council": ["openai/gpt-4o", "google/gemini-2.5-flash", "x-ai/grok-4-fast"],
-  "chairman": "anthropic/claude-sonnet-4"
+  "council": ["openai/gpt-5", "google/gemini-3.5-flash", "x-ai/grok-4.3"],
+  "chairman": "anthropic/claude-sonnet-4.6"
 }
 ```
 
-### Deep Reasoning
+### Deep Reasoning (5 members, Opus chairman)
 
-For complex architectural decisions requiring careful analysis.
+For complex architectural decisions requiring careful analysis with maximum cross-provider coverage. Run via `--members 5 --chairman anthropic/claude-opus-4.7` (auto-selects one model per non-Anthropic provider) or pin explicitly:
 
 ```json
 {
-  "council": ["openai/gpt-5-pro", "anthropic/claude-opus-4", "google/gemini-3-pro-preview"],
-  "chairman": "anthropic/claude-opus-4"
+  "council": [
+    "openai/gpt-5",
+    "google/gemini-3.5-flash",
+    "x-ai/grok-4.3",
+    "meta-llama/llama-4-maverick",
+    "mistralai/mistral-large-2512"
+  ],
+  "chairman": "anthropic/claude-opus-4.7"
 }
 ```
 
@@ -59,8 +65,8 @@ For quicker deliberations when time matters.
 
 ```json
 {
-  "council": ["openai/gpt-4o-mini", "google/gemini-2.5-flash-lite", "x-ai/grok-4-fast"],
-  "chairman": "google/gemini-2.5-flash"
+  "council": ["openai/gpt-5-mini", "google/gemini-2.5-flash-lite", "x-ai/grok-4.3"],
+  "chairman": "google/gemini-3.5-flash"
 }
 ```
 
@@ -70,8 +76,8 @@ For gathering and synthesizing information on a topic.
 
 ```json
 {
-  "council": ["openai/o3-deep-research", "google/gemini-2.5-pro", "anthropic/claude-sonnet-4"],
-  "chairman": "anthropic/claude-opus-4"
+  "council": ["openai/gpt-5-pro", "google/gemini-2.5-pro", "anthropic/claude-sonnet-4.6"],
+  "chairman": "anthropic/claude-opus-4.7"
 }
 ```
 
@@ -86,35 +92,41 @@ For gathering and synthesizing information on a topic.
 | `openai/gpt-5.1` | Latest GPT with adaptive reasoning |
 | `openai/gpt-5.1-codex` | Software engineering focus |
 | `openai/gpt-5-pro` | Most advanced reasoning |
-| `openai/gpt-4o` | Balanced performance (recommended) |
-| `openai/gpt-4o-mini` | Fast, cost-effective |
-| `openai/o3-deep-research` | Research with web search |
+| `openai/gpt-5` | Balanced performance (default council member) |
+| `openai/gpt-5-mini` | Fast, cost-effective (default for consensus) |
 
 ### Google Models
 
 | Model | Best For |
 |-------|----------|
 | `google/gemini-3-pro-preview` | State-of-the-art, 1M context |
+| `google/gemini-3.5-flash` | Near-Pro reasoning at Flash cost (default) |
 | `google/gemini-2.5-pro` | Full Gemini 2.5 capabilities |
-| `google/gemini-2.5-flash` | Fast responses (recommended) |
 | `google/gemini-2.5-flash-lite` | Fastest, most economical |
 
 ### Anthropic Models
 
 | Model | Best For |
 |-------|----------|
-| `anthropic/claude-opus-4.5` | Frontier reasoning, best chairman |
-| `anthropic/claude-sonnet-4.5` | Great balance, 1M context |
-| `anthropic/claude-sonnet-4` | Excellent synthesis (default chairman) |
+| `anthropic/claude-opus-4.7` | Frontier reasoning, best chairman for hard cases |
+| `anthropic/claude-opus-4.5` | Strong reasoning, prior frontier tier |
+| `anthropic/claude-sonnet-4.6` | Excellent synthesis (default chairman) |
 | `anthropic/claude-haiku-4.5` | Fast, efficient |
 
 ### xAI (Grok) Models
 
 | Model | Best For |
 |-------|----------|
-| `x-ai/grok-4` | Full Grok 4 capabilities |
-| `x-ai/grok-4-fast` | Fast with 2M context (recommended) |
-| `x-ai/grok-4.1-fast:free` | Free tier option |
+| `x-ai/grok-4.3` | Current Grok (default council member) |
+| `x-ai/grok-4.20` | Heavier reasoning tier |
+| `x-ai/grok-4.1-fast` | Faster tier when latency matters |
+
+### Other Providers
+
+| Model | Best For |
+|-------|----------|
+| `meta-llama/llama-4-maverick` | Cross-architecture diversity |
+| `mistralai/mistral-large-2512` | Strong European/multilingual reasoning |
 
 ---
 
@@ -150,11 +162,11 @@ Location: `~/.claude/config/council.json`
 ```json
 {
   "council": [
-    "openai/gpt-4o",
-    "google/gemini-2.5-flash",
-    "x-ai/grok-4-fast"
+    "openai/gpt-5",
+    "google/gemini-3.5-flash",
+    "x-ai/grok-4.3"
   ],
-  "chairman": "anthropic/claude-sonnet-4",
+  "chairman": "anthropic/claude-sonnet-4.6",
   "max_tokens": 1000,
   "timeout_seconds": 90
 }
@@ -164,8 +176,8 @@ Location: `~/.claude/config/council.json`
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `council` | GPT-4o, Gemini, Grok | List of council member models |
-| `chairman` | Claude Sonnet 4 | Model for final synthesis |
+| `council` | GPT-5, Gemini-3.5-Flash, Grok-4.3 | List of council member models |
+| `chairman` | Claude Sonnet 4.6 | Model for final synthesis |
 | `max_tokens` | 1000 | Max tokens per response (chairman gets 2x) |
 | `timeout_seconds` | 90 | Request timeout |
 
