@@ -2,7 +2,7 @@
 
 Streamlined Claude Code plugin with workflow automation, Memorizer memory integration, spec-kit integration, chunked planning, Jira integration, and integration with 61 specialized agents.
 
-**Version:** 1.12.0
+**Version:** 1.13.0
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 
@@ -67,7 +67,7 @@ For the 61 specialized agents, see [rlg-cc-subagents](https://github.com/RLGeeX/
 
 ## Plugin Components
 
-### Skills (34 total)
+### Skills (35 total)
 
 | Category | Skills |
 |----------|--------|
@@ -78,6 +78,7 @@ For the 61 specialized agents, see [rlg-cc-subagents](https://github.com/RLGeeX/
 | Observability (1) | memorizer-status |
 | Persistence (1) | persist-execute |
 | Content (1) | hugo-story |
+| Broker (1) | ask-coordinator |
 
 ### Commands (19 total)
 
