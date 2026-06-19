@@ -2,7 +2,7 @@
 
 Streamlined Claude Code plugin with workflow automation, Memorizer memory integration, spec-kit integration, chunked planning, Jira integration, and integration with 61 specialized agents.
 
-**Version:** 1.13.0
+**Version:** 1.14.0
 **Author:** RLGeeX
 **Requires:** Claude Code >=2.0.31
 
@@ -80,13 +80,14 @@ For the 61 specialized agents, see [rlg-cc-subagents](https://github.com/RLGeeX/
 | Content (1) | hugo-story |
 | Broker (1) | ask-coordinator |
 
-### Commands (19 total)
+### Commands (23 total)
 
 | Category | Commands |
 |----------|----------|
 | Workflow | `/tdd`, `/debug`, `/review`, `/brainstorm`, `/worktree` |
 | Planning | `/plan-new`, `/plan-status`, `/plan-execute`, `/plan-next`, `/plan-resume`, `/plan-list` |
 | Integration | `/jira-plan`, `/sk-jira`, `/sk-execute`, `/consensus`, `/council`, `/hugo-story`, `/d3` |
+| Lanes | `/arch`, `/dev`, `/test`, `/deploy` |
 
 All commands use the `/cc-unleashed:` prefix.
 
