@@ -38,12 +38,18 @@ POST {BROKER_URL}/a2a/coordinator/resolve
   { ticket_id, rid, stack, worker_role, decision:"go"|"no_go", actor }
   -> { verdict: "APPLY APPROVED — GO by <actor>." | "APPLY DENIED — NO-GO by <actor>." }
 
-# the worker learns the verdict by reading the latest coordinator->worker message:
-GET {BROKER_URL}/a2a/inbox?role=<worker_role>   # body_markdown starts with "APPLY ..."
+# the worker learns the verdict by polling the v3 result path BY ticket_id
+# (NOT /a2a/inbox?role= — v1, returns [] forever; role alone also matches other tickets):
+GET {BROKER_URL}/a2a/coordinator/result?ticket_id=<id>&stack=<stack>&worker_role=<role>
+  -> [ {from_agent:"coordinator", to_agent:"operator", body:"APPLY APPROVED — GO by <actor>."}, ... ]
+     # oldest-first; take the LATEST element's `body`:
+     #   "APPLY APPROVED — GO"  -> ship
+     #   "APPLY DENIED — NO-GO"  -> abort (journal "denied")
+     #   "AWAITING HUMAN APPROVAL …" / other -> keep polling until gate_timeout
 ```
 
 Both the STOP and the verdict persist to v3 `a2a_messages` by construction — the skill
-does not log a2a itself.
+does not log a2a itself. `ticket_id`/`rid` are UUIDs on the live broker.
 
 ## Receipts the run emits
 

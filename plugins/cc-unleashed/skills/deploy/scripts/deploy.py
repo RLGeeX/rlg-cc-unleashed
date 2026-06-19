@@ -42,6 +42,7 @@ import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -83,30 +84,49 @@ def gate_interactive(plan_shape: str) -> bool:
 
 
 def gate_broker(args: argparse.Namespace, plan_shape: str) -> bool:
-    """Record the go_no_go hold, then poll the inbox for the human's resolve."""
+    """Record the go_no_go hold, then poll /a2a/coordinator/result for the human's resolve.
+
+    Reads the v3 result path (broker f38a99d) BY ticket_id — NOT /a2a/inbox?role= (v1,
+    returns [] forever) and not by role alone (matches other tickets/runs). The result
+    is coordinator->worker messages for this ticket, oldest-first; the LATEST element's
+    body carries the verdict.
+    """
+    ticket_id = args.ticket or args.rid
     stop_body = f"🛑 GO/NO-GO — irreversible ship\n\n{plan_shape}"
     payload = {
-        "ticket_id": args.ticket or args.rid, "rid": args.rid, "stack": args.stack,
+        "ticket_id": ticket_id, "rid": args.rid, "stack": args.stack,
         "plan_dir": args.plan_dir, "worker_role": args.worker_role,
         "stop_body": stop_body, "query_type": "go_no_go",
     }
     resp = _post(f"{BROKER_URL}/a2a/coordinator/ask", payload)
     if not resp.get("awaiting_human"):
         die(f"broker did not register an apply hold (response: {resp})")
+
+    query = urllib.parse.urlencode(
+        {"ticket_id": ticket_id, "stack": args.stack, "worker_role": args.worker_role}
+    )
+    result_url = f"{BROKER_URL}/a2a/coordinator/result?{query}"
     log("apply gate recorded; awaiting human GO/NO-GO via POST /a2a/coordinator/resolve")
-    log(f"polling {BROKER_URL}/a2a/inbox?role={args.worker_role} (timeout {args.gate_timeout}s)")
+    log(f"polling {result_url} (timeout {args.gate_timeout}s)")
     deadline = time.monotonic() + args.gate_timeout
     while time.monotonic() < deadline:
-        inbox = _get(f"{BROKER_URL}/a2a/inbox?role={args.worker_role}")
-        for msg in reversed(inbox if isinstance(inbox, list) else []):
-            body = (msg.get("body_markdown") or "").upper()
-            if body.startswith("APPLY APPROVED — GO") or "APPLY APPROVED" in body:
-                log(f"resolved: GO ({msg.get('body_markdown')})")
+        msgs = _get(result_url)
+        msgs = msgs if isinstance(msgs, list) else []
+        if msgs:
+            latest = msgs[-1]  # oldest-first → the latest verdict is the last element
+            raw = latest.get("body") or latest.get("body_markdown") or ""
+            body = raw.upper()
+            if "APPLY APPROVED" in body:
+                log(f"resolved: GO ({raw})")
+                args.gate_outcome = "go"
                 return True
-            if body.startswith("APPLY DENIED") or "NO-GO" in body:
-                log(f"resolved: NO-GO ({msg.get('body_markdown')})")
+            if "APPLY DENIED" in body or "NO-GO" in body:
+                log(f"resolved: NO-GO ({raw})")
+                args.gate_outcome = "no_go"
                 return False
+            # else (e.g. "AWAITING HUMAN APPROVAL …") → not yet resolved; keep polling
         time.sleep(args.gate_poll)
+    args.gate_outcome = "timeout"
     die("apply gate timed out waiting for a human GO/NO-GO")
     return False
 
@@ -265,8 +285,11 @@ def main(argv: "list[str] | None" = None) -> None:
     # 1. GATE — never ship without an explicit GO
     approved = gate_broker(args, plan_shape) if args.gate == "broker" else gate_interactive(plan_shape)
     if not approved:
-        write_journal(args, "aborted", {"gate": {"value": "NO-GO / no approval", "source": args.gate}},
-                      f"ship aborted at the human gate for PR #{args.pr}")
+        denied = getattr(args, "gate_outcome", None) == "no_go"
+        status = "denied" if denied else "aborted"
+        gate_val = "NO-GO" if denied else "no approval / timeout"
+        write_journal(args, status, {"gate": {"value": gate_val, "source": args.gate}},
+                      f"ship {status} at the human gate for PR #{args.pr}")
         die("NO-GO — ship aborted at the human apply gate")
 
     # 2-4. merge -> watch -> smoke (receipts captured at each step)
