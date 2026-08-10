@@ -662,7 +662,9 @@ main() {
     local chairman="$DEFAULT_CHAIRMAN"
     local chairman_explicit=false
     local max_tokens="$DEFAULT_MAX_TOKENS"
+    local max_tokens_explicit=false
     local timeout="$DEFAULT_TIMEOUT"
+    local timeout_explicit=false
     local discover=false
     local format="json"
 
@@ -687,10 +689,12 @@ main() {
                 ;;
             --max-tokens)
                 max_tokens="$2"
+                max_tokens_explicit=true
                 shift 2
                 ;;
             --timeout)
                 timeout="$2"
+                timeout_explicit=true
                 shift 2
                 ;;
             --discover)
@@ -749,6 +753,16 @@ Set it in your shell profile (~/.bashrc or ~/.zshrc):
             local file_chairman
             file_chairman=$(jq -r '.chairman // empty' "$config_file" 2>/dev/null)
             [[ -n "$file_chairman" ]] && chairman="$file_chairman"
+        fi
+        if [[ "$max_tokens_explicit" == false ]]; then
+            local file_max_tokens
+            file_max_tokens=$(jq -r '.max_tokens // empty' "$config_file" 2>/dev/null)
+            [[ -n "$file_max_tokens" ]] && max_tokens="$file_max_tokens"
+        fi
+        if [[ "$timeout_explicit" == false ]]; then
+            local file_timeout
+            file_timeout=$(jq -r '.timeout_seconds // empty' "$config_file" 2>/dev/null)
+            [[ -n "$file_timeout" ]] && timeout="$file_timeout"
         fi
     fi
 
