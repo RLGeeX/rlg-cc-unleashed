@@ -14,53 +14,64 @@ Available OpenRouter models and configuration details.
 
 ### Default Models
 
-| Model | Description |
-|-------|-------------|
-| `openai/gpt-4o-mini` | Reliable, cost-effective — fits 500-token budget cleanly |
-| `google/gemini-3.5-flash` | Latest Gemini Flash, near-Pro reasoning |
-| `x-ai/grok-4.3` | Current Grok tier (Grok 4 Fast was deprecated) |
+Verified against the OpenRouter catalog on 2026-08-10. Prices are $ per million
+tokens, prompt → completion. Re-check with `council.sh --discover --format table`
+rather than trusting this table indefinitely.
 
-> **Note:** GPT-5 family models (gpt-5, gpt-5-mini, gpt-5-nano) emit hidden reasoning tokens that count against `max_tokens`. At the consensus 500-token budget they can hit `finish_reason=length` and return empty output. Use them in the council (1000-token budget) or raise `max_tokens` if you want a GPT-5 model in consensus.
+| Model | $/M in→out | Description |
+|-------|-----------|-------------|
+| `openai/gpt-5.6-luna` | 0.10 → 0.60 | Cheapest current GPT tier; fast and capable |
+| `google/gemini-3.5-flash-lite` | 0.30 → 2.50 | Lightweight, fastest Gemini |
+| `x-ai/grok-4.3` | 1.25 → 2.50 | Cheapest current Grok, 1M context |
+
+> **Note:** essentially every current model emits hidden reasoning tokens that count
+> against `max_tokens`. The old 500-token budget could hit `finish_reason=length` and
+> return empty output, which is why this used to pin `openai/gpt-4o-mini` (July 2024,
+> non-reasoning). The budget is now **1500** and the defaults are modern. If you lower
+> `max_tokens` again, switch back to a non-reasoning model or expect empty responses.
 
 ### OpenAI Models
 
-| Model | Description |
-|-------|-------------|
-| `openai/gpt-5.1` | Latest GPT-5 with adaptive reasoning |
-| `openai/gpt-5.1-codex` | Specialized for software engineering |
-| `openai/gpt-5.1-codex-mini` | Faster codex variant |
-| `openai/gpt-5-pro` | Most advanced reasoning |
-| `openai/gpt-5` | Balanced GPT-5 |
-| `openai/gpt-5-mini` | Fast GPT-5 (needs higher max_tokens than the 500 default) |
-| `openai/gpt-4o-mini` | Reliable at 500-token budget (current consensus default) |
-| `openai/gpt-5-nano` | Lightweight GPT-5 |
-| `openai/o3-deep-research` | Web search for research tasks |
-| `openai/o4-mini-deep-research` | Faster deep research |
+| Model | $/M in→out | Description |
+|-------|-----------|-------------|
+| `openai/gpt-5.6-sol` | 5 → 30 | Flagship tier, complex reasoning |
+| `openai/gpt-5.6-terra` | 1 → 6 | Balanced tier (council default) |
+| `openai/gpt-5.6-luna` | 0.10 → 0.60 | Cost-efficient tier (consensus default) |
+| `openai/gpt-5.1-codex` | — | Specialized for software engineering |
+| `openai/gpt-5-nano` | — | Lightweight legacy GPT-5 |
 
 ### Google Models
 
-| Model | Description |
-|-------|-------------|
-| `google/gemini-3-pro-preview` | 1M context, state-of-the-art (preview) |
-| `google/gemini-3.5-flash` | Latest Flash, near-Pro reasoning (default) |
-| `google/gemini-2.5-pro` | Full Gemini 2.5 |
-| `google/gemini-2.5-flash-lite` | Lightweight, fastest |
+| Model | $/M in→out | Description |
+|-------|-----------|-------------|
+| `google/gemini-3.6-flash` | 1.50 → 7.50 | Current Flash (council default) |
+| `google/gemini-3.5-flash-lite` | 0.30 → 2.50 | Lightweight, fastest (consensus default) |
+| `google/gemini-2.5-pro` | — | Legacy Gemini 2.5 |
 
 ### xAI (Grok) Models
 
-| Model | Description |
-|-------|-------------|
-| `x-ai/grok-4.3` | Current Grok (default) |
-| `x-ai/grok-4.20` | Heavier reasoning tier |
-| `x-ai/grok-4.1-fast` | Faster tier when latency matters |
+| Model | $/M in→out | Description |
+|-------|-----------|-------------|
+| `x-ai/grok-4.5` | 2 → 6 | Current frontier Grok (council default) |
+| `x-ai/grok-4.3` | 1.25 → 2.50 | Cheaper prior tier (consensus default) |
+| `x-ai/grok-4.20` | — | Heavier reasoning tier |
 
 ### Anthropic Models
 
-| Model | Description |
-|-------|-------------|
-| `anthropic/claude-opus-4.7` | Frontier reasoning |
-| `anthropic/claude-sonnet-4.6` | Balanced, strong synthesis |
-| `anthropic/claude-haiku-4.5` | Fastest, most efficient |
+| Model | $/M in→out | Description |
+|-------|-----------|-------------|
+| `anthropic/claude-opus-5` | 5 → 25 | Frontier reasoning (council chairman default) |
+| `anthropic/claude-sonnet-5` | 2 → 10 | Balanced, strong synthesis |
+| `anthropic/claude-haiku-4.5` | — | Fastest, most efficient |
+
+### Open-Weight Models
+
+| Model | $/M in→out | Description |
+|-------|-----------|-------------|
+| `qwen/qwen3.8-max` | 2 → 6 | Open-weight frontier |
+| `deepseek/deepseek-v4-pro` | 0.44 → 0.87 | Strong reasoning, very cheap |
+| `deepseek/deepseek-v4-flash` | 0.14 → 0.28 | Cheapest capable member |
+| `qwen/qwen3.7-flash` | 0.03 → 0.13 | Cheapest option in the catalog |
 
 ### Meta-Routing
 
@@ -85,10 +96,12 @@ export OPENROUTER_API_KEY="your-api-key"
 ```json
 {
   "models": [
-    "openai/gpt-4o-mini",
-    "google/gemini-3.5-flash",
+    "openai/gpt-5.6-luna",
+    "google/gemini-3.5-flash-lite",
     "x-ai/grok-4.3"
-  ]
+  ],
+  "max_tokens": 1500,
+  "timeout_seconds": 60
 }
 ```
 

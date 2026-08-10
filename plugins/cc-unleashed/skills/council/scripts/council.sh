@@ -21,23 +21,28 @@ set -euo pipefail
 OPENROUTER_API="https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_MODELS_API="https://openrouter.ai/api/v1/models"
 
-DEFAULT_CHAIRMAN="anthropic/claude-sonnet-4.6"
+DEFAULT_CHAIRMAN="anthropic/claude-opus-5"
 DEFAULT_MEMBERS=3
-DEFAULT_MAX_TOKENS=1000
+# Every model in the pool below is a reasoning model. Reasoning tokens draw against
+# max_tokens, so a small budget truncates or empties responses. Keep this >= 2500.
+DEFAULT_MAX_TOKENS=2500
 DEFAULT_TIMEOUT=90
 
 # Preferred models by provider (best first)
 # Uses a function instead of associative arrays for bash 3.2 compatibility (macOS)
-PROVIDER_ORDER=(openai google x-ai meta-llama mistralai anthropic)
+# select_council_members() skips the chairman's own provider, so with the default
+# Opus chairman these five non-anthropic providers are exactly the n=5 roster.
+# n=6 therefore still yields 5 members — there is no sixth non-anthropic entry.
+PROVIDER_ORDER=(openai google x-ai qwen mistralai anthropic)
 
 provider_model() {
     case "$1" in
-        openai)      echo "openai/gpt-5" ;;
-        google)      echo "google/gemini-3.5-flash" ;;
-        x-ai)        echo "x-ai/grok-4.3" ;;
-        meta-llama)  echo "meta-llama/llama-4-maverick" ;;
-        mistralai)   echo "mistralai/mistral-large-2512" ;;
-        anthropic)   echo "anthropic/claude-sonnet-4.6" ;;
+        openai)      echo "openai/gpt-5.6-terra" ;;
+        google)      echo "google/gemini-3.6-flash" ;;
+        x-ai)        echo "x-ai/grok-4.5" ;;
+        qwen)        echo "qwen/qwen3.7-max" ;;
+        mistralai)   echo "mistralai/mistral-medium-3-5" ;;
+        anthropic)   echo "anthropic/claude-sonnet-5" ;;
         *)           echo "" ;;
     esac
 }
@@ -138,6 +143,8 @@ get_model_short_name() {
         *claude*) echo "Claude" ;;
         *llama*) echo "Llama" ;;
         *mistral*) echo "Mistral" ;;
+        *qwen*) echo "Qwen" ;;
+        *deepseek*) echo "DeepSeek" ;;
         *) echo "${model##*/}" ;;
     esac
 }
@@ -367,7 +374,7 @@ discover_models() {
 
     # Filter to major providers
     local filtered
-    filtered=$(echo "$response" | jq '[.data[] | select(.id | test("^(openai|anthropic|google|x-ai|meta-llama|mistralai)/"))]')
+    filtered=$(echo "$response" | jq '[.data[] | select(.id | test("^(openai|anthropic|google|x-ai|qwen|deepseek|mistralai)/"))]')
 
     if [[ "$format" == "json" ]]; then
         echo "$filtered" | jq '{
@@ -382,7 +389,7 @@ discover_models() {
         echo "Total: $total models"
         echo ""
 
-        for provider in openai anthropic google x-ai meta-llama mistralai; do
+        for provider in openai anthropic google x-ai qwen deepseek mistralai; do
             local provider_models
             provider_models=$(echo "$filtered" | jq -r --arg p "$provider" \
                 '[.[] | select(.id | startswith($p + "/"))] | sort_by(.name)[:10][] |
@@ -638,10 +645,10 @@ Options:
 Examples:
   $(basename "$0") --discover --format table
   $(basename "$0") -q "Should we use GraphQL or REST?" -n 5
-  $(basename "$0") -q "Monorepo vs polyrepo?" -c "openai/gpt-5,google/gemini-3.5-flash"
-  $(basename "$0") -q "Best approach?" --chairman "anthropic/claude-opus-4.7" -n 4
+  $(basename "$0") -q "Monorepo vs polyrepo?" -c "openai/gpt-5.6-terra,google/gemini-3.6-flash"
+  $(basename "$0") -q "Best approach?" --chairman "anthropic/claude-sonnet-5" -n 4
   # 5-member council with Opus chairman (one model per non-Anthropic provider):
-  $(basename "$0") -q "Architectural decision?" -n 5 --chairman "anthropic/claude-opus-4.7"
+  $(basename "$0") -q "Architectural decision?" -n 5
 
 Environment:
   OPENROUTER_API_KEY       Required for council deliberation (not for --discover)
@@ -653,6 +660,7 @@ main() {
     local council=""
     local members="$DEFAULT_MEMBERS"
     local chairman="$DEFAULT_CHAIRMAN"
+    local chairman_explicit=false
     local max_tokens="$DEFAULT_MAX_TOKENS"
     local timeout="$DEFAULT_TIMEOUT"
     local discover=false
@@ -674,6 +682,7 @@ main() {
                 ;;
             --chairman)
                 chairman="$2"
+                chairman_explicit=true
                 shift 2
                 ;;
             --max-tokens)
@@ -734,7 +743,9 @@ Set it in your shell profile (~/.bashrc or ~/.zshrc):
             file_council=$(jq -r '.council // empty | join(",")' "$config_file" 2>/dev/null)
             [[ -n "$file_council" ]] && council="$file_council"
         fi
-        if [[ "$chairman" == "$DEFAULT_CHAIRMAN" ]]; then
+        # Track the flag explicitly rather than comparing against DEFAULT_CHAIRMAN:
+        # passing --chairman with the default value must still beat the config file.
+        if [[ "$chairman_explicit" == false ]]; then
             local file_chairman
             file_chairman=$(jq -r '.chairman // empty' "$config_file" 2>/dev/null)
             [[ -n "$file_chairman" ]] && chairman="$file_chairman"

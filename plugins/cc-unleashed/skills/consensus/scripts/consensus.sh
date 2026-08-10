@@ -7,9 +7,11 @@
 # Configuration (in order of priority):
 #   1. Environment variables: CONSENSUS_MODEL_1, CONSENSUS_MODEL_2, CONSENSUS_MODEL_3
 #   2. Config file: .claude/config/consensus.json
-#   3. Defaults: openai/gpt-4o-mini, google/gemini-3.5-flash, x-ai/grok-4.3
-#      (gpt-4o-mini chosen over gpt-5-mini because GPT-5 reasoning tokens
-#       can exhaust the 500-token consensus budget and produce empty output)
+#   3. Defaults: openai/gpt-5.6-luna, google/gemini-3.5-flash-lite, x-ai/grok-4.3
+#      All three are reasoning models, whose reasoning tokens draw against
+#      max_tokens. The budget is 1500 (was 500) so they cannot exhaust it and
+#      return empty output — the failure that previously pinned this to gpt-4o-mini.
+#      Do not lower MAX_TOKENS without switching to non-reasoning models.
 #
 # Required: OPENROUTER_API_KEY environment variable
 #
@@ -26,8 +28,8 @@ BOLD='\033[1m'
 NC='\033[0m' # No Color
 
 # Default models
-DEFAULT_MODEL_1="openai/gpt-4o-mini"
-DEFAULT_MODEL_2="google/gemini-3.5-flash"
+DEFAULT_MODEL_1="openai/gpt-5.6-luna"
+DEFAULT_MODEL_2="google/gemini-3.5-flash-lite"
 DEFAULT_MODEL_3="x-ai/grok-4.3"
 
 # OpenRouter API endpoint
@@ -79,21 +81,21 @@ load_config() {
             CONFIG_MODEL_1=$(jq -r '.models[0] // empty' "$CONFIG_FILE" 2>/dev/null || echo "")
             CONFIG_MODEL_2=$(jq -r '.models[1] // empty' "$CONFIG_FILE" 2>/dev/null || echo "")
             CONFIG_MODEL_3=$(jq -r '.models[2] // empty' "$CONFIG_FILE" 2>/dev/null || echo "")
-            MAX_TOKENS=$(jq -r '.max_tokens // 500' "$CONFIG_FILE" 2>/dev/null || echo "500")
+            MAX_TOKENS=$(jq -r '.max_tokens // 1500' "$CONFIG_FILE" 2>/dev/null || echo "1500")
             TIMEOUT_SECS=$(jq -r '.timeout_seconds // 60' "$CONFIG_FILE" 2>/dev/null || echo "60")
         else
             log_warning "jq not installed, using defaults (install jq to use config file)"
             CONFIG_MODEL_1=""
             CONFIG_MODEL_2=""
             CONFIG_MODEL_3=""
-            MAX_TOKENS=500
+            MAX_TOKENS=1500
             TIMEOUT_SECS=60
         fi
     else
         CONFIG_MODEL_1=""
         CONFIG_MODEL_2=""
         CONFIG_MODEL_3=""
-        MAX_TOKENS=500
+        MAX_TOKENS=1500
         TIMEOUT_SECS=60
     fi
 
@@ -274,9 +276,9 @@ main() {
         echo ""
         echo "Environment variables:"
         echo "  OPENROUTER_API_KEY     - Required: Your OpenRouter API key"
-        echo "  CONSENSUS_MODEL_1      - Optional: First model (default: openai/gpt-4o-mini)"
-        echo "  CONSENSUS_MODEL_2      - Optional: Second model (default: google/gemini-3.5-flash)"
-        echo "  CONSENSUS_MODEL_3      - Optional: Third model (default: x-ai/grok-4.3)"
+        echo "  CONSENSUS_MODEL_1      - Optional: First model (default: $DEFAULT_MODEL_1)"
+        echo "  CONSENSUS_MODEL_2      - Optional: Second model (default: $DEFAULT_MODEL_2)"
+        echo "  CONSENSUS_MODEL_3      - Optional: Third model (default: $DEFAULT_MODEL_3)"
         exit 1
     fi
 
