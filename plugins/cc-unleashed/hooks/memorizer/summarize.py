@@ -440,9 +440,11 @@ def run(
         log("empty transcript after filtering")
         return []
     transcript = strip_private(transcript)
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    # Separate variable so Claude Code itself never sees an API key (it would bill per-token
+    # instead of using the subscription). ANTHROPIC_API_KEY remains a fallback.
+    api_key = os.environ.get("MEMORIZER_ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
-        log("ANTHROPIC_API_KEY unset — skipping API call")
+        log("MEMORIZER_ANTHROPIC_API_KEY unset — skipping API call")
         return []
     response = call_anthropic(transcript, model, api_key)
     if not response:

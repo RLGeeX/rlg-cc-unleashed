@@ -60,12 +60,20 @@ fi
 
 # --- Session synthesis (Phase 4.7) -------------------------------------------
 # Summarize transcript via Haiku, dedup, and store as typed memories.
-# Silently no-ops when ANTHROPIC_API_KEY or SESSION_ID is missing.
-if [[ -n "${ANTHROPIC_API_KEY:-}" && -n "$SESSION_ID" ]]; then
+# The key is MEMORIZER_ANTHROPIC_API_KEY, deliberately not ANTHROPIC_API_KEY: an exported
+# ANTHROPIC_API_KEY makes Claude Code itself bill per-token instead of using the subscription.
+# ANTHROPIC_API_KEY is still honored as a fallback for setups that already export it.
+synth_key="${MEMORIZER_ANTHROPIC_API_KEY:-${ANTHROPIC_API_KEY:-}}"
+if [[ -z "$synth_key" && -n "$SESSION_ID" ]]; then
+  # Logged rather than silent: a missing key once disabled synthesis unnoticed for two months.
+  echo "[stop.sh] $(date -u +%FT%TZ) synthesis skipped: MEMORIZER_ANTHROPIC_API_KEY not set" \
+    >> "${MEM_DIR}/summarize.log" 2>/dev/null || true
+fi
+if [[ -n "$synth_key" && -n "$SESSION_ID" ]]; then
   synth_project_id=$(get_project_id 2>/dev/null || echo "")
   if [[ -n "$synth_project_id" ]]; then
     mem_log="${MEM_DIR}/summarize.log"
-    memories=$("${SCRIPT_DIR}/summarize.py" \
+    memories=$(MEMORIZER_ANTHROPIC_API_KEY="$synth_key" "${SCRIPT_DIR}/summarize.py" \
       --session-id "$SESSION_ID" \
       --project-id "$synth_project_id" \
       2>>"$mem_log" || echo "[]")

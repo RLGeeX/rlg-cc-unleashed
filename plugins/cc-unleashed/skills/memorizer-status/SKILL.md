@@ -115,7 +115,7 @@ If both auto sources report 0 captures, check these in order and report the firs
 | Check | Command | Remediation |
 |-------|---------|-------------|
 | MCP registered | `claude mcp list \| grep memorizer` | Run `scripts/setup-memory.sh` |
-| API key set | `[[ -n $ANTHROPIC_API_KEY ]]` | Export in shell init; synthesis needs it |
+| API key set | `[[ -n $MEMORIZER_ANTHROPIC_API_KEY ]]`; `grep 'synthesis skipped' .memorizer/summarize.log` | Export `MEMORIZER_ANTHROPIC_API_KEY` in shell init. Never export `ANTHROPIC_API_KEY` for this: it makes Claude Code bill per-token instead of using the subscription |
 | Hook wired | `cat ~/.claude/settings.json \| jq .hooks.Stop` | Verify Stop hook includes `memorizer/stop.sh` |
 | Project has UUID | `get_project_context(query: "<project>")` | Create workspace/project via `create_workspace` + `create_project` |
 | `.memorizer/` exists in cwd | `ls .memorizer/` | First file read/write in project auto-creates it |
