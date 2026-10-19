@@ -8,12 +8,15 @@ The free source: Claude Code writes a per-session ``.jsonl`` transcript under
 attribution. This script aggregates that into per-session and per-subagent
 tokens, cost, and latency — the OTEL layer over the DB record.
 
-Cost rates (per MTok, confirmed via the claude-api skill):
+Cost rates (per MTok, confirmed via the claude-api skill 2026-10-19):
     model         input  output  cache-write-5m  cache-write-1h  cache-read
-    opus-4-8      5.00   25.00   6.25            10.00           0.50
-    sonnet-4-6    3.00   15.00   3.75             6.00           0.30
-    haiku-4-5     1.00    5.00   1.25             2.00           0.10
-(cache write = 1.25x input for 5m / 2x for 1h; cache read = 0.1x input.)
+    fable-5-1    10.00   50.00  12.50            20.00           0.25
+    opus-5-5      4.00   20.00   5.00             8.00           0.20
+    sonnet-5-5    2.00   10.00   2.50             4.00           0.20
+    haiku-5-5     0.10    0.50   0.125            0.20           0.01
+(cache write = 1.25x input for 5m / 2x for 1h; cache read = 0.1x input, except
+Fable 5.1 at 0.025x and Opus 5.5 at 0.05x. Haiku 5.5 is priced for prompts up to
+100K tokens; longer prompts bill at $0.50/$2.50, which this trace does not model.)
 
 Usage:
     otel.py trace [TRANSCRIPT.jsonl]      # default: newest in the project dir
@@ -33,14 +36,26 @@ import os
 import sys
 
 # per-MTok rates: (input, output, cache_write_5m, cache_write_1h, cache_read)
+# _rate_for() matches by substring in insertion order, so a longer ID must come
+# before its prefix ("opus-5-5" before "opus-5", "fable-5-1" before "fable-5").
 RATES = {
+    "fable-5-1": (10.00, 50.00, 12.50, 20.00, 0.25),
+    "mythos-5-1": (10.00, 50.00, 12.50, 20.00, 0.25),
+    "fable-5": (10.00, 50.00, 12.50, 20.00, 1.00),
+    "mythos-5": (10.00, 50.00, 12.50, 20.00, 1.00),
+    "opus-5-5": (4.00, 20.00, 5.00, 8.00, 0.20),
+    "opus-5": (5.00, 25.00, 6.25, 10.00, 0.50),
     "opus-4-8": (5.00, 25.00, 6.25, 10.00, 0.50),
     "opus-4-7": (5.00, 25.00, 6.25, 10.00, 0.50),
+    "opus-4-6": (5.00, 25.00, 6.25, 10.00, 0.50),
+    "sonnet-5-5": (2.00, 10.00, 2.50, 4.00, 0.20),
+    "sonnet-5": (2.00, 10.00, 2.50, 4.00, 0.20),
     "sonnet-4-6": (3.00, 15.00, 3.75, 6.00, 0.30),
+    "haiku-5-5": (0.10, 0.50, 0.125, 0.20, 0.01),
     "haiku-4-5": (1.00, 5.00, 1.25, 2.00, 0.10),
-    "fable-5": (10.00, 50.00, 12.50, 20.00, 1.00),
 }
-_DEFAULT_RATE = RATES["opus-4-8"]
+# Unknown models are priced as the current default Opus.
+_DEFAULT_RATE = RATES["opus-5-5"]
 
 
 def _die(msg: str) -> "None":

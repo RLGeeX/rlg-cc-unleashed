@@ -53,14 +53,14 @@ python3 "$OTEL" trace --format json            # OTLP-ish metrics JSON
 python3 "$OTEL" trace --plan-dir .claude/plans/ai-broker   # also append to <dir>/otel.md
 ```
 
-Cost uses per-MTok rates (confirmed via the `claude-api` skill): Opus 4.8 $5/$25
-(cache-write 5m $6.25 / 1h $10.00, cache-read $0.50), Sonnet 4.6 $3/$15, Haiku 4.5 $1/$5
-— cache write = 1.25× (5m) / 2× (1h) input, cache read = 0.1× input. Per-subagent rows
-appear when the transcript has sidechain activity.
+Cost uses per-MTok rates (confirmed via the `claude-api` skill): Opus 5.5 $4/$20,
+Sonnet 5.5 $2/$10, Haiku 5.5 $0.10/$0.50, Fable 5.1 $10/$50, plus prior generations —
+full table with cache rates in `reference.md`. Unknown models are priced as Opus 5.5.
+Per-subagent rows appear when the transcript has sidechain activity.
 
 ## Capturing agent reasoning in the trace
 
-Opus 4.7/4.8 omit thinking by default. To make reasoning visible in logs, run agents
+Opus 4.7 and later, Sonnet 5 and later, Haiku 5.5, and Fable omit thinking by default. To make reasoning visible in logs, run agents
 with `thinking: {type: "adaptive", display: "summarized"}` — otherwise the transcript's
 thinking blocks are empty and the postmortem can't cite the reasoning.
 

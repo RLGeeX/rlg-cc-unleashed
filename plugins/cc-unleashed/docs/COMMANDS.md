@@ -35,7 +35,7 @@ All commands use the `/cc-unleashed:` namespace. The plugin provides 19 workflow
 
 ### /cc-unleashed:consensus
 **Description:** Query multiple AI models for consensus on a decision question
-**Action:** Loads `skills/consensus/` - queries GPT-4, Gemini, and Grok via OpenRouter
+**Action:** Loads `skills/consensus/` - queries GPT, Gemini, and Grok via OpenRouter
 **Use when:** Facing a specific decision with clear alternatives (not brainstorming)
 
 **Prerequisites:**
@@ -51,7 +51,7 @@ All commands use the `/cc-unleashed:` namespace. The plugin provides 19 workflow
 - "How should I architect my application?" (too broad)
 - "What features should I add?" (exploratory)
 
-**Cost:** ~$0.03-0.06 per query (3 API calls)
+**Cost:** ~$0.01 per query (3 API calls)
 
 **Example:**
 ```
@@ -68,7 +68,7 @@ All commands use the `/cc-unleashed:` namespace. The plugin provides 19 workflow
 
 **Prerequisites:**
 - `OPENROUTER_API_KEY` environment variable set
-- Python 3.8+ with `httpx` installed
+- `curl` and `jq` installed
 - Optional: `~/.claude/config/council.json` to customize council composition
 
 **3-Stage Process:**
@@ -77,15 +77,15 @@ All commands use the `/cc-unleashed:` namespace. The plugin provides 19 workflow
 3. **Synthesis:** Chairman combines insights into final recommendation
 
 **Default Council:**
-- Council: GPT-4o, Gemini 2.5 Flash, Grok 4
-- Chairman: Claude Sonnet 4
+- Council: GPT-6.1 Sol, Gemini 4 Argon, Grok 4.7 (`-n 5` adds Kimi and GLM; `-n 6` adds DeepSeek)
+- Chairman: Claude Opus 5.5
 
 **Good questions:**
 - "Should we use GraphQL or REST for our new API?"
 - "How should we structure authentication across microservices?"
 - "Monorepo vs polyrepo for 5 related services?"
 
-**Cost:** ~$0.15-0.30 per query (3 models × 2 stages + chairman)
+**Cost:** ~$0.20-0.40 per query (3 models × 2 stages + chairman)
 
 **Example:**
 ```

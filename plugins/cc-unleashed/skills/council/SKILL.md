@@ -33,13 +33,13 @@ Use AskUserQuestion to let user customize (or accept defaults):
 ```
 Question: "How would you like to configure the council?"
 Options:
-1. Use defaults (Recommended) - GPT-5, Gemini 3.5 Flash, Grok 4.3, Claude Sonnet 4.6 as chairman
-2. Deep council - 5 members (GPT-5, Gemini, Grok, Llama-4, Mistral) with Claude Opus 4.7 chairman
+1. Use defaults (Recommended) - GPT-6.1 Sol, Gemini 4 Argon, Grok 4.7, Claude Opus 5.5 as chairman
+2. Deep council - 5 members (adds Kimi K3 and GLM-5.3), Claude Opus 5.5 chairman
 3. Customize council members - Select which models participate
 4. Customize chairman - Choose who synthesizes the final answer
 ```
 
-**For the "Deep council" option, invoke with `-n 5`** — the chairman already defaults to `anthropic/claude-opus-5`, and the script auto-selects one model per non-Anthropic provider (`anthropic` sits last in `PROVIDER_ORDER`, so it is never picked at n=5), giving maximum cross-architecture diversity with Opus synthesizing. Or pin the roster via `council-5-opus.json.example`.
+**For the "Deep council" option, invoke with `-n 5`** — the chairman already defaults to `anthropic/claude-opus-5.5`, and the script auto-selects one model per non-Anthropic provider in `PROVIDER_ORDER`, giving cross-architecture diversity with Opus synthesizing. Or pin the roster via `council-5-opus.json.example`. `-n 6` seats every non-Anthropic provider (adds DeepSeek V4 Pro) for foundational decisions where breadth beats cost.
 
 **If user selects "Customize council members" or "Customize chairman":**
 
@@ -49,7 +49,7 @@ First, fetch available models from OpenRouter:
 $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/council/scripts/council.sh --discover --format table
 ```
 
-This returns models from major providers (OpenAI, Anthropic, Google, xAI, Meta, Mistral) with context length and pricing.
+This returns models from major providers (OpenAI, Anthropic, Google, xAI, DeepSeek, Moonshot, Z.ai) with context length and pricing.
 
 Then use AskUserQuestion to let them pick from the available models:
 - For council: Pick 3-5 models (recommend diversity across providers)
@@ -98,7 +98,8 @@ The script outputs structured results. Present to user:
 ## Error Handling
 
 - **Missing API key**: Tell user to set `OPENROUTER_API_KEY`
-- **Model failures**: Script continues if 2+ council members succeed
+- **Model failures**: Script continues if 2+ council members succeed. A member that spends its whole budget reasoning is reported as `Truncated`, and a partly cut-off answer is tagged `[TRUNCATED]` so reviewers and the chairman discount it
+- **Timeouts**: reported as `Timed out after Ns`; long questions can take a reasoning model 2+ minutes
 - **Missing curl/jq**: Tell user to install these tools
 
 ## Configuration File
@@ -108,13 +109,14 @@ Optional `~/.claude/config/council.json`:
 ```json
 {
   "council": [
-    "openai/gpt-5.6-terra",
-    "google/gemini-3.6-flash",
-    "x-ai/grok-4.5"
+    "openai/gpt-6.1-sol",
+    "google/gemini-4-argon",
+    "x-ai/grok-4.7"
   ],
-  "chairman": "anthropic/claude-opus-5",
-  "max_tokens": 2500,
-  "timeout_seconds": 90
+  "chairman": "anthropic/claude-opus-5.5",
+  "max_tokens": 8000,
+  "reasoning_effort": "medium",
+  "timeout_seconds": 240
 }
 ```
 
@@ -132,7 +134,7 @@ $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashe
 $HOME/.claude/plugins/marketplaces/rlg-unleashed-marketplace/plugins/cc-unleashed/skills/council/scripts/council.sh --discover --format table
 ```
 
-**Major providers included:** OpenAI, Anthropic, Google, xAI, Meta, Mistral
+**Major providers included:** OpenAI, Anthropic, Google, xAI, DeepSeek, Moonshot, Z.ai
 
 ---
 

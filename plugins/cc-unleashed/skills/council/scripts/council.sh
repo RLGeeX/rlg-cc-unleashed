@@ -21,28 +21,40 @@ set -euo pipefail
 OPENROUTER_API="https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_MODELS_API="https://openrouter.ai/api/v1/models"
 
-DEFAULT_CHAIRMAN="anthropic/claude-opus-5"
+DEFAULT_CHAIRMAN="anthropic/claude-opus-5.5"
 DEFAULT_MEMBERS=3
-# Every model in the pool below is a reasoning model. Reasoning tokens draw against
-# max_tokens, so a small budget truncates or empties responses. Keep this >= 2500.
-DEFAULT_MAX_TOKENS=2500
-DEFAULT_TIMEOUT=90
+# Every model in the pool below is a reasoning model, and reasoning tokens draw
+# against max_tokens. A replay of real past council questions (2026-10-19) showed
+# that at 2500 tokens five of eight candidates spent the whole budget thinking and
+# returned nothing or a cut-off answer. Each request now caps reasoning with
+# OpenRouter's reasoning.effort inside an 8000-token budget; grok-4.7 took up to
+# 142s on long questions, hence the 240s timeout.
+DEFAULT_MAX_TOKENS=8000
+DEFAULT_TIMEOUT=240
+DEFAULT_REASONING_EFFORT="medium"
+REASONING_EFFORT="$DEFAULT_REASONING_EFFORT"  # overridden by reasoning_effort in council.json
 
 # Preferred models by provider (best first)
 # Uses a function instead of associative arrays for bash 3.2 compatibility (macOS)
 # select_council_members() skips the chairman's own provider, so with the default
-# Opus chairman these five non-anthropic providers are exactly the n=5 roster.
-# n=6 therefore still yields 5 members — there is no sixth non-anthropic entry.
-PROVIDER_ORDER=(openai google x-ai qwen mistralai anthropic)
+# Opus chairman the first six entries are the non-anthropic roster: n=3 is the
+# OpenAI/Google/xAI default, n=5 adds Moonshot and Z.ai, n=6 adds DeepSeek
+# (deepseek-v4-pro truncated one long real question even with the cap, so it sits last).
+# n=7 therefore still yields 6 members — there is no seventh non-anthropic entry.
+# Qwen and Mistral were dropped: mistral-large-4-0 truncated 2/5 real questions even
+# with the reasoning cap, and qwen3.8-max was the slowest, most verbose and most
+# expensive of the extended seats.
+PROVIDER_ORDER=(openai google x-ai moonshotai z-ai deepseek anthropic)
 
 provider_model() {
     case "$1" in
-        openai)      echo "openai/gpt-5.6-terra" ;;
-        google)      echo "google/gemini-3.6-flash" ;;
-        x-ai)        echo "x-ai/grok-4.5" ;;
-        qwen)        echo "qwen/qwen3.7-max" ;;
-        mistralai)   echo "mistralai/mistral-medium-3-5" ;;
-        anthropic)   echo "anthropic/claude-sonnet-5" ;;
+        openai)      echo "openai/gpt-6.1-sol" ;;
+        google)      echo "google/gemini-4-argon" ;;
+        x-ai)        echo "x-ai/grok-4.7" ;;
+        moonshotai)  echo "moonshotai/kimi-k3" ;;
+        z-ai)        echo "z-ai/glm-5.3" ;;
+        deepseek)    echo "deepseek/deepseek-v4-pro-0813" ;;
+        anthropic)   echo "anthropic/claude-sonnet-5.5" ;;
         *)           echo "" ;;
     esac
 }
@@ -145,6 +157,8 @@ get_model_short_name() {
         *mistral*) echo "Mistral" ;;
         *qwen*) echo "Qwen" ;;
         *deepseek*) echo "DeepSeek" ;;
+        *kimi*) echo "Kimi" ;;
+        *glm*) echo "GLM" ;;
         *) echo "${model##*/}" ;;
     esac
 }
@@ -176,6 +190,7 @@ call_model() {
 {
   "model": "$model",
   "max_tokens": $max_tokens,
+  "reasoning": {"effort": "$REASONING_EFFORT"},
   "messages": [
     {
       "role": "user",
@@ -186,8 +201,10 @@ call_model() {
 EOF
 )
 
-    # Make API call (same pattern as consensus.sh)
-    local http_code
+    # Make API call (same pattern as consensus.sh). curl prints the status code
+    # even when it then times out mid-body, so appending a fallback code to its
+    # output produced "HTTP 200000". Track the exit status separately instead.
+    local http_code curl_rc=0
     http_code=$(curl -s -w "%{http_code}" -o "$output_file" \
         --max-time "$timeout" \
         -X POST "$OPENROUTER_API" \
@@ -195,7 +212,15 @@ EOF
         -H "Content-Type: application/json" \
         -H "HTTP-Referer: https://github.com/rlgeex/rlg-cc-unleashed" \
         -H "X-Title: CC-Unleashed Council" \
-        -d "$request_body" 2>/dev/null || echo "000")
+        -d "$request_body" 2>/dev/null) || curl_rc=$?
+
+    if [[ $curl_rc -eq 28 ]]; then
+        echo "{\"error\": \"Timed out after ${timeout}s (raise --timeout)\", \"model\": \"$model\"}" > "$output_file"
+        return 1
+    elif [[ $curl_rc -ne 0 ]]; then
+        echo "{\"error\": \"curl failed (exit $curl_rc)\", \"model\": \"$model\"}" > "$output_file"
+        return 1
+    fi
 
     # Check HTTP response code
     if [[ "$http_code" != "200" ]]; then
@@ -221,12 +246,28 @@ EOF
     fi
 
     # Extract content from OpenRouter response
-    local content
+    local content finish
     content=$(jq -r '.choices[0].message.content // empty' "$output_file" 2>/dev/null)
+    finish=$(jq -r '.choices[0].finish_reason // empty' "$output_file" 2>/dev/null)
+
+    # finish_reason=length with no text means reasoning consumed the whole
+    # budget; with text it means the answer was cut off mid-way. Flag the
+    # latter so peer reviewers and the chairman know, instead of passing it
+    # off as complete.
+    if [[ -z "$content" && "$finish" == "length" ]]; then
+        echo "{\"error\": \"Truncated: reasoning used the whole ${max_tokens}-token budget (raise --max-tokens)\", \"model\": \"$model\"}" > "$output_file"
+        return 1
+    fi
 
     if [[ -z "$content" ]]; then
         echo "{\"error\": \"Empty response\", \"model\": \"$model\"}" > "$output_file"
         return 1
+    fi
+
+    if [[ "$finish" == "length" ]]; then
+        warn "$(get_model_short_name "$model") hit the ${max_tokens}-token budget; response is truncated" >&2
+        content="${content}
+[TRUNCATED: response hit the ${max_tokens}-token budget]"
     fi
 
     # Save successful response with model info (compact for JSONL compatibility)
@@ -374,7 +415,7 @@ discover_models() {
 
     # Filter to major providers
     local filtered
-    filtered=$(echo "$response" | jq '[.data[] | select(.id | test("^(openai|anthropic|google|x-ai|qwen|deepseek|mistralai)/"))]')
+    filtered=$(echo "$response" | jq '[.data[] | select(.id | test("^(openai|anthropic|google|x-ai|deepseek|moonshotai|z-ai)/"))]')
 
     if [[ "$format" == "json" ]]; then
         echo "$filtered" | jq '{
@@ -389,7 +430,7 @@ discover_models() {
         echo "Total: $total models"
         echo ""
 
-        for provider in openai anthropic google x-ai qwen deepseek mistralai; do
+        for provider in openai anthropic google x-ai deepseek moonshotai z-ai; do
             local provider_models
             provider_models=$(echo "$filtered" | jq -r --arg p "$provider" \
                 '[.[] | select(.id | startswith($p + "/"))] | sort_by(.name)[:10][] |
@@ -493,7 +534,8 @@ run_council() {
             ((success_count++)) || true
         else
             local model_name error_msg
-            model_name=$(basename "$f" .json | sed 's/stage1_//')
+            model_name=$(jq -r '.model // empty' "$f" 2>/dev/null)
+            [[ -n "$model_name" ]] || model_name=$(basename "$f" .json | sed 's/stage1_//')
             error_msg=$(jq -r '.error' "$f")
             echo -e "${RED}[ERROR]${NC} Model $model_name: $error_msg"
         fi
@@ -554,9 +596,10 @@ run_council() {
             echo "" >> "$stage2_reviews"
             ((review_count++)) || true
         else
-            local error_msg
+            local error_msg review_model
             error_msg=$(jq -r '.error' "$f")
-            echo -e "${RED}[ERROR]${NC} Review failed: $error_msg"
+            review_model=$(jq -r '.model // "unknown model"' "$f" 2>/dev/null)
+            echo -e "${RED}[ERROR]${NC} Review failed ($review_model): $error_msg"
         fi
     done
 
@@ -645,10 +688,12 @@ Options:
 Examples:
   $(basename "$0") --discover --format table
   $(basename "$0") -q "Should we use GraphQL or REST?" -n 5
-  $(basename "$0") -q "Monorepo vs polyrepo?" -c "openai/gpt-5.6-terra,google/gemini-3.6-flash"
-  $(basename "$0") -q "Best approach?" --chairman "anthropic/claude-sonnet-5" -n 4
-  # 5-member council with Opus chairman (one model per non-Anthropic provider):
+  $(basename "$0") -q "Monorepo vs polyrepo?" -c "openai/gpt-6.1-sol,google/gemini-4-argon"
+  $(basename "$0") -q "Best approach?" --chairman "anthropic/claude-sonnet-5.5" -n 4
+  # 5-member council with Opus chairman (adds Kimi and GLM to the default three):
   $(basename "$0") -q "Architectural decision?" -n 5
+  # Full 6-member council (adds DeepSeek):
+  $(basename "$0") -q "Foundational decision?" -n 6
 
 Environment:
   OPENROUTER_API_KEY       Required for council deliberation (not for --discover)
@@ -763,6 +808,11 @@ Set it in your shell profile (~/.bashrc or ~/.zshrc):
             local file_timeout
             file_timeout=$(jq -r '.timeout_seconds // empty' "$config_file" 2>/dev/null)
             [[ -n "$file_timeout" ]] && timeout="$file_timeout"
+        fi
+        local file_effort
+        file_effort=$(jq -r '.reasoning_effort // empty' "$config_file" 2>/dev/null)
+        if [[ -n "$file_effort" ]]; then
+            REASONING_EFFORT="$file_effort"
         fi
     fi
 

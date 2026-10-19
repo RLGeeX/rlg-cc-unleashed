@@ -55,18 +55,25 @@ Together they answer: what was decided (DB), what shipped + why (journal), what 
 
 | model | input | output | cache-write 5m | cache-write 1h | cache-read |
 |-------|------:|-------:|---------------:|---------------:|-----------:|
-| opus-4-8 / opus-4-7 | 5.00 | 25.00 | 6.25 | 10.00 | 0.50 |
+| fable-5-1 / mythos-5-1 | 10.00 | 50.00 | 12.50 | 20.00 | 0.25 |
+| fable-5 / mythos-5 | 10.00 | 50.00 | 12.50 | 20.00 | 1.00 |
+| opus-5-5 | 4.00 | 20.00 | 5.00 | 8.00 | 0.20 |
+| opus-5 / opus-4-8 / opus-4-7 / opus-4-6 | 5.00 | 25.00 | 6.25 | 10.00 | 0.50 |
+| sonnet-5-5 / sonnet-5 | 2.00 | 10.00 | 2.50 | 4.00 | 0.20 |
 | sonnet-4-6 | 3.00 | 15.00 | 3.75 | 6.00 | 0.30 |
+| haiku-5-5 | 0.10 | 0.50 | 0.125 | 0.20 | 0.01 |
 | haiku-4-5 | 1.00 | 5.00 | 1.25 | 2.00 | 0.10 |
-| fable-5 | 10.00 | 50.00 | 12.50 | 20.00 | 1.00 |
 
-cache write = 1.25× input (5m) / 2× input (1h); cache read = 0.1× input. Source: the
-`claude-api` skill (cached 2026-06). Cost =
+cache write = 1.25× input (5m) / 2× input (1h); cache read = 0.1× input, except
+Fable 5.1 (0.025×) and Opus 5.5 (0.05×). Haiku 5.5 rates are for prompts ≤100K tokens
+(longer: $0.50/$2.50, not modeled). Unknown models are priced as opus-5-5. Source: the
+`claude-api` skill (cached 2026-10). Cost =
 `(in·iR + out·oR + cr·crR + cw5m·w5R + cw1h·w1R) / 1e6`, summed per agent.
 
 ## Reasoning capture
 
-Opus 4.7/4.8 default to `display: "omitted"` — transcript thinking blocks are empty.
+Opus 4.7 and later, Sonnet 5 and later, Haiku 5.5, and Fable default to
+`display: "omitted"` — transcript thinking blocks are empty.
 Run agents with `thinking: {type: "adaptive", display: "summarized"}` so the reasoning
 is in the transcript for the postmortem to cite.
 

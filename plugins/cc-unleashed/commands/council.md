@@ -23,7 +23,7 @@ Use AskUserQuestion to let user configure the council:
 ```
 Question: "How would you like to configure the council?"
 Options:
-1. Use defaults (Recommended) - GPT-4o, Gemini 2.5 Flash, Grok 4, Claude Sonnet as chairman
+1. Use defaults (Recommended) - GPT-6.1 Sol, Gemini 4 Argon, Grok 4.7, Claude Opus 5.5 as chairman
 2. Customize council - Select which models participate
 3. Customize chairman - Choose who synthesizes the final answer
 ```

@@ -21,7 +21,11 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Iterable
 
-DEFAULT_MODEL = "claude-haiku-4-5-20251001"
+DEFAULT_MODEL = "claude-haiku-5-5"
+# Haiku 5.5 thinks by default and thinking draws against max_tokens; leave
+# headroom so the memories array is never cut off behind a thinking block.
+MAX_TOKENS = 16000
+EFFORT = "medium"
 DEFAULT_BUDGET = 30000
 API_URL = "https://api.anthropic.com/v1/messages"
 ALLOWED_TYPES = {"decision", "preference", "pattern", "risk", "task", "fact"}
@@ -31,7 +35,7 @@ SYSTEM_PROMPT = """You extract durable memories from a Claude Code session trans
 
 A "durable memory" is something a future Claude instance would wish it had known when the user says "hey, about that thing we did" — load-bearing decisions, non-obvious gotchas, preferences that should shape future work, and concrete state that does not live in the code.
 
-Return a JSON array. Each item must have:
+Return a JSON object {"memories": [...]}. Each item in the array must have:
 - type: one of [decision, preference, pattern, risk, task, fact]
 - title: concise summary, <80 chars, specific enough to distinguish from similar memories
 - body: supporting detail, <500 chars; include *why* when the rule has a reason
@@ -94,12 +98,37 @@ Example of a well-formed entry:
 }
 
 Example of correctly returning nothing:
-Session was: opened a file, read two others, asked a clarifying question, conversation ended. No decisions reached, no preferences stated, no patterns uncovered. Return [].
+Session was: opened a file, read two others, asked a clarifying question, conversation ended. No decisions reached, no preferences stated, no patterns uncovered. Return {"memories": []}.
 
 Format:
-- Respond with ONLY the JSON array. No preamble, no trailing prose, no code fences.
-- Return [] when nothing meets the bar. Empty is correct; better than noise.
-- The assistant turn is pre-filled with '[' — continue the array from that point and close with ']'."""
+- The response is constrained to the JSON schema; put every entry in the "memories" array.
+- Return {"memories": []} when nothing meets the bar. Empty is correct; better than noise."""
+
+# Structured output schema. The root must be an object, so the array is wrapped
+# in {"memories": [...]}. Range limits (salience 0-1, string lengths) are not
+# expressible here and stay enforced in parse_memories.
+OUTPUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "memories": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "type": {"type": "string", "enum": sorted(ALLOWED_TYPES)},
+                    "title": {"type": "string"},
+                    "body": {"type": "string"},
+                    "salience": {"type": "number"},
+                    "why": {"type": "string"},
+                },
+                "required": ["type", "title", "body", "salience", "why"],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["memories"],
+    "additionalProperties": False,
+}
 
 
 def log(msg: str) -> None:
@@ -221,12 +250,15 @@ def strip_private(text: str) -> str:
 def call_anthropic(
     transcript: str, model: str, api_key: str, timeout: float = 60.0
 ) -> dict[str, Any] | None:
-    # Prefill assistant with '[' so Haiku starts a JSON array instead of drifting
-    # into prose. The API returns only what the model generates *after* the
-    # prefill, so the caller must prepend '[' before parsing.
+    # Structured outputs replace the old '[' assistant prefill, which Haiku 5.5
+    # rejects with a 400. No temperature/top_p: non-default values also 400.
     payload = {
         "model": model,
-        "max_tokens": 4096,
+        "max_tokens": MAX_TOKENS,
+        "output_config": {
+            "effort": EFFORT,
+            "format": {"type": "json_schema", "schema": OUTPUT_SCHEMA},
+        },
         "system": [
             {
                 "type": "text",
@@ -236,7 +268,6 @@ def call_anthropic(
         ],
         "messages": [
             {"role": "user", "content": transcript},
-            {"role": "assistant", "content": "["},
         ],
     }
     data = json.dumps(payload).encode("utf-8")
@@ -326,9 +357,9 @@ def _find_json_array(text: str) -> str | None:
 
 
 def parse_memories(raw: str) -> list[dict[str, Any]]:
-    # Response may be prefilled with '[' — the API returns only what the model
-    # generated after the prefill, so prepend '[' if the text looks like it
-    # continues an array (i.e., doesn't already start with one).
+    # Structured outputs return {"memories": [...]}. A bare array and the
+    # anchored-extraction fallback are kept for --model overrides that point
+    # at a model without structured-output support.
     raw = raw.strip()
     if not raw:
         log("parse: empty response text")
@@ -338,15 +369,14 @@ def parse_memories(raw: str) -> list[dict[str, Any]]:
         raw = re.sub(r"^```[a-zA-Z]*\s*", "", raw)
         raw = re.sub(r"\s*```$", "", raw)
         raw = raw.strip()
-    if not raw.startswith("["):
-        # Haiku prefill was '[' — add it back so parser sees a full array.
-        raw = "[" + raw
 
     # 1. Try parsing the whole response first (the common, well-behaved case).
     try:
         data = json.loads(raw)
     except json.JSONDecodeError:
         data = None
+    if isinstance(data, dict) and "memories" in data:
+        data = data["memories"]
 
     # 2. Fall back to anchored array extraction if the whole-parse failed.
     if data is None:
@@ -428,14 +458,19 @@ def run(
             in_tok, out_tok, cache_read, cache_create, stop_reason
         )
     )
+    if stop_reason == "refusal":
+        category = (response.get("stop_details") or {}).get("category")
+        log(f"WARN: model declined the request (category={category}) — no memories")
+        return []
     if stop_reason == "max_tokens":
         log("WARN: hit max_tokens ceiling — response likely truncated")
     if cache_create == 0 and cache_read == 0:
         # Caching silently no-ops if the cacheable prefix is below the model's
-        # minimum (1024 tokens for all current Claude models). Note it once.
+        # minimum: 512 tokens on Haiku 5.5, but 4096 on Haiku 4.5, which is why
+        # 4.5 never cached this ~1.5K-token prompt.
         log(
-            "WARN: cache_control had no effect — system prompt likely < 1024 tokens "
-            "(Anthropic's caching minimum)"
+            "WARN: cache_control had no effect — system prompt below the model's "
+            "caching minimum (512 tokens on Haiku 5.5, 4096 on Haiku 4.5)"
         )
     text = extract_text(response)
     memories = parse_memories(text)

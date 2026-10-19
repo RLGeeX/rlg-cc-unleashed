@@ -7,11 +7,13 @@
 # Configuration (in order of priority):
 #   1. Environment variables: CONSENSUS_MODEL_1, CONSENSUS_MODEL_2, CONSENSUS_MODEL_3
 #   2. Config file: .claude/config/consensus.json
-#   3. Defaults: openai/gpt-5.6-luna, google/gemini-3.5-flash-lite, x-ai/grok-4.3
+#   3. Defaults: openai/gpt-6-luna, google/gemini-3.8-flash, x-ai/grok-4.3
 #      All three are reasoning models, whose reasoning tokens draw against
-#      max_tokens. The budget is 1500 (was 500) so they cannot exhaust it and
-#      return empty output — the failure that previously pinned this to gpt-4o-mini.
-#      Do not lower MAX_TOKENS without switching to non-reasoning models.
+#      max_tokens. A replay of real past questions (2026-10-19) showed a flat
+#      budget is not enough: some models spend all of it thinking and return
+#      nothing. Each request therefore caps reasoning with OpenRouter's
+#      reasoning.effort ("low") inside a 4000-token budget. deepseek-v4.1-flash
+#      and qwen3.8-flash were rejected: they still truncated with the cap.
 #
 # Required: OPENROUTER_API_KEY environment variable
 #
@@ -28,9 +30,12 @@ BOLD='\033[1m'
 NC='\033[0m' # No Color
 
 # Default models
-DEFAULT_MODEL_1="openai/gpt-5.6-luna"
-DEFAULT_MODEL_2="google/gemini-3.5-flash-lite"
+DEFAULT_MODEL_1="openai/gpt-6-luna"
+DEFAULT_MODEL_2="google/gemini-3.8-flash"
 DEFAULT_MODEL_3="x-ai/grok-4.3"
+DEFAULT_MAX_TOKENS=4000
+DEFAULT_TIMEOUT=120
+DEFAULT_REASONING_EFFORT="low"
 
 # OpenRouter API endpoint
 OPENROUTER_API="https://openrouter.ai/api/v1/chat/completions"
@@ -81,22 +86,25 @@ load_config() {
             CONFIG_MODEL_1=$(jq -r '.models[0] // empty' "$CONFIG_FILE" 2>/dev/null || echo "")
             CONFIG_MODEL_2=$(jq -r '.models[1] // empty' "$CONFIG_FILE" 2>/dev/null || echo "")
             CONFIG_MODEL_3=$(jq -r '.models[2] // empty' "$CONFIG_FILE" 2>/dev/null || echo "")
-            MAX_TOKENS=$(jq -r '.max_tokens // 1500' "$CONFIG_FILE" 2>/dev/null || echo "1500")
-            TIMEOUT_SECS=$(jq -r '.timeout_seconds // 60' "$CONFIG_FILE" 2>/dev/null || echo "60")
+            MAX_TOKENS=$(jq -r ".max_tokens // $DEFAULT_MAX_TOKENS" "$CONFIG_FILE" 2>/dev/null || echo "$DEFAULT_MAX_TOKENS")
+            TIMEOUT_SECS=$(jq -r ".timeout_seconds // $DEFAULT_TIMEOUT" "$CONFIG_FILE" 2>/dev/null || echo "$DEFAULT_TIMEOUT")
+            REASONING_EFFORT=$(jq -r ".reasoning_effort // \"$DEFAULT_REASONING_EFFORT\"" "$CONFIG_FILE" 2>/dev/null || echo "$DEFAULT_REASONING_EFFORT")
         else
             log_warning "jq not installed, using defaults (install jq to use config file)"
             CONFIG_MODEL_1=""
             CONFIG_MODEL_2=""
             CONFIG_MODEL_3=""
-            MAX_TOKENS=1500
-            TIMEOUT_SECS=60
+            MAX_TOKENS=$DEFAULT_MAX_TOKENS
+            TIMEOUT_SECS=$DEFAULT_TIMEOUT
+            REASONING_EFFORT=$DEFAULT_REASONING_EFFORT
         fi
     else
         CONFIG_MODEL_1=""
         CONFIG_MODEL_2=""
         CONFIG_MODEL_3=""
-        MAX_TOKENS=1500
-        TIMEOUT_SECS=60
+        MAX_TOKENS=$DEFAULT_MAX_TOKENS
+        TIMEOUT_SECS=$DEFAULT_TIMEOUT
+        REASONING_EFFORT=$DEFAULT_REASONING_EFFORT
     fi
 
     # Priority: ENV > Config > Default
@@ -141,6 +149,7 @@ call_model() {
 {
   "model": "$model",
   "max_tokens": $MAX_TOKENS,
+  "reasoning": {"effort": "$REASONING_EFFORT"},
   "messages": [
     {
       "role": "user",
@@ -155,7 +164,10 @@ EOF
     # file so extract_response can surface it without clobbering the API's
     # own error body (which carries the actionable message, e.g. "model X is
     # deprecated").
-    local http_code
+    # curl prints the status code even when it then times out mid-body, so
+    # appending a fallback code to its output produced "HTTP 200000". Track
+    # the exit status separately instead.
+    local http_code curl_rc=0
     http_code=$(curl -s -w "%{http_code}" -o "$output_file" \
         --max-time "$TIMEOUT_SECS" \
         -X POST "$OPENROUTER_API" \
@@ -163,8 +175,16 @@ EOF
         -H "Content-Type: application/json" \
         -H "HTTP-Referer: https://github.com/rlgeex/rlg-cc-unleashed" \
         -H "X-Title: CC-Unleashed Consensus" \
-        -d "$request_body" 2>/dev/null || echo "000")
+        -d "$request_body" 2>/dev/null) || curl_rc=$?
     echo "$http_code" > "${output_file}.http_code"
+
+    if [[ $curl_rc -eq 28 ]]; then
+        echo "{\"error\": \"Timed out after ${TIMEOUT_SECS}s (raise timeout_seconds)\", \"model\": \"$model\"}" > "$output_file"
+        return 1
+    elif [[ $curl_rc -ne 0 ]]; then
+        echo "{\"error\": \"curl failed (exit $curl_rc)\", \"model\": \"$model\"}" > "$output_file"
+        return 1
+    fi
 
     # Check response
     if [[ "$http_code" != "200" ]]; then
@@ -222,12 +242,25 @@ extract_response() {
     fi
 
     # Extract content from OpenRouter response
-    local content
+    local content finish
     content=$(jq -r '.choices[0].message.content // empty' "$file" 2>/dev/null)
+    finish=$(jq -r '.choices[0].finish_reason // empty' "$file" 2>/dev/null)
+
+    # finish_reason=length with no text means reasoning consumed the whole
+    # budget; with text it means the answer was cut off mid-way.
+    if [[ -z "$content" && "$finish" == "length" ]]; then
+        echo "ERROR: Truncated - reasoning used the whole ${MAX_TOKENS}-token budget (raise max_tokens)"
+        return 0
+    fi
 
     if [[ -z "$content" ]]; then
         echo "ERROR: ${http_prefix}Empty response"
         return 0
+    fi
+
+    if [[ "$finish" == "length" ]]; then
+        content="${content}
+[TRUNCATED: response hit the ${MAX_TOKENS}-token budget]"
     fi
 
     echo "$content"
@@ -262,6 +295,8 @@ get_model_short_name() {
         *claude*) echo "Claude" ;;
         *llama*) echo "Llama" ;;
         *mistral*) echo "Mistral" ;;
+        *qwen*) echo "Qwen" ;;
+        *deepseek*) echo "DeepSeek" ;;
         *) echo "${model##*/}" ;;
     esac
 }

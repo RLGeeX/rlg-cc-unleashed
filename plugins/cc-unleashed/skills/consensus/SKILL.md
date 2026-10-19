@@ -6,7 +6,7 @@ allowed-tools: Bash, Read, AskUserQuestion
 
 # AI Consensus Query
 
-Query multiple AI models (GPT-4, Gemini, Grok) via OpenRouter to get diverse perspectives on a technical decision.
+Query multiple AI models (GPT, Gemini, Grok) via OpenRouter to get diverse perspectives on a technical decision.
 
 ## CRITICAL: Run the Bash Script
 
